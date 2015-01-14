@@ -9,6 +9,8 @@ use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
 
+$ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
+
 local $0=fileparse $0;
 sub logmsg{print STDERR "$0: @_\n";}
 exit(main());
