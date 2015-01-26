@@ -19,7 +19,7 @@ sub main{
   my $settings={};
   GetOptions($settings,qw(help inbox=s debug));
   die usage() if($$settings{help});
-  my $inboxPath=$$settings{inbox}||"/media/data/dropbox/inbox";
+  my $inboxPath=$$settings{inbox}||"/mnt/monolith0Data/dropbox/inbox";
 
   # Find the directories
   my $dirInfo=findReadsDir($inboxPath,$settings);
@@ -85,7 +85,7 @@ sub parseReadsDir{
 sub takeOwnership{
   my($info,$settings)=@_;
   my $user=$ENV{USER};
-  command("chown -R $user.$user $$info{dir}");
+  command("chown -Rv $user.$user $$info{dir}");
   die if $?;
 }
 
@@ -100,12 +100,13 @@ sub moveDir{
 
 sub addReadMetrics{
   my($info,$settings)=@_;
+  logmsg "Running fast read metrics";
   command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.txt");
 }
  
 sub giveToSequencermaster{
   my($info,$settings)=@_;
-  command("chown -R sequencermaster.sequencermaster $$info{dir}");
+  command("chown -Rv sequencermaster.sequencermaster $$info{dir}");
 }
 
 
