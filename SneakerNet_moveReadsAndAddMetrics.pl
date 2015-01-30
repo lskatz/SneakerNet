@@ -25,6 +25,8 @@ sub main{
   my $dirInfo=findReadsDir($inboxPath,$settings);
   # Process the directories
   for my $d(@$dirInfo){
+    logmsg "Going to move $$d{dir}";
+    waitForAnyChanges($d,$settings);
     takeOwnership($d,$settings);
     moveDir($d,$settings);
     addReadMetrics($d,$settings);
@@ -82,6 +84,32 @@ sub parseReadsDir{
   return \%dirInfo;
 }
 
+sub waitForAnyChanges{
+  my($info,$settings)=@_;
+
+  # Find a unique md5sum for this timepoint.
+  # If it changes, then the directory has changed
+  my $md5sumCommand="find $$info{dir} -type f -exec ls -l {} \\; | sort | md5sum -";
+  my $md5sum=`$md5sumCommand`;
+  die "ERROR with md5sum command: $!\n  $md5sum" if $?;
+  
+  my $waitSeconds=120; # two minutes just in case
+  logmsg "I will wait $waitSeconds seconds to see if any changes are in progress in the directory.";
+  for(my $i=1;$i<=$waitSeconds;$i++){
+    sleep 1;
+    logmsg "$i seconds..." if($i % 30 == 0);
+    my $newMd5=`$md5sumCommand`;
+    die "ERROR with md5sum command: $!\n  $md5sum" if $?;
+    if($newMd5 ne $md5sum){
+      logmsg "WARNING: directory has changed!  I will wait for another $waitSeconds seconds before I test again";
+      $md5sum=$newMd5;
+      $i=1;
+    }
+  }
+  logmsg "No changes detected. Onward!";
+  return 1;
+}
+
 sub takeOwnership{
   my($info,$settings)=@_;
   my $user=$ENV{USER};
@@ -93,9 +121,9 @@ sub moveDir{
   my($info,$settings)=@_;
 
   my $subdir=join("-",$$info{machine},$$info{year},$$info{run});
-  command("mv --no-clobber -v $$info{dir} /media/data/RawSequenceData/$$info{machine}/$subdir");
+  command("mv --no-clobber -v $$info{dir} /mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir");
   $$info{source_dir}=$$info{dir};
-  $$info{dir}="/media/data/RawSequenceData/$$info{machine}/$subdir";
+  $$info{dir}="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
 }
 
 sub addReadMetrics{
