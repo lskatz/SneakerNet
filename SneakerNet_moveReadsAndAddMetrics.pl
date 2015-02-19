@@ -8,6 +8,7 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
+use FindBin;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -16,12 +17,13 @@ sub logmsg{print STDERR "$0: @_\n";}
 exit(main());
 
 sub main{
-  my $settings={};
+  my $settings=readConfig();
   GetOptions($settings,qw(help inbox=s debug));
   die usage() if($$settings{help});
-  my $inboxPath=$$settings{inbox}||"/mnt/monolith0Data/dropbox/inbox";
+  $$settings{inbox}||="/mnt/monolith0Data/dropbox/inbox";
 
   # Find the directories
+  my $inboxPath=$$settings{inbox};
   my $dirInfo=findReadsDir($inboxPath,$settings);
   # Process the directories
   for my $d(@$dirInfo){
@@ -130,11 +132,35 @@ sub addReadMetrics{
   my($info,$settings)=@_;
   logmsg "Running fast read metrics";
   command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.txt");
+
+  # edit read metrics to include genome sizes
+  #my $newReadMetrics;
+  #open(
 }
  
 sub giveToSequencermaster{
   my($info,$settings)=@_;
   command("chown -Rv sequencermaster.sequencermaster $$info{dir}");
+}
+
+################
+# Utility subs #
+################
+sub readConfig{
+  my @file=glob("$FindBin::RealBin/config/*");
+  my $settings={};
+  for(@file){
+    open(CONFIGFILE,$_) or die "ERROR: could not open config file $_: $!";
+    my $key=basename $_;
+    while(<CONFIGFILE>){
+      s/^\s+|\s+$//g; # trim
+      next if(/^$/);
+      next if(/^#/);
+      my $configLine=[split(/\t/,$_)];
+      push(@{ $$settings{$key} },$configLine);
+    }
+  }
+  return $settings;
 }
 
 
