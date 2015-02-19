@@ -1,0 +1,7 @@
+# Fields: perl-regex  genome-size  notes
+
+/^\d+K\-\d+/	5000000	Salmonella
+/^\d+D\-\d+/	1600000	Campylobacter
+/^\d+C\-\d+/	5000000	E. coli
+/^\d+L\-\d+/	3000000	Listeria
+
