@@ -18,7 +18,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug));
+  GetOptions($settings,qw(help inbox=s debug force));
   die usage() if($$settings{help});
   $$settings{inbox}||="/mnt/monolith0Data/dropbox/inbox";
 
@@ -96,6 +96,7 @@ sub waitForAnyChanges{
   die "ERROR with md5sum command: $!\n  $md5sum" if $?;
   
   my $waitSeconds=120; # two minutes just in case
+  $waitSeconds=0 if($$settings{force});
   logmsg "I will wait $waitSeconds seconds to see if any changes are in progress in the directory.";
   for(my $i=1;$i<=$waitSeconds;$i++){
     sleep 1;
@@ -131,11 +132,62 @@ sub moveDir{
 sub addReadMetrics{
   my($info,$settings)=@_;
   logmsg "Running fast read metrics";
-  command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.txt");
+  command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.txt.tmp");
 
   # edit read metrics to include genome sizes
-  #my $newReadMetrics;
-  #open(
+  my $newReadMetrics;
+  open(READMETRICS,"$$info{dir}/readMetrics.txt.tmp") or die "ERROR: could not open $$info{dir}/readMetrics.txt.tmp because $!";
+  open(READMETRICSFINAL,">","$$info{dir}/readMetrics.txt") or die "ERROR: could not open $$info{dir}/readMetrics.txt for writing: $!";
+
+  # get the header and also put it into the final output file
+  my $header=<READMETRICS>;
+  print READMETRICSFINAL $header;
+  chomp($header);
+  my @header=split(/\t/,$header);
+  while(<READMETRICS>){
+    chomp;
+    # read in each line into the appropriate header
+    my %h;
+    @h{@header}=split(/\t/);
+
+    # find the genome size based on the filename
+    my $coverage=calculateCoverage(\%h,$settings);
+    $h{coverage}=$coverage;
+
+    for(@header){
+      print READMETRICSFINAL "$h{$_}\t";
+    }
+    print READMETRICSFINAL "\n";
+  }
+  close READMETRICSFINAL;
+  close READMETRICS;
+}
+
+# Use a hash of a line from a readmetrics output 
+# to determine genome coverage.
+sub calculateCoverage{
+  my($h,$settings)=@_;
+  my $coverage=$$h{coverage} || '.'; # default value in case one isn't found
+  my $is_recalculated=0;             # know whether the coverage was recalculated
+
+  # See if we can recalculate the coverage based on the filename
+  my $file=basename($$h{File});
+  for my $info(@{ $$settings{genomeSizes} }){
+    my($regex,$size,$organism)=@$info;
+    next if($file!~/$regex/);
+
+    $coverage=$$h{totalBases}/$size;
+    $coverage=sprintf("%0.2f",$coverage); # round it
+    $is_recalculated=1; # the coverage was recalculated
+
+    logmsg "Decided that $$h{File} is $organism with expected genome size $size. New coverage: $coverage";
+  }
+
+  # Report!
+  if(!$is_recalculated){
+    logmsg "Warning: could not understand what organism $$h{File} belongs to; coverage was not recalculated. Reported coverage: $coverage";
+  }
+  return $coverage;
 }
  
 sub giveToSequencermaster{
@@ -159,6 +211,7 @@ sub readConfig{
       my $configLine=[split(/\t/,$_)];
       push(@{ $$settings{$key} },$configLine);
     }
+    close CONFIGFILE;
   }
   return $settings;
 }
@@ -176,5 +229,6 @@ sub usage{
   Usage: $0 [-i inboxDir/]
   -i dir  # choose a different 'inbox' to look at
   --debug # Show debugging information
+  --force # Get this show on the road!!
   "
 }
