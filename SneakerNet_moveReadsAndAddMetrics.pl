@@ -9,6 +9,7 @@ use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
 use FindBin;
+use MIME::Lite;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -33,6 +34,7 @@ sub main{
     moveDir($d,$settings);
     addReadMetrics($d,$settings);
     giveToSequencermaster($d,$settings);
+    emailWhoever($d,$settings);
   }
 
   return 0;
@@ -123,9 +125,13 @@ sub takeOwnership{
 sub moveDir{
   my($info,$settings)=@_;
 
-  my $subdir=join("-",$$info{machine},$$info{year},$$info{run});
+  $$info{comment}||="";
+  my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
+  $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
   command("mv --no-clobber -v $$info{dir} /mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir");
+
   $$info{source_dir}=$$info{dir};
+  $$info{subdir}=$subdir;
   $$info{dir}="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
 }
 
@@ -193,6 +199,33 @@ sub calculateCoverage{
 sub giveToSequencermaster{
   my($info,$settings)=@_;
   command("chown -Rv sequencermaster.sequencermaster $$info{dir}");
+}
+
+sub emailWhoever{
+  my($info,$settings)=@_;
+  
+  my $email="gzu2\@cdc.gov";
+  my $subdir=$$info{subdir};
+  my $readMetrics=$$info{dir}."/readMetrics.txt";
+
+  logmsg "Emailing to $email\n  readMetrics file: $readMetrics";
+
+  my $msg=>MIME::Lite->new(
+    From     => "sequencermaster\@Monolith0.edlb.cdc.gov",
+    To       => $email,
+    Subject  => "Q/C of $subdir",
+    Type     => "multipart/mixed",
+  );
+
+  $msg->attach(
+    Type     => "text/tsv",
+    Path     => $readMetrics,
+    Filename => "readMetrics.tsv",
+  );
+
+  $msg->send;
+
+  return $msg;
 }
 
 ################
