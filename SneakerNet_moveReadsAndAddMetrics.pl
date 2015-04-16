@@ -50,7 +50,11 @@ sub findReadsDir{
   for my $d(@dir){
     my $info=parseReadsDir($d,$settings);
     logmsg Dumper $info if($$settings{debug});
-    push(@readsDir,$info) if($$info{is_good});
+    if($$info{is_good}){
+      push(@readsDir,$info) if($$info{is_good});
+    } elsif($$info{why_not}){
+      logmsg "Found $d but $$info{why_not}";
+    }
   } 
 
   return \@readsDir;
@@ -216,6 +220,8 @@ sub emailWhoever{
     Subject  => "Q/C of $subdir",
     Type     => "multipart/mixed",
   );
+
+print Dumper ["debug information on \$msg",$msg];
 
   $msg->attach(
     Type     => "text/tsv",
