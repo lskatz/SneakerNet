@@ -208,30 +208,22 @@ sub giveToSequencermaster{
 sub emailWhoever{
   my($info,$settings)=@_;
   
-  my $email="gzu2\@cdc.gov";
   my $subdir=$$info{subdir};
   my $readMetrics=$$info{dir}."/readMetrics.txt";
 
-  logmsg "Emailing to $email\n  readMetrics file: $readMetrics";
+  my $from="sequencermaster\@monolith0.edlb.cdc.gov";
+  my $to="gzu2\@cdc.gov";
+  my $uuencodeAttach=`uuencode $subdir.qc.txt < $readMetrics`;
 
-  my $msg=>MIME::Lite->new(
-    From     => "sequencermaster\@Monolith0.edlb.cdc.gov",
-    To       => $email,
-    Subject  => "Q/C of $subdir",
-    Type     => "multipart/mixed",
-  );
+  # This worked for me:
+  # (echo -e "Subject: M947-15-012 QC\nFrom: root@monolith0.edlb.cdc.gov"; uuencode blah.txt < /mnt/monolith0Data/RawSequenceData/M947/M947-15-012/readMetrics.txt) | sendmail gzu2@cdc.gov
 
-print Dumper ["debug information on \$msg",$msg];
+  logmsg "Emailing to $to\n  readMetrics file: $readMetrics";
 
-  $msg->attach(
-    Type     => "text/tsv",
-    Path     => $readMetrics,
-    Filename => "readMetrics.tsv",
-  );
+  my $fullMessage="Subject: $subdir QC\nFrom: $from\nTo: $to\nPlease open the following attachment in Excel for read metrics for run $subdir.\n$uuencodeAttach";
 
-  $msg->send;
-
-  return $msg;
+  my $exit_code=system("echo -e \"$fullMessage\" | sendmail $to");
+  return !$exit_code;
 }
 
 ################
