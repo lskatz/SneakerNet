@@ -222,7 +222,7 @@ sub emailWhoever{
 
   my $fullMessage="Subject: $subdir QC\nFrom: $from\nTo: $to\nPlease open the following attachment in Excel for read metrics for run $subdir.\n$uuencodeAttach";
 
-  my $exit_code=system("echo -e \"$fullMessage\" | sendmail $to");
+  my $exit_code=system("echo -e \'$fullMessage\' | sendmail $to");
   return !$exit_code;
 }
 
