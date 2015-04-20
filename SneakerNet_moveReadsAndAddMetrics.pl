@@ -9,7 +9,7 @@ use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
 use FindBin;
-use MIME::Lite;
+use Email::Stuffer;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -213,17 +213,20 @@ sub emailWhoever{
 
   my $from="sequencermaster\@monolith0.edlb.cdc.gov";
   my $to="gzu2\@cdc.gov";
-  my $uuencodeAttach=`uuencode $subdir.qc.txt < $readMetrics`;
+  my $subject="$subdir QC";
+  my $body="Please open the following attachment in Excel for read metrics for run $subdir.\n";
 
-  # This worked for me:
-  # (echo -e "Subject: M947-15-012 QC\nFrom: root@monolith0.edlb.cdc.gov"; uuencode blah.txt < /mnt/monolith0Data/RawSequenceData/M947/M947-15-012/readMetrics.txt) | sendmail gzu2@cdc.gov
+  my $was_sent=Email::Stuffer->from($from)
+                             ->subject($subject)
+                             ->to($to)
+                             ->text_body($body)
+                             ->attach_file($readMetrics)
+                             ->send;
 
-  logmsg "Emailing to $to\n  readMetrics file: $readMetrics";
-
-  my $fullMessage="Subject: $subdir QC\nFrom: $from\nTo: $to\nPlease open the following attachment in Excel for read metrics for run $subdir.\n$uuencodeAttach";
-
-  my $exit_code=system("echo -e \'$fullMessage\' | sendmail $to");
-  return !$exit_code;
+  if(!$was_sent){
+    logmsg "Warning: Email was not sent!";
+  }
+  return $was_sent;
 }
 
 ################
