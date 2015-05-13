@@ -212,7 +212,7 @@ sub emailWhoever{
   my $readMetrics=$$info{dir}."/readMetrics.txt";
 
   # Figure out who we are mailing
-  my @to=("gzu2\@cdc.gov","pfge\@cdc.gov");
+  my @to=("gzu2\@cdc.gov","wwm8\@cdc.gov","pfge\@cdc.gov","wvt2\@cdc.gov");
   my $pocLine=`grep -m 1 'Investigator' $$info{dir}/SampleSheet.csv`;
   if($pocLine=~/\((.+)\)/){
     my $cdcids=$1;
