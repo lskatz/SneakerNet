@@ -207,27 +207,44 @@ sub giveToSequencermaster{
 
 sub emailWhoever{
   my($info,$settings)=@_;
-  
+
   my $subdir=$$info{subdir};
   my $readMetrics=$$info{dir}."/readMetrics.txt";
 
-  my $from="sequencermaster\@monolith0.edlb.cdc.gov";
-  my $to="gzu2\@cdc.gov";
-  my $subject="$subdir QC";
-  my $body="Please open the following attachment in Excel for read metrics for run $subdir.\n";
-
-  my $was_sent=Email::Stuffer->from($from)
-                             ->subject($subject)
-                             ->to($to)
-                             ->text_body($body)
-                             ->attach_file($readMetrics)
-                             ->send;
-
-  if(!$was_sent){
-    logmsg "Warning: Email was not sent!";
+  # Figure out who we are mailing
+  my @to=("gzu2\@cdc.gov");
+  my $pocLine=`grep -m 1 'Investigator' $$info{dir}/SampleSheet.csv`;
+  if($pocLine=~/\((.+)\)/){
+    my $cdcids=$1;
+    $cdcids=~s/\s+//g;
+    my @cdcids=map {"$_\@cdc.gov"} split(/,/,$cdcids);
+    push(@to,@cdcids);
+  } else {
+    logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
-  return $was_sent;
+
+  # Send one email per recipient.
+  for my $to(@to){
+    logmsg "To: $to";
+    my $from="sequencermaster\@monolith0.edlb.cdc.gov";
+    my $subject="$subdir QC";
+    my $body="Please open the following attachment in Excel for read metrics for run $subdir.\n";
+
+    my $was_sent=Email::Stuffer->from($from)
+                               ->subject($subject)
+                               ->to($to)
+                               ->text_body($body)
+                               ->attach_file($readMetrics)
+                               ->send;
+
+    if(!$was_sent){
+      logmsg "Warning: Email was not sent to $to!";
+    }
+  }
+
+  return \@to;
 }
+
 
 ################
 # Utility subs #
