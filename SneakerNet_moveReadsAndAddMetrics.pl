@@ -8,6 +8,7 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
+use File::Temp;
 use FindBin;
 use Email::Stuffer;
 
@@ -19,9 +20,14 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug force));
+  GetOptions($settings,qw(help inbox=s debug force test));
   die usage() if($$settings{help});
-  $$settings{inbox}||="/mnt/monolith0Data/dropbox/inbox";
+
+  if($$settings{test}){
+    $$settings{inbox}=createTestDataset();
+  } else {
+    $$settings{inbox}||="/mnt/monolith0Data/dropbox/inbox";
+  }
 
   # Find the directories
   my $inboxPath=$$settings{inbox};
@@ -34,10 +40,62 @@ sub main{
     moveDir($d,$settings);
     addReadMetrics($d,$settings);
     giveToSequencermaster($d,$settings);
+    transferFilesToRemoteComputers($d,$settings);
     emailWhoever($d,$settings);
   }
 
   return 0;
+}
+
+sub createTestDataset{
+  my $tmpdir=File::Temp->tempdir("SneakerNetXXXXXX",TMPDIR=>1,CLEANUP=>1);
+
+  # create fastq files
+  for my $sample(qw(A B)){
+    my $forward="$tmpdir/${sample}_1.fastq";
+    my $reverse="$tmpdir/${sample}_2.fastq";
+    logmsg "Creating $forward, $reverse";
+    my $read="A" x 150; 
+    my $qual="I" x 150;
+    open(FWD,">",$forward) or die "ERROR: could not make temp file $forward: $!";
+    open(REV,">",$reverse) or die "ERROR: could not make temp file $reverse: $!";
+    for my $i(1..4e5){
+      # read1
+      print FWD "\@".$i."/1\n$read\n+\n$qual\n";
+      # read2
+      print REV "\@".$i."/2\n$read\n+\n$qual\n";
+    }
+    close FWD;
+    close REV;
+    system("gzip $forward $reverse");
+    die "ERROR with gzip on $forward or $reverse: $!" if $?;
+  }
+
+  # create spreadsheet
+  my $samplesheet="$tmpdir/SampleSheet.csv";
+  open(SAMPLE,">",$samplesheet) or die "ERROR: cannot write to $samplesheet: $!";
+  print SAMPLE "[Header]\nIEMFileVersion,4\nInvestigator Name,LSK (GZU2)\nExperiment Name,test\n";
+  print SAMPLE "Date,8/14/2015\nWorkflow,GenerateFASTQ\nApplication,FASTQ Only\nAssay,Nextera XT\nDescription,Listeria GMI\nChemistry,Amplicon\n\n";
+  print SAMPLE "[Reads]\n150\n150\n]n";
+  print SAMPLE "[Settings]\nReverseComplement,0\nAdapter,CTGTCTCTTATACACATCT\n\n";
+  print SAMPLE "[Data]\nSample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description\n";
+  print SAMPLE "A,,test,A01,N701,TAAGGCGA,S517,GCGTAAGA,,Species=Listeria_monocytogenes;ExpectedGenomeSize=0.4;Route=CalcEngine;Route=NCBI\n";
+  print SAMPLE "B,,test,B01,N702,CGTACTAG,S517,GCGTAAGA,,Species=Listeria_monocytogenes;ExpectedGenomeSize=0.4;Route=CalcEngine;Route=NCBI\n";
+  close SAMPLE;
+
+  # make zero byte files
+  for my $i(qw(config.xml SampleSheet.csv QC/CompletedJobInfo.xml QC/InterOp/CorrectedIntMetricsOut.bin QC/runParameters.xml QC/GenerateFASTQRunStatistics.xml QC/RunInfo.xml)){
+    my $zerobyte="$tmpdir/$i";
+    mkdir dirname($zerobyte);
+    open(FILE,">>", $zerobyte) or die "ERROR: could not create zero-byte file $zerobyte: $!";
+    close FILE;
+  }
+
+  # Just like the inbox, make a parent directory for this fake run
+  mkdir("$tmpdir/test-15-001");
+  system("mv $tmpdir/* $tmpdir/test-15-001");
+
+  return $tmpdir;
 }
 
 sub findReadsDir{
@@ -142,12 +200,12 @@ sub moveDir{
 sub addReadMetrics{
   my($info,$settings)=@_;
   logmsg "Running fast read metrics";
-  command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.txt.tmp");
+  command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.tsv.tmp");
 
   # edit read metrics to include genome sizes
   my $newReadMetrics;
-  open(READMETRICS,"$$info{dir}/readMetrics.txt.tmp") or die "ERROR: could not open $$info{dir}/readMetrics.txt.tmp because $!";
-  open(READMETRICSFINAL,">","$$info{dir}/readMetrics.txt") or die "ERROR: could not open $$info{dir}/readMetrics.txt for writing: $!";
+  open(READMETRICS,"$$info{dir}/readMetrics.tsv.tmp") or die "ERROR: could not open $$info{dir}/readMetrics.tsv.tmp because $!";
+  open(READMETRICSFINAL,">","$$info{dir}/readMetrics.tsv") or die "ERROR: could not open $$info{dir}/readMetrics.tsv for writing: $!";
 
   # get the header and also put it into the final output file
   my $header=<READMETRICS>;
@@ -171,6 +229,9 @@ sub addReadMetrics{
   }
   close READMETRICSFINAL;
   close READMETRICS;
+
+  # Clean up by removing the temporary file
+  unlink("$$info{dir}/readMetrics.txt.tmp");
 }
 
 # Use a hash of a line from a readmetrics output 
@@ -204,6 +265,12 @@ sub giveToSequencermaster{
   my($info,$settings)=@_;
   command("chown -Rv sequencermaster.sequencermaster $$info{dir}");
 }
+
+sub transferFilesToRemoteComputers{
+  my($info,$settings)=@_;
+  
+}
+
 
 sub emailWhoever{
   my($info,$settings)=@_;
@@ -279,6 +346,7 @@ sub usage{
   "Find all reads directories under the inbox
   Usage: $0 [-i inboxDir/]
   -i dir  # choose a different 'inbox' to look at
+  --test  # Create a test directory 
   --debug # Show debugging information
   --force # Get this show on the road!!
   "
