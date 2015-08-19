@@ -11,6 +11,7 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
 use Email::Stuffer;
+use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -20,7 +21,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug force test));
+  GetOptions($settings,qw(help inbox=s debug force test)) or die $!;
   die usage() if($$settings{help});
 
   if($$settings{test}){
@@ -48,12 +49,14 @@ sub main{
 }
 
 sub createTestDataset{
-  my $tmpdir=File::Temp->tempdir("SneakerNetXXXXXX",TMPDIR=>1,CLEANUP=>1);
+  my $inbox=File::Temp->tempdir("SneakerNetXXXXXX",TMPDIR=>1,CLEANUP=>1);
+  my $rundir="$inbox/test-15-001";
+  mkdir($rundir);
 
   # create fastq files
   for my $sample(qw(A B)){
-    my $forward="$tmpdir/${sample}_1.fastq";
-    my $reverse="$tmpdir/${sample}_2.fastq";
+    my $forward="$rundir/${sample}_1.fastq";
+    my $reverse="$rundir/${sample}_2.fastq";
     logmsg "Creating $forward, $reverse";
     my $read="A" x 150; 
     my $qual="I" x 150;
@@ -67,39 +70,37 @@ sub createTestDataset{
     }
     close FWD;
     close REV;
-    system("gzip $forward $reverse");
-    die "ERROR with gzip on $forward or $reverse: $!" if $?;
+    command("gzip $forward $reverse");
   }
 
   # create spreadsheet
-  my $samplesheet="$tmpdir/SampleSheet.csv";
+  my $samplesheet="$rundir/SampleSheet.csv";
   open(SAMPLE,">",$samplesheet) or die "ERROR: cannot write to $samplesheet: $!";
-  print SAMPLE "[Header]\nIEMFileVersion,4\nInvestigator Name,LSK (GZU2)\nExperiment Name,test\n";
+  print SAMPLE "[Header]\nIEMFileVersion,4\nInvestigator Name,LSK (gzu2)\nExperiment Name,test\n";
   print SAMPLE "Date,8/14/2015\nWorkflow,GenerateFASTQ\nApplication,FASTQ Only\nAssay,Nextera XT\nDescription,Listeria GMI\nChemistry,Amplicon\n\n";
   print SAMPLE "[Reads]\n150\n150\n]n";
   print SAMPLE "[Settings]\nReverseComplement,0\nAdapter,CTGTCTCTTATACACATCT\n\n";
   print SAMPLE "[Data]\nSample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description\n";
   print SAMPLE "A,,test,A01,N701,TAAGGCGA,S517,GCGTAAGA,,Species=Listeria_monocytogenes;ExpectedGenomeSize=0.4;Route=CalcEngine;Route=NCBI\n";
-  print SAMPLE "B,,test,B01,N702,CGTACTAG,S517,GCGTAAGA,,Species=Listeria_monocytogenes;ExpectedGenomeSize=0.4;Route=CalcEngine;Route=NCBI\n";
+  print SAMPLE "B,,test,B01,N702,CGTACTAG,S517,GCGTAAGA,,Species=Listeria_monocytogenes;ExpectedGenomeSize=0.4;Route=NCBI\n";
   close SAMPLE;
 
   # make zero byte files
   for my $i(qw(config.xml SampleSheet.csv QC/CompletedJobInfo.xml QC/InterOp/CorrectedIntMetricsOut.bin QC/runParameters.xml QC/GenerateFASTQRunStatistics.xml QC/RunInfo.xml)){
-    my $zerobyte="$tmpdir/$i";
+    my $zerobyte="$rundir/$i";
     mkdir dirname($zerobyte);
+    logmsg "Making zero-byte file $zerobyte";
     open(FILE,">>", $zerobyte) or die "ERROR: could not create zero-byte file $zerobyte: $!";
+    print FILE "blah\n";
     close FILE;
   }
 
-  # Just like the inbox, make a parent directory for this fake run
-  mkdir("$tmpdir/test-15-001");
-  system("mv $tmpdir/* $tmpdir/test-15-001");
-
-  return $tmpdir;
+  return $inbox;
 }
 
 sub findReadsDir{
   my($inbox,$settings)=@_;
+
 
   # all subdirectories under the inbox
   my @dir=grep({-d $_} glob("$inbox/*"));
@@ -190,7 +191,11 @@ sub moveDir{
   $$info{comment}||="";
   my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
   $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
-  command("mv --no-clobber -v $$info{dir} /mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir");
+  my $destinationDir="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
+  if(-e $destinationDir){
+    die "ERROR: destination directory already exists!\n  $destinationDir";
+  }
+  command("mv --no-clobber -v $$info{dir} $destinationDir");
 
   $$info{source_dir}=$$info{dir};
   $$info{subdir}=$subdir;
@@ -230,7 +235,7 @@ sub addReadMetrics{
   close READMETRICSFINAL;
   close READMETRICS;
 
-  # cleanup
+  # Clean up by removing the temporary file
   unlink("$$info{dir}/readMetrics.tsv.tmp");
 }
 
@@ -269,8 +274,78 @@ sub giveToSequencermaster{
 sub transferFilesToRemoteComputers{
   my($info,$settings)=@_;
   
+  # Find information about each genome
+  my $sampleInfo=samplesheetInfo("$$info{dir}/SampleSheet.csv",$settings);
+
+  # Which files should be transferred?
+  my %filesToTransfer=(); # hash keys are species names
+  while(my($sampleName,$s)=each(%$sampleInfo)){
+    my $taxon=(keys(%{ $$s{species} }))[0];
+    if($$s{route}{calcengine}){
+      $filesToTransfer{$taxon}.=join(" ",glob("$$info{dir}/$sampleName*.fastq.gz"))." ";
+    }
+  }
+
+  #die "ERROR: no files to transfer" if (!$filesToTransfer);
+  logmsg "WARNING: no files will be transferred" if(!keys(%filesToTransfer));
+
+  # Make the transfers based on taxon.
+  # TODO consider putting this taxon logic into a config file.
+  while(my($taxon,$fileString)=each(%filesToTransfer)){
+
+    # Which folder under /scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine
+    # is appropriate?  SneakerNet if nothing else is found.
+    my $subfolder="SneakerNet";
+    if($taxon =~ /Listeria/i){
+      $subfolder="LMO";
+    } elsif ($taxon =~ /Salmonella/i){
+      $subfolder="Salm";
+    } elsif ($taxon =~ /Campy|Arcobacter|Helicobacter/i){
+      $subfolder="Campy";
+    } elsif ($taxon =~ /^E\.$|STEC|Escherichia|Shigella/i){
+      $subfolder="STEC";
+    } elsif ($taxon =~ /Vibrio|cholerae|cholera/i){
+      $subfolder="Vibrio";
+    } else {
+      logmsg "WARNING: cannot figure out the correct subfolder for taxon $taxon. The following files will be sent to $subfolder instead.";
+    }
+    logmsg "Transferring to $subfolder:\n  $fileString";
+    command("rsync --update -av $fileString gzu2\@aspen.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine/$subfolder/");
+  }
 }
 
+sub samplesheetInfo{
+  my($samplesheet,$settings)=@_;
+
+  my $section="";
+  my @header=();
+  my %sample;
+  open(SAMPLE,$samplesheet) or die "ERROR: could not open sample spreadsheet $samplesheet: $!";
+  while(<SAMPLE>){
+    chomp;
+    if(/^\[(\w+)\]/){
+      $section=lc($1);
+      my $header=<SAMPLE>;
+      chomp($header);
+      @header=split(/,/,lc($header));
+      next;
+    }
+    if($section eq "data"){
+      my %F;
+      @F{@header}=split(/,/,$_);
+      for my $keyvalue(split(/;/,lc($F{description}))){
+        my($key,$value)=split(/=/,$keyvalue);
+        $key=~s/^\s+|\s+$//g;      #whitespace trim
+        $value=~s/^\s+|\s+$//g;    #whitespace trim
+        $F{$key}={} if(!$F{$key});
+        $F{$key}{$value}++;
+      }
+      
+      $sample{$F{sample_id}}=\%F;
+    }
+  }
+  return \%sample;
+}
 
 sub emailWhoever{
   my($info,$settings)=@_;
@@ -290,12 +365,15 @@ sub emailWhoever{
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
 
+  @to=uniq(@to);
+
   # Send one email per recipient.
   for my $to(@to){
     logmsg "To: $to";
     my $from="sequencermaster\@monolith0.edlb.cdc.gov";
     my $subject="$subdir QC";
-    my $body="Please open the following attachment in Excel for read metrics for run $subdir.\n";
+    my $body ="Please open the following attachment in Excel for read metrics for run $subdir.\n";
+       $body.="\n  This message was brought to you by SneakerNet!";
 
     my $was_sent=Email::Stuffer->from($from)
                                ->subject($subject)
