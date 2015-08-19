@@ -207,6 +207,8 @@ sub addReadMetrics{
   logmsg "Running fast read metrics";
   command("run_assembly_readMetrics.pl --fast $$info{dir}/*.fastq.gz | sort -k3,3n > $$info{dir}/readMetrics.tsv.tmp");
 
+  my $sampleInfo=samplesheetInfo("$$info{dir}/SampleSheet.csv",$settings);
+
   # edit read metrics to include genome sizes
   my $newReadMetrics;
   open(READMETRICS,"$$info{dir}/readMetrics.tsv.tmp") or die "ERROR: could not open $$info{dir}/readMetrics.tsv.tmp because $!";
@@ -224,7 +226,7 @@ sub addReadMetrics{
     @h{@header}=split(/\t/);
 
     # find the genome size based on the filename
-    my $coverage=calculateCoverage(\%h,$settings);
+    my $coverage=calculateCoverage(\%h,$sampleInfo,$settings);
     $h{coverage}=$coverage;
 
     for(@header){
@@ -242,22 +244,48 @@ sub addReadMetrics{
 # Use a hash of a line from a readmetrics output 
 # to determine genome coverage.
 sub calculateCoverage{
-  my($h,$settings)=@_;
+  my($h,$sampleInfo,$settings)=@_;
+
+  # $h contains read metrics for this one row.
+
+  # Two variables to figure out for genome coverage
+  my $expectedGenomeSize=0;
+  my $organism="";
+
+  # Find out if this file has an expected genome size from the Sample Sheet.
+  # This isn't the most efficient way to do it but then again this hash isn't too big.
+  my $file=basename($$h{File});
+  while(my($name,$info)=each(%$sampleInfo)){
+    if(grep(/\Q$file\E/,@{ $$info{fastq} })){
+      $expectedGenomeSize=(keys(%{ $$info{expectedgenomesize} }))[0] * 1e6;
+      $organism=(keys(%{ $$info{species} }))[0];
+    }
+  }
+
   my $coverage=$$h{coverage} || '.'; # default value in case one isn't found
   my $is_recalculated=0;             # know whether the coverage was recalculated
 
   # See if we can recalculate the coverage based on the filename
-  my $file=basename($$h{File});
-  for my $info(@{ $$settings{genomeSizes} }){
-    my($regex,$size,$organism)=@$info;
-    next if($file!~/$regex/);
+  if(!$expectedGenomeSize){
+    # See if this filename matches any organism regex
+    for my $info(@{ $$settings{genomeSizes} }){
+      my($regex,$expectedGenomeSizeFromConfig);
+      ($regex,$expectedGenomeSizeFromConfig,$organism)=@$info;
 
-    $coverage=$$h{totalBases}/$size;
-    $coverage=sprintf("%0.2f",$coverage); # round it
-    $is_recalculated=1; # the coverage was recalculated
-
-    logmsg "Decided that $$h{File} is $organism with expected genome size $size. New coverage: $coverage";
+      # Calculate coverage from either the config file, the SampleSheet,
+      # or else you just can't calculate.
+      if($file=~/$regex/){
+        $expectedGenomeSize=$expectedGenomeSizeFromConfig;
+        last;
+      }
+    }
   }
+  $coverage=$$h{totalBases}/$expectedGenomeSize;
+
+  $coverage=sprintf("%0.2f",$coverage); # round it
+  $is_recalculated=1; # the coverage was recalculated
+
+  logmsg "Decided that $$h{File} is $organism with expected genome size $expectedGenomeSize. Calculated coverage: $coverage";
 
   # Report!
   if(!$is_recalculated){
@@ -310,7 +338,7 @@ sub transferFilesToRemoteComputers{
       logmsg "WARNING: cannot figure out the correct subfolder for taxon $taxon. The following files will be sent to $subfolder instead.";
     }
     logmsg "Transferring to $subfolder:\n  $fileString";
-    command("rsync --update -av $fileString gzu2\@aspen.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine/$subfolder/");
+    command("rsync --update -av $fileString edlb-sneakernet\@biolinux.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine/$subfolder/");
   }
 }
 
@@ -344,6 +372,13 @@ sub samplesheetInfo{
       $sample{$F{sample_id}}=\%F;
     }
   }
+
+  # Try to associate samples to files
+  while(my($samplename,$sampleinfo)=each(%sample)){
+    my @possibleFastq=glob(dirname($samplesheet)."/$samplename*.fastq.gz");
+    $sample{$samplename}{fastq}=\@possibleFastq;
+  }
+
   return \%sample;
 }
 
@@ -354,7 +389,11 @@ sub emailWhoever{
   my $readMetrics=$$info{dir}."/readMetrics.tsv";
 
   # Figure out who we are mailing
+  # Send here by default
   my @to=("gzu2\@cdc.gov","wwm8\@cdc.gov","pfge\@cdc.gov","wvt2\@cdc.gov","fid4\@cdc.gov");
+  # Read the sample sheet for something like
+  #                                   Investigator Name,ALS (IAU3)
+  # And then make IAU3 into a CDC email.
   my $pocLine=`grep -m 1 'Investigator' $$info{dir}/SampleSheet.csv`;
   if($pocLine=~/\((.+)\)/){
     my $cdcids=$1;
@@ -365,10 +404,8 @@ sub emailWhoever{
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
 
-  @to=uniq(@to);
-
   # Send one email per recipient.
-  for my $to(@to){
+  for my $to(uniq(@to)){
     logmsg "To: $to";
     my $from="sequencermaster\@monolith0.edlb.cdc.gov";
     my $subject="$subdir QC";
