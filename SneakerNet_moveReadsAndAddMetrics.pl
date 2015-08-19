@@ -230,8 +230,8 @@ sub addReadMetrics{
   close READMETRICSFINAL;
   close READMETRICS;
 
-  # Clean up by removing the temporary file
-  unlink("$$info{dir}/readMetrics.txt.tmp");
+  # cleanup
+  unlink("$$info{dir}/readMetrics.tsv.tmp");
 }
 
 # Use a hash of a line from a readmetrics output 
@@ -276,10 +276,10 @@ sub emailWhoever{
   my($info,$settings)=@_;
 
   my $subdir=$$info{subdir};
-  my $readMetrics=$$info{dir}."/readMetrics.txt";
+  my $readMetrics=$$info{dir}."/readMetrics.tsv";
 
   # Figure out who we are mailing
-  my @to=("gzu2\@cdc.gov","wwm8\@cdc.gov","pfge\@cdc.gov","wvt2\@cdc.gov");
+  my @to=("gzu2\@cdc.gov","wwm8\@cdc.gov","pfge\@cdc.gov","wvt2\@cdc.gov","fid4\@cdc.gov");
   my $pocLine=`grep -m 1 'Investigator' $$info{dir}/SampleSheet.csv`;
   if($pocLine=~/\((.+)\)/){
     my $cdcids=$1;
