@@ -263,7 +263,6 @@ sub calculateCoverage{
   }
 
   my $coverage=$$h{coverage} || '.'; # default value in case one isn't found
-  my $is_recalculated=0;             # know whether the coverage was recalculated
 
   # See if we can recalculate the coverage based on the filename
   if(!$expectedGenomeSize){
@@ -280,15 +279,13 @@ sub calculateCoverage{
       }
     }
   }
-  $coverage=$$h{totalBases}/$expectedGenomeSize;
 
-  $coverage=sprintf("%0.2f",$coverage); # round it
-  $is_recalculated=1; # the coverage was recalculated
-
-  logmsg "Decided that $$h{File} is $organism with expected genome size $expectedGenomeSize. Calculated coverage: $coverage";
-
-  # Report!
-  if(!$is_recalculated){
+  # Recalculate coverage, if it's possible
+  if($expectedGenomeSize > 0){
+    $coverage=$$h{totalBases}/$expectedGenomeSize;
+    $coverage=sprintf("%0.2f",$coverage); # round it
+    logmsg "Decided that $$h{File} is $organism with expected genome size $expectedGenomeSize. Calculated coverage: $coverage";
+  } else {
     logmsg "Warning: could not understand what organism $$h{File} belongs to; coverage was not recalculated. Reported coverage: $coverage";
   }
   return $coverage;
