@@ -41,11 +41,23 @@ sub main{
     moveDir($d,$settings);
     giveToSequencermaster($d,$settings);
 
-    for my $exe(glob("$FindBin::RealBin/SneakerNet.plugins/*")){
+    my %seenExe;
+    my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
+    for(my $i=0;$i<@exe;$i++){
+      my $exe=$exe[$i];
       next if(!-f $exe || !-x $exe);
+      #next if($seenExe++);
+
+      command("$exe $$d{dir}");
 
       next;
-      command("$exe $$d{dir}");
+
+      eval{
+        command("$exe $$d{dir}");
+      };
+      if($@){
+        push(@exe,$exe);
+      }
     }
   }
 
