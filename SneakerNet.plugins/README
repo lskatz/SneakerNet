@@ -1,0 +1,4 @@
+Any executable in this directory will be run when SneakerNet is executed.
+
+Each executable will be run with standard options and ARGV=="run directory"
+
