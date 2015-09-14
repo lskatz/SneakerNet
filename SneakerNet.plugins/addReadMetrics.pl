@@ -13,10 +13,12 @@ use FindBin;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
+use lib "$FindBin::RealBin/../lib";
+use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
+
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 local $0=fileparse $0;
-sub logmsg{print STDERR "$0: @_\n";}
 exit(main());
 
 sub main{
@@ -125,91 +127,9 @@ sub calculateCoverage{
   return $coverage;
 }
  
-sub samplesheetInfo{
-  my($samplesheet,$settings)=@_;
-
-  my $section="";
-  my @header=();
-  my %sample;
-  open(SAMPLE,$samplesheet) or die "ERROR: could not open sample spreadsheet $samplesheet: $!";
-  while(<SAMPLE>){
-    s/^\s+|\s+$//g; # trim whitespace
-
-    if(/^\[(\w+)\]/){  # [sectionname]
-      $section=lc($1);
-      my $header=<SAMPLE>;
-      $header=~s/^\s+|\s+$//g; # trim whitespace
-      @header=split(/,/,lc($header));
-      next;
-    }
-    if($section eq "data"){
-      my %F;
-      @F{@header}=split(/,/,$_);
-      for my $keyvalue(split(/;/,lc($F{description}))){
-        my($key,$value)=split(/=/,$keyvalue);
-        $key=~s/^\s+|\s+$//g;      #whitespace trim
-        $value=~s/^\s+|\s+$//g;    #whitespace trim
-        #$F{$key}={} if(!$F{$key});
-        #$F{$key}{$value}++;
-        if($F{$key}){
-          if(ref($F{$key}) ne 'ARRAY'){
-            $F{$key}=[$F{$key}];
-          }
-          push(@{ $F{$key} }, $value);
-        } else {
-          $F{$key}=$value;
-        }
-      }
-      delete($F{description});
-      
-      $sample{$F{sample_id}}=\%F;
-    }
-  }
-
-  # Try to associate samples to files
-  my %fastqToName;
-  while(my($samplename,$sampleinfo)=each(%sample)){
-    my @possibleFastq=glob(dirname($samplesheet)."/$samplename*.fastq.gz");
-    $sample{$samplename}{fastq}=\@possibleFastq;
-    
-    # Make some links from file to sample
-    for my $fastq(@possibleFastq){
-      $fastqToName{$fastq}=$samplename;
-    }
-  }
-  %sample=(%sample,%fastqToName);
-
-  return \%sample;
-}
-
 ################
 # Utility subs #
 ################
-sub readConfig{
-  my @file=glob("$FindBin::RealBin/../config/*");
-  my $settings={};
-  for(@file){
-    open(CONFIGFILE,$_) or die "ERROR: could not open config file $_: $!";
-    my $key=basename $_;
-    while(<CONFIGFILE>){
-      s/^\s+|\s+$//g; # trim
-      next if(/^$/);
-      next if(/^#/);
-      my $configLine=[split(/\t/,$_)];
-      push(@{ $$settings{$key} },$configLine);
-    }
-    close CONFIGFILE;
-  }
-  return $settings;
-}
-
-
-sub command{
-  my($command,$settings)=@_;
-  logmsg "COMMAND\n  $command" if($$settings{debug});
-  system($command);
-  die "ERROR running command\n  $command" if $?;
-}
 
 sub usage{
   "Find all reads directories under the inbox
@@ -217,3 +137,4 @@ sub usage{
   --debug # Show debugging information
   "
 }
+

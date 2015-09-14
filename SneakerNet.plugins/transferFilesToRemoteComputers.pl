@@ -10,10 +10,12 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
 
+use lib "$FindBin::RealBin/../lib";
+use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
+
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 local $0=fileparse $0;
-sub logmsg{print STDERR "$0: @_\n";}
 exit(main());
 
 sub main{
@@ -37,9 +39,11 @@ sub transferFilesToRemoteComputers{
   # Which files should be transferred?
   my %filesToTransfer=(); # hash keys are species names
   while(my($sampleName,$s)=each(%$sampleInfo)){
-    my $taxon=(keys(%{ $$s{species} }))[0];
-    if($$s{route}{calcengine}){
-      $filesToTransfer{$taxon}.=join(" ",glob("$dir/$sampleName*.fastq.gz"))." ";
+    next if(ref($s) ne 'HASH'); # avoid file=>name aliases
+    my $taxon=$$s{species};
+    if(grep {/calcengine/i} @{ $$s{route} }){
+      $filesToTransfer{$taxon}.=join(" ",@{ $$s{fastq} })." ";
+      #$filesToTransfer{$taxon}.=join(" ",glob("$dir/$sampleName*.fastq.gz"))." ";
     }
   }
 
@@ -71,75 +75,6 @@ sub transferFilesToRemoteComputers{
   }
 }
 
-sub samplesheetInfo{
-  my($samplesheet,$settings)=@_;
-
-  my $section="";
-  my @header=();
-  my %sample;
-  open(SAMPLE,$samplesheet) or die "ERROR: could not open sample spreadsheet $samplesheet: $!";
-  while(<SAMPLE>){
-    chomp;
-    if(/^\[(\w+)\]/){
-      $section=lc($1);
-      my $header=<SAMPLE>;
-      chomp($header);
-      @header=split(/,/,lc($header));
-      next;
-    }
-    if($section eq "data"){
-      my %F;
-      @F{@header}=split(/,/,$_);
-      for my $keyvalue(split(/;/,lc($F{description}))){
-        my($key,$value)=split(/=/,$keyvalue);
-        $key=~s/^\s+|\s+$//g;      #whitespace trim
-        $value=~s/^\s+|\s+$//g;    #whitespace trim
-        $F{$key}={} if(!$F{$key});
-        $F{$key}{$value}++;
-      }
-      
-      $sample{$F{sample_id}}=\%F;
-    }
-  }
-
-  # Try to associate samples to files
-  while(my($samplename,$sampleinfo)=each(%sample)){
-    my @possibleFastq=glob(dirname($samplesheet)."/$samplename*.fastq.gz");
-    $sample{$samplename}{fastq}=\@possibleFastq;
-  }
-
-  return \%sample;
-}
-
-
-################
-# Utility subs #
-################
-sub readConfig{
-  my @file=glob("$FindBin::RealBin/config/*");
-  my $settings={};
-  for(@file){
-    open(CONFIGFILE,$_) or die "ERROR: could not open config file $_: $!";
-    my $key=basename $_;
-    while(<CONFIGFILE>){
-      s/^\s+|\s+$//g; # trim
-      next if(/^$/);
-      next if(/^#/);
-      my $configLine=[split(/\t/,$_)];
-      push(@{ $$settings{$key} },$configLine);
-    }
-    close CONFIGFILE;
-  }
-  return $settings;
-}
-
-
-sub command{
-  my($command,$settings)=@_;
-  logmsg "COMMAND\n  $command" if($$settings{debug});
-  system($command);
-  die "ERROR running command\n  $command" if $?;
-}
 
 sub usage{
   "Find all reads directories under the inbox
@@ -150,3 +85,4 @@ sub usage{
   --force # Get this show on the road!!
   "
 }
+
