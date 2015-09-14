@@ -21,8 +21,9 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug test)) or die $!;
+  GetOptions($settings,qw(help inbox=s debug test numcpus=i)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
+  $$settings{numcpus}||=1;
   
   my $dir=$ARGV[0];
 
@@ -33,12 +34,16 @@ sub main{
 
 sub addReadMetrics{
   my($dir,$settings)=@_;
-  logmsg "Running fast read metrics";
-  command("run_assembly_readMetrics.pl --fast $dir/*.fastq.gz | sort -k3,3n > $dir/readMetrics.tsv.tmp");
 
+  logmsg "Reading sample $dir/SampleSheet.csv";
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
+  logmsg "Running fast read metrics";
+  command("run_assembly_readMetrics.pl --numcpus $$settings{numcpus} --fast $dir/*.fastq.gz | sort -k3,3n > $dir/readMetrics.tsv.tmp");
+
+
   # edit read metrics to include genome sizes
+  logmsg "Backfilling values in $dir/readMetrics.tsv";
   my $newReadMetrics;
   open(READMETRICS,"$dir/readMetrics.tsv.tmp") or die "ERROR: could not open $dir/readMetrics.tsv.tmp because $!";
   open(READMETRICSFINAL,">","$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv for writing: $!";
@@ -77,21 +82,21 @@ sub calculateCoverage{
 
   # $h contains read metrics for this one row.
 
-  # Two variables to figure out for genome coverage
-  my $expectedGenomeSize=0;
-  my $organism="";
+  my $file=basename($$h{File});
+  my $samplename=$$sampleInfo{$$h{File}} || "";
 
   # Find out if this file has an expected genome size from the Sample Sheet.
-  # This isn't the most efficient way to do it but then again this hash isn't too big.
-  my $file=basename($$h{File});
-  while(my($name,$info)=each(%$sampleInfo)){
-    if(grep(/\Q$file\E/,@{ $$info{fastq} })){
-      $expectedGenomeSize=(keys(%{ $$info{expectedgenomesize} }))[0] * 1e6;
-      $organism=(keys(%{ $$info{species} }))[0];
-    }
+  my $expectedGenomeSize=0;
+  my $organism="";
+  if($$sampleInfo{$samplename}{expectedgenomesize}){
+    $expectedGenomeSize=$$sampleInfo{$samplename}{expectedgenomesize} * 10**6;
   }
+  if($$sampleInfo{$samplename}{species}){
+    $organism=$$sampleInfo{$samplename}{species};
+  }
+  
 
-  my $coverage=$$h{coverage} || '.'; # default value in case one isn't found
+  my $coverage=$$h{coverage} || 0; 
 
   # See if we can recalculate the coverage based on the filename
   if(!$expectedGenomeSize){
@@ -128,11 +133,12 @@ sub samplesheetInfo{
   my %sample;
   open(SAMPLE,$samplesheet) or die "ERROR: could not open sample spreadsheet $samplesheet: $!";
   while(<SAMPLE>){
-    chomp;
-    if(/^\[(\w+)\]/){
+    s/^\s+|\s+$//g; # trim whitespace
+
+    if(/^\[(\w+)\]/){  # [sectionname]
       $section=lc($1);
       my $header=<SAMPLE>;
-      chomp($header);
+      $header=~s/^\s+|\s+$//g; # trim whitespace
       @header=split(/,/,lc($header));
       next;
     }
@@ -143,19 +149,35 @@ sub samplesheetInfo{
         my($key,$value)=split(/=/,$keyvalue);
         $key=~s/^\s+|\s+$//g;      #whitespace trim
         $value=~s/^\s+|\s+$//g;    #whitespace trim
-        $F{$key}={} if(!$F{$key});
-        $F{$key}{$value}++;
+        #$F{$key}={} if(!$F{$key});
+        #$F{$key}{$value}++;
+        if($F{$key}){
+          if(ref($F{$key}) ne 'ARRAY'){
+            $F{$key}=[$F{$key}];
+          }
+          push(@{ $F{$key} }, $value);
+        } else {
+          $F{$key}=$value;
+        }
       }
+      delete($F{description});
       
       $sample{$F{sample_id}}=\%F;
     }
   }
 
   # Try to associate samples to files
+  my %fastqToName;
   while(my($samplename,$sampleinfo)=each(%sample)){
     my @possibleFastq=glob(dirname($samplesheet)."/$samplename*.fastq.gz");
     $sample{$samplename}{fastq}=\@possibleFastq;
+    
+    # Make some links from file to sample
+    for my $fastq(@possibleFastq){
+      $fastqToName{$fastq}=$samplename;
+    }
   }
+  %sample=(%sample,%fastqToName);
 
   return \%sample;
 }
@@ -164,7 +186,7 @@ sub samplesheetInfo{
 # Utility subs #
 ################
 sub readConfig{
-  my @file=glob("$FindBin::RealBin/config/*");
+  my @file=glob("$FindBin::RealBin/../config/*");
   my $settings={};
   for(@file){
     open(CONFIGFILE,$_) or die "ERROR: could not open config file $_: $!";
