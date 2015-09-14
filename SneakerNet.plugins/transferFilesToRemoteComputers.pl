@@ -43,7 +43,6 @@ sub transferFilesToRemoteComputers{
     my $taxon=$$s{species};
     if(grep {/calcengine/i} @{ $$s{route} }){
       $filesToTransfer{$taxon}.=join(" ",@{ $$s{fastq} })." ";
-      #$filesToTransfer{$taxon}.=join(" ",glob("$dir/$sampleName*.fastq.gz"))." ";
     }
   }
 
