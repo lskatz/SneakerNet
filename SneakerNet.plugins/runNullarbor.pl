@@ -15,8 +15,8 @@ use List::MoreUtils qw/uniq/;
 use lib "$FindBin::RealBin/../lib";
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
 
-$ENV{PATH}="$ENV{PATH}:/opt/mlst-1.2/bin:/opt/nullarbor/bin:/opt/abricate/bin:/opt/bcftools-1.2:/opt/samtools-1.2:/opt/megahit-1.0.2/bin:/opt/prokka-1.11/bin:/opt/snippy-2.6/bin:/opt/kraken";
-$ENV{KRAKEN_DB_PATH}="/opt/kraken/minikraken_20141208";
+$ENV{PATH}="/opt/samtools-1.2/htslib-1.2.1:/opt/bwa-0.7.12:/opt/mlst-1.2/bin:/opt/nullarbor/bin:/opt/abricate/bin:/opt/bcftools-1.2:/opt/samtools-1.2:/opt/megahit-1.0.2/bin:/opt/prokka-1.11/bin:/opt/snippy-2.6/bin:/opt/kraken:$ENV{PATH}";
+$ENV{KRAKEN_DEFAULT_DB}="/opt/kraken/minikraken_20141208";
 
 local $0=fileparse $0;
 exit(main());
@@ -58,11 +58,12 @@ sub nullarborBySpecies{
   my $mlstScheme=chooseMlstScheme($species,$settings);
   my $ref=chooseRef($dir,$species,$settings);
 
-  my $outdir="$dir/$species.nullarbor";
-     $outdir=~s/\s+/_/g;
+  my $outdir="$species.nullarbor";
+     $outdir=~s/\s+|\/+|:/_/g;      # remove special characters
+     $outdir="$dir/$outdir";        # add on the parent directory
   
-  command("nullarbor.pl --name $species --mlst $mlstScheme --ref $ref --input $tsv --outdir $outdir --cpus $$settings{numcpus} 2>&1 | tee $outdir.log");
-  command("nice make -C $outdir");
+  command("nullarbor.pl --name $species --mlst $mlstScheme --ref $ref --input $tsv --outdir $outdir --force --cpus 1 2>&1 | tee $outdir.log") if(!-e "$outdir/Makefile");
+  command("nice make --environment-overrides -j $$settings{numcpus} -C $outdir 2>&1 | tee --append $outdir.log");
 
   return $outdir;
 }
@@ -88,6 +89,7 @@ sub chooseMlstScheme{
   my($species,$settings)=@_;
   
   # TODO put this logic into a config file
+  my $internalError="WARNING: I have no idea what scheme to attach to $species. Please edit the logic found in $0 after line ".__LINE__;
   my $scheme="";
   if($species=~/listeria|monocytogenes/i){
     $scheme="lmonocytogenes";
@@ -101,18 +103,42 @@ sub chooseMlstScheme{
     $scheme="vibrio";
   } elsif($species=~/salmonella/i){
     $scheme="senterica";
-  } else {
-    $scheme="";
   }
+
+  # Catch any weird things and return a warning if so
+  elsif($species=~/^undetermined/i){
+    logmsg $internalError;
+  }else{
+    logmsg $internalError;
+  }
+
+    
   return $scheme;
 }
 
 sub chooseRef{
   my($dir,$species,$settings)=@_;
   my $ref="$dir/ref.fasta";
-  open(REF,">",$ref) or die "ERROR: could not open $ref for writing: $!";
-  print REF ">BLANKREF\nAAAAAAAAAAAAAAAAAAAAAAAAA\nTTTTTTTTTTTTTTTTTTT\n";
-  close REF;
+  return $ref if(-e $ref);
+
+  # Find largest fastq file and assemble it quickly.
+  my $maxSize=0;
+  my($R1,$R2);
+  my $allsamples=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  while(my($samplename,$info)=each(%$allsamples)){
+    next if(ref($info) ne 'HASH');
+    my $size=(-s $$info{fastq}[0]) + (-s $$info{fastq}[1]);
+    if($species eq 'all' || $$info{species} eq $species){
+      if($size > $maxSize){
+        $maxSize=$size;
+        ($R1,$R2)=@{ $$info{fastq} };
+      }
+    }
+  }
+  
+  command("rm -rf $dir/referenceAssembly.tmp && megahit -1 $R1 -2 $R2 -o $dir/referenceAssembly.tmp -t $$settings{numcpus} --k-min 61 --k-max 81 --k-step 10 --presets bulk");
+  command("cp $dir/referenceAssembly.tmp/final.contigs.fa $ref");
+  command("fa $ref");
   return $ref;
 }
 ################
