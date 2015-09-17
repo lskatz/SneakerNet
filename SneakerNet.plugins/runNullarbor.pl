@@ -62,6 +62,7 @@ sub nullarborBySpecies{
      $outdir=~s/\s+|\/+|:/_/g;      # remove special characters
      $outdir="$dir/$outdir";        # add on the parent directory
   
+  command("cp -nv $ref $outdir/ref.fa");
   command("nullarbor.pl --name $species --mlst $mlstScheme --ref $ref --input $tsv --outdir $outdir --force --cpus 1 2>&1 | tee $outdir.log") if(!-e "$outdir/Makefile");
   command("nice make --environment-overrides -j $$settings{numcpus} -C $outdir 2>&1 | tee --append $outdir.log");
 
@@ -118,7 +119,7 @@ sub chooseMlstScheme{
 
 sub chooseRef{
   my($dir,$species,$settings)=@_;
-  my $ref="$dir/ref.fasta";
+  my $ref="$dir/ref.fa";
   return $ref if(-e $ref);
 
   # Find largest fastq file and assemble it quickly.
