@@ -119,6 +119,7 @@ sub command{
   system($command);
   if($?){
     my $msg="ERROR running command\n  $command";
+    die $msg;
   }
 }
 
