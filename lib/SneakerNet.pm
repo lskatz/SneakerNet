@@ -117,7 +117,9 @@ sub command{
   my($command,$settings)=@_;
   logmsg "COMMAND\n  $command" if($$settings{debug});
   system($command);
-  die "ERROR running command\n  $command" if $?;
+  if($?){
+    my $msg="ERROR running command\n  $command";
+  }
 }
 
 
