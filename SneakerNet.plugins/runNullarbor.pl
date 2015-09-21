@@ -15,7 +15,9 @@ use List::MoreUtils qw/uniq/;
 use lib "$FindBin::RealBin/../lib";
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
 
-$ENV{PATH}="/opt/samtools-1.2/htslib-1.2.1:/opt/bwa-0.7.12:/opt/mlst-1.2/bin:/opt/nullarbor/bin:/opt/abricate/bin:/opt/bcftools-1.2:/opt/samtools-1.2:/opt/megahit-1.0.2/bin:/opt/prokka-1.11/bin:/opt/snippy-2.6/bin:/opt/kraken:$ENV{PATH}";
+$ENV{PATH}="/opt/Roary-3.2.7/bin:/opt/ruby-2.2.3/bin:/opt/kramdown/bin:/opt/samtools-1.2/htslib-1.2.1:/opt/bwa-0.7.12:/opt/mlst-1.2/bin:/opt/nullarbor/bin:/opt/abricate/bin:/opt/bcftools-1.2:/opt/samtools-1.2:/opt/megahit-1.0.2/bin:/opt/prokka-1.11/bin:/opt/snippy-2.6/bin:/opt/kraken:$ENV{PATH}";
+$ENV{RUBYLIB}||="";
+$ENV{RUBYLIB}="$ENV{RUBYLIB}/kramdown/lib";
 $ENV{KRAKEN_DEFAULT_DB}="/opt/kraken/minikraken_20141208";
 
 local $0=fileparse $0;
@@ -62,6 +64,7 @@ sub nullarborBySpecies{
      $outdir=~s/\s+|\/+|:/_/g;      # remove special characters
      $outdir="$dir/$outdir";        # add on the parent directory
   
+  system("mkdir -pv $outdir");
   command("cp -nv $ref $outdir/ref.fa");
   command("nullarbor.pl --name $species --mlst $mlstScheme --ref $ref --input $tsv --outdir $outdir --force --cpus 1 2>&1 | tee $outdir.log") if(!-e "$outdir/Makefile");
   command("nice make --environment-overrides -j $$settings{numcpus} -C $outdir 2>&1 | tee --append $outdir.log");
@@ -119,6 +122,7 @@ sub chooseMlstScheme{
 
 sub chooseRef{
   my($dir,$species,$settings)=@_;
+  system("mkdir -pv $dir");
   my $ref="$dir/ref.fa";
   return $ref if(-e $ref);
 
@@ -137,9 +141,13 @@ sub chooseRef{
     }
   }
   
-  command("rm -rf $dir/referenceAssembly.tmp && megahit -1 $R1 -2 $R2 -o $dir/referenceAssembly.tmp -t $$settings{numcpus} --k-min 61 --k-max 81 --k-step 10 --presets bulk");
+  my $megahit_cpus=$$settings{numcpus};
+     $megahit_cpus=2 if($megahit_cpus < 2);
+  command("rm -rf $dir/referenceAssembly.tmp");
+  command("megahit -1 $R1 -2 $R2 -o $dir/referenceAssembly.tmp -t $megahit_cpus --k-min 61 --k-max 91 --k-step 20 --min-count 3 --min-contig-len 500 --no-mercy");
   command("cp $dir/referenceAssembly.tmp/final.contigs.fa $ref");
   command("fa $ref");
+  command("rm -rf $dir/referenceAssembly.tmp");
   return $ref;
 }
 ################
@@ -149,6 +157,7 @@ sub chooseRef{
 sub usage{
   "Runs nullarbor for the read set
   Usage: $0 runDir
+  --numcpus 1
   "
 }
 
