@@ -2,3 +2,5 @@ Any executable in this directory will be run when SneakerNet is executed.
 
 Each executable will be run with standard options and ARGV=="run directory"
 
+A good way to test a new script, therefore, is to introduce it to this folder but don't make it executable.
+
