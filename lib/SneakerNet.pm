@@ -55,6 +55,7 @@ sub samplesheetInfo{
     if($section eq "data"){
       my %F;
       @F{@header}=split(/,/,$_);
+      $F{route}||=[]; # force route to be an array
       for my $keyvalue(split(/;/,lc($F{description}))){
         my($key,$value)=split(/=/,$keyvalue);
         $key=~s/^\s+|\s+$//g;      #whitespace trim
@@ -83,13 +84,6 @@ sub samplesheetInfo{
         }
       }
 
-      # Route needs to be an array.
-      if(!defined($F{route})){
-        $F{route}=[];
-      } elsif(ref($F{route}) ne 'ARRAY'){
-        $F{route}=[];
-      }
-      
       $sample{$F{sample_id}}=\%F;
     }
   }

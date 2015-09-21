@@ -69,6 +69,7 @@ sub transferFilesToRemoteComputers{
     } else {
       logmsg "WARNING: cannot figure out the correct subfolder for taxon $taxon. The following files will be sent to $subfolder instead.";
     }
+
     logmsg "Transferring to $subfolder:\n  $fileString";
     command("rsync --update -av $fileString edlb-sneakernet\@biolinux.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine/$subfolder/");
   }
@@ -77,11 +78,7 @@ sub transferFilesToRemoteComputers{
 
 sub usage{
   "Find all reads directories under the inbox
-  Usage: $0 [-i inboxDir/]
-  -i dir  # choose a different 'inbox' to look at
-  --test  # Create a test directory 
-  --debug # Show debugging information
-  --force # Get this show on the road!!
+  Usage: $0 MiSeq_run_dir
   "
 }
 
