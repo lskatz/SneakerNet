@@ -17,7 +17,7 @@ use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
 
 $ENV{PATH}="/opt/Roary-3.2.7/bin:/opt/ruby-2.2.3/bin:/opt/kramdown/bin:/opt/samtools-1.2/htslib-1.2.1:/opt/bwa-0.7.12:/opt/mlst-1.2/bin:/opt/nullarbor/bin:/opt/abricate/bin:/opt/bcftools-1.2:/opt/samtools-1.2:/opt/megahit-1.0.2/bin:/opt/prokka-1.11/bin:/opt/snippy-2.6/bin:/opt/kraken:$ENV{PATH}";
 $ENV{RUBYLIB}||="";
-$ENV{RUBYLIB}="$ENV{RUBYLIB}/kramdown/lib";
+$ENV{RUBYLIB}="$ENV{RUBYLIB}:/opt/kramdown/lib";
 $ENV{KRAKEN_DEFAULT_DB}="/opt/kraken/minikraken_20141208";
 
 local $0=fileparse $0;
