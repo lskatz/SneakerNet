@@ -19,6 +19,7 @@ $ENV{PATH}="/opt/Roary-3.2.7/bin:/opt/ruby-2.2.3/bin:/opt/kramdown/bin:/opt/samt
 $ENV{RUBYLIB}||="";
 $ENV{RUBYLIB}="$ENV{RUBYLIB}:/opt/kramdown/lib";
 $ENV{KRAKEN_DEFAULT_DB}="/opt/kraken/minikraken_20141208";
+$ENV{PERL5LIB}="$ENV{PERL5LIB}:/opt/Roary-3.2.7/lib";
 
 local $0=fileparse $0;
 exit(main());
