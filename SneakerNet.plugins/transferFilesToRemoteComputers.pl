@@ -72,7 +72,7 @@ sub transferFilesToRemoteComputers{
     }
 
     logmsg "Transferring to $subfolder:\n  $fileString";
-    command("ssh sequencermaster\@localhost 'rsync --update -av $fileString edlb-sneakernet\@biolinux.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine/$subfolder/'");
+    command("rsync --update -av $fileString edlb-sneakernet\@biolinux.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine/$subfolder/");
   }
 }
 
