@@ -8,7 +8,7 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
-use File::Temp;
+use File::Temp qw/tempdir/;
 use FindBin;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
@@ -16,7 +16,18 @@ use List::MoreUtils qw/uniq/;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 local $0=fileparse $0;
-sub logmsg{print STDERR "$0: @_\n";}
+
+# All logging will go to a file, which will end up as $run/SneakerNet.txt.
+# The link to the log will be emailed in the email plugin.
+my $logdir=tempdir("$0_XXXXXX",TMPDIR=>1,CLEANUP=>1);
+my $logfile="$logdir/logfile.txt";
+open(my $logfileFh,'>',$logfile) or die "ERROR: could not open $logfile for writing: $!";
+sub logmsg{
+  my $msg="$0: @_\n";
+  print STDERR $msg;
+  print $logfileFh $msg;
+}
+
 exit(main());
 
 sub main{
@@ -25,6 +36,7 @@ sub main{
   die usage() if($$settings{help});
 
   if($$settings{test}){
+    $$settings{now}=1;
     $$settings{inbox}=createTestDataset();
   } else {
     $$settings{inbox}||="/mnt/monolith0Data/dropbox/inbox";
@@ -37,10 +49,20 @@ sub main{
   for my $d(@$dirInfo){
     logmsg "Going to move $$d{dir}";
     waitForAnyChanges($d,$settings);
-    takeOwnership($d,$settings);
+    #takeOwnership($d,$settings); # not sure if root really needs to own this first
     moveDir($d,$settings);
     giveToSequencermaster($d,$settings);
 
+    # At this point, the log file should be put into this current directory.
+    # The file handle should be reopened.
+    close $logfileFh;
+    my $newLogfile="$$d{dir}/SneakerNet.txt";
+    system("mv -v $logfile $newLogfile");
+    die if $?;
+    $logfile=$newLogfile;
+    open($logfileFh,'>>',$logfile) or die "ERROR: could not open $logfile for writing: $!";
+
+    # Run all plugins as sequencermaster, using ssh to act as sequencermaster
     my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
     for(my $i=0;$i<@exe;$i++){
       my $exe=$exe[$i];
@@ -54,7 +76,7 @@ sub main{
 }
 
 sub createTestDataset{
-  my $inbox=File::Temp->tempdir("SneakerNetXXXXXX",TMPDIR=>1,CLEANUP=>1);
+  my $inbox=tempdir("SneakerNetXXXXXX",TMPDIR=>1,CLEANUP=>1);
   my $rundir="$inbox/test-15-001";
   mkdir($rundir);
 
@@ -238,8 +260,11 @@ sub readConfig{
 sub command{
   my($command,$settings)=@_;
   logmsg "COMMAND\n  $command" if($$settings{debug});
-  system($command);
-  die "ERROR running command\n  $command" if $?;
+  my $stdout=`$command 2>&1`;
+  my $exit_code=$?;
+  print STDERR $stdout;
+  print $logfileFh $stdout;
+  die "ERROR running command\n  $command" if $exit_code;
 }
 
 sub usage{
@@ -251,6 +276,6 @@ sub usage{
   -i dir  # choose a different 'inbox' to look at
   --test  # Create a test directory 
   --debug # Show debugging information
-  --force # Get this show on the road!!
+  --now   # Get this show on the road!!
   "
 }
