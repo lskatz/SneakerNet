@@ -41,7 +41,7 @@ sub transferFilesToRemoteComputers{
   my %filesToTransfer=(); # hash keys are species names
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
-    my $taxon=$$s{species} 'NOT LISTED';
+    my $taxon=$$s{species} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
     if(grep {/calcengine/i} @{ $$s{route} }){
       $filesToTransfer{$taxon}.=join(" ",@{ $$s{fastq} })." ";
