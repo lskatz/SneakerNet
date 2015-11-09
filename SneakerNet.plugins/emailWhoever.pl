@@ -36,6 +36,7 @@ sub emailWhoever{
   my($dir,$settings)=@_;
 
   my $subdir=basename($dir);
+  my $machineName=basename(dirname($dir));
   my $readMetrics="$dir/readMetrics.tsv";
 
   # Figure out who we are mailing
@@ -61,6 +62,7 @@ sub emailWhoever{
     my $subject="$subdir QC";
     my $body ="Please open the following attachment in Excel for read metrics for run $subdir.\n";
        $body.="\nThis message was brought to you by SneakerNet!";
+       $body.="\nFor more information on this run, please navigate to \\\\monolith0.edlb.cdc.gov\\RawSequenceData\\$machineName\\$subdir\\Sneakernet.txt";
 
     my $was_sent=Email::Stuffer->from($from)
                                ->subject($subject)
