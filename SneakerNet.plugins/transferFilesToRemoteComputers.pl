@@ -41,11 +41,16 @@ sub transferFilesToRemoteComputers{
   my %filesToTransfer=(); # hash keys are species names
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
-    my $taxon=$$s{species};
+    my $taxon=$$s{species} 'NOT LISTED';
+    logmsg "The taxon of $sampleName is $taxon";
     if(grep {/calcengine/i} @{ $$s{route} }){
       $filesToTransfer{$taxon}.=join(" ",@{ $$s{fastq} })." ";
+      logmsg "One route for sample $sampleName is the Calculation Engine";
+    } else {
+      logmsg "Note: The route for $sampleName was not listed in the sample sheet.";
     }
   }
+
 
   #die "ERROR: no files to transfer" if (!$filesToTransfer);
   logmsg "WARNING: no files will be transferred" if(!keys(%filesToTransfer));
