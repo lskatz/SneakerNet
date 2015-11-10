@@ -27,6 +27,10 @@ sub readConfig{
       next if(/^#/);
       my $configLine=[split(/\t/,$_)];
       push(@{ $$settings{$key} },$configLine);
+
+      my $subkey=$$configLine[0];
+      my $value=join("\t",@$configLine[1..@$configLine-1]);
+      $$settings{$subkey}=$value;
     }
     close CONFIGFILE;
   }
