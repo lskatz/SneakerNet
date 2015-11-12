@@ -56,11 +56,11 @@ sub runKrakenOnDir{
     runKraken($s,$sampledir,$settings);
 
     my $expectedSpecies=$$s{species} || "";
-    my ($percentContaminated,$html)=reportContamination($sampledir,$expectedSpecies,$settings);
+    my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
     next if(!$html);
 
     # Add onto the contamination report
-    push(@report,join("\t",$sampleName,$expectedSpecies,$percentContaminated));
+    push(@report,join("\t",$sampleName,$expectedSpecies,$percentContaminated,$bestGuess));
     symlink($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
@@ -70,7 +70,9 @@ sub runKrakenOnDir{
   }
 
   # print the report to a file
-  unshift(@report,join("\t",qw(NAME TAXON PERCENT_CONTAMINATION)));
+  unshift(@report,join("\t",qw(NAME TAXON PERCENT_CONTAMINATION BEST_GUESS)));
+  push(@report,"NOTE: <=10% has not been shown to indicate contamination and is currently considered background");
+  push(@report,"NOTE: 'contamination' is the percentage of reads whose first match is not the expected genus or species listed in the sample spreadsheet");
   open(KRAKENREPORT,">","$outdir/report.tsv") or die "ERROR: could not open $outdir/report.tsv for writing: $!";
   print KRAKENREPORT join("\n",@report)."\n";
   close KRAKENREPORT;
@@ -109,6 +111,7 @@ sub reportContamination{
 
   my $taxfile="$sampledir/kraken.taxonomy";
 
+  my %bestGuess;
   my $numCorrectReads=0;
   my $numContaminantReads=0;
   open(TAXONOMY,'<',$taxfile) or die "ERROR: could not open $taxfile for reading: $!";
@@ -117,6 +120,7 @@ sub reportContamination{
     my($numReads,undef, $domain, $kingdom, $phylum, $class, $order, $family, $genus, $species)=split /\t/;
     $genus||="";
     $species||="";
+    $species=(split(/\s+/,$species))[-1]; # sometimes there are genus and species in the species column, but you just want the last word to be the species.
     my $scientificName="$genus $species";
 
     if($expectedSpecies eq $genus || $expectedSpecies eq $species || $expectedSpecies eq $scientificName){
@@ -124,11 +128,14 @@ sub reportContamination{
     } else {
       $numContaminantReads+=$numReads;
     }
+    $bestGuess{$scientificName}+=$numReads;
   }
   close TAXONOMY;
+
+  my $bestGuess=(sort{$bestGuess{$b} <=> $bestGuess{$a}} keys(%bestGuess))[0];
   
   my $percentContamination=$numContaminantReads/($numContaminantReads+$numCorrectReads) * 100;
-  return ($percentContamination, "$sampledir/report.html") if wantarray;
+  return ($percentContamination, "$sampledir/report.html", $bestGuess) if wantarray;
   return $percentContamination;
 }
 
