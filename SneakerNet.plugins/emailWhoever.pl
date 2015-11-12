@@ -61,9 +61,11 @@ sub emailWhoever{
     logmsg "To: $to";
     my $from="sequencermaster\@monolith0.edlb.cdc.gov";
     my $subject="$subdir QC";
-    my $body ="Please open the following attachment in Excel for read metrics for run $subdir.\n";
+    my $body ="Please open the following attachments for QC information on $subdir.\n";
+       $body.=" - TSV files can be opened in Excel\n";
+       $body.=" - LOG files can be opened in Wordpad\n";
+       $body.=" - HTML files can be opened in Internet Explorer\n";
        $body.="\nThis message was brought to you by SneakerNet!\n";
-       #$body.="\nFor more information on this run, please navigate to \\\\monolith0.edlb.cdc.gov\\RawSequenceData\\$machineName\\$subdir\\Sneakernet.txt";
 
     my $email=Email::Stuffer->from($from)
                                ->subject($subject)
