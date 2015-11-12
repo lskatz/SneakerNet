@@ -54,21 +54,32 @@ sub main{
     giveToSequencermaster($d,$settings);
 
     # At this point, the log file should be put into this current directory.
+    # Also, a SneakerNet directory should be created.
     # The file handle should be reopened.
+    my $sneakernetDir="$$d{dir}/SneakerNet";
+    mkdir $sneakernetDir;
     close $logfileFh;
-    my $newLogfile="$$d{dir}/SneakerNet.txt";
-    system("mv -v $logfile $newLogfile");
+    my $newLogfile="$sneakernetDir/SneakerNet.txt";
+    system("cp -v $logfile $newLogfile"); # don't move, in case there is another run whose log needs to be copied
     die if $?;
     $logfile=$newLogfile;
     open($logfileFh,'>>',$logfile) or die "ERROR: could not open $logfile for writing: $!";
 
     # Run all plugins as sequencermaster, using ssh to act as sequencermaster
     my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
-    for(my $i=0;$i<@exe;$i++){
-      my $exe=$exe[$i];
-      next if(!-f $exe || !-x $exe);
 
-      command("ssh sequencermaster\@localhost $exe $$d{dir}");
+    # Put the email script in last and remove files that are
+    # not executable and not files.
+    @exe=grep {!/emailWhoever.pl/} @exe;
+    push(@exe,"$FindBin::RealBin/SneakerNet.plugins/emailWhoever.pl");
+    @exe=map{ 
+      $_ if(-f $_ && -x $_);
+    } @exe;
+    @exe=grep {/./} @exe;
+
+    # Execute all plugins
+    for(my $i=0;$i<@exe;$i++){
+      command("ssh sequencermaster\@localhost $exe[$i] $$d{dir} --numcpus $$settings{numcpus}");
     }
   }
 

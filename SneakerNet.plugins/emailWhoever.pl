@@ -22,8 +22,9 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug)) or die $!;
+  GetOptions($settings,qw(help numcpus=i inbox=s debug)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
+  $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
 
