@@ -120,7 +120,7 @@ sub reportContamination{
     my($numReads,undef, $domain, $kingdom, $phylum, $class, $order, $family, $genus, $species)=split /\t/;
     $genus||="";
     $species||="";
-    $species=~s/^.*\s+//; # sometimes there are genus and species in the species column, but you just want the second word to be the species.
+    $species=~s/^.+\s+(.+)/$1/; # sometimes there are genus and species in the species column, but you just want the second word to be the species.
     my $scientificName="$genus $species";
 
     if($expectedSpecies eq $genus || $expectedSpecies eq $species || $expectedSpecies eq $scientificName){
