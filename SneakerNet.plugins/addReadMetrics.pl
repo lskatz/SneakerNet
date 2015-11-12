@@ -31,11 +31,16 @@ sub main{
 
   addReadMetrics($dir,$settings);
 
+  # Mark this file as something to attach for an email later
+  symlink("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv");
+
   return 0;
 }
 
 sub addReadMetrics{
   my($dir,$settings)=@_;
+
+  return if(-e "$dir/readMetrics.tsv");
 
   logmsg "Reading sample $dir/SampleSheet.csv";
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);

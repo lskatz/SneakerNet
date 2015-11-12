@@ -58,6 +58,7 @@ sub main{
     # The file handle should be reopened.
     my $sneakernetDir="$$d{dir}/SneakerNet";
     mkdir $sneakernetDir;
+    mkdir "$sneakernetDir/forEmail"; # anything in this directory will be emailed in the email plugin
     close $logfileFh;
     my $newLogfile="$sneakernetDir/SneakerNet.txt";
     system("cp -v $logfile $newLogfile"); # don't move, in case there is another run whose log needs to be copied
