@@ -32,8 +32,9 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug now test)) or die $!;
+  GetOptions($settings,qw(help numcpus=i inbox=s debug now test)) or die $!;
   die usage() if($$settings{help});
+  $$settings{numcpus}||=1;
 
   if($$settings{test}){
     $$settings{now}=1;
