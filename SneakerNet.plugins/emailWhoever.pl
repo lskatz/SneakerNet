@@ -62,15 +62,19 @@ sub emailWhoever{
     my $from="sequencermaster\@monolith0.edlb.cdc.gov";
     my $subject="$subdir QC";
     my $body ="Please open the following attachment in Excel for read metrics for run $subdir.\n";
-       $body.="\nThis message was brought to you by SneakerNet!";
-       $body.="\nFor more information on this run, please navigate to \\\\monolith0.edlb.cdc.gov\\RawSequenceData\\$machineName\\$subdir\\Sneakernet.txt";
+       $body.="\nThis message was brought to you by SneakerNet!\n";
+       #$body.="\nFor more information on this run, please navigate to \\\\monolith0.edlb.cdc.gov\\RawSequenceData\\$machineName\\$subdir\\Sneakernet.txt";
 
-    my $was_sent=Email::Stuffer->from($from)
+    my $email=Email::Stuffer->from($from)
                                ->subject($subject)
                                ->to($to)
-                               ->text_body($body)
-                               ->attach_file($readMetrics)
-                               ->send;
+                               ->text_body($body);
+
+    for my $file(glob("$dir/SneakerNet/forEmail/*")){
+      $email->attach_file($file);
+    }
+
+    my $was_sent=$email->send;
 
     if(!$was_sent){
       logmsg "Warning: Email was not sent to $to!";

@@ -32,8 +32,7 @@ sub main{
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
-  # make the emailable report
-  logmsg "$dir/SneakerNet/kraken.tsv";
+  # make the report emailable 
   symlink("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
 
   return 0;
@@ -53,6 +52,7 @@ sub runKrakenOnDir{
 
     my $sampledir="$outdir/$sampleName";
     mkdir $sampledir;
+    logmsg "Running Kraken on $sampleName";
     runKraken($s,$sampledir,$settings);
 
     my $expectedSpecies=$$s{species} || "";
@@ -61,7 +61,7 @@ sub runKrakenOnDir{
 
     # Add onto the contamination report
     push(@report,join("\t",$sampleName,$expectedSpecies,$percentContaminated));
-    symlink($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html") or die $!;
+    symlink($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
     if($percentContaminated > 10){
