@@ -32,17 +32,22 @@ sub main{
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
+  # make the emailable report
+  logmsg "$dir/SneakerNet/kraken.tsv";
+  symlink("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
+
   return 0;
 }
 
 sub runKrakenOnDir{
   my($dir,$settings)=@_;
-  my $outdir="$dir/kraken";
+  my $outdir="$dir/SneakerNet/kraken";
   mkdir $outdir;
 
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
   my %filesToTransfer=(); # hash keys are species names
+  my @report; # reporting contamination in an array, in case I want to sort it later
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
 
@@ -51,12 +56,26 @@ sub runKrakenOnDir{
     runKraken($s,$sampledir,$settings);
 
     my $expectedSpecies=$$s{species} || "";
-    my $percentContaminated=reportContamination($sampledir,$expectedSpecies,$settings);
+    my ($percentContaminated,$html)=reportContamination($sampledir,$expectedSpecies,$settings);
+    next if(!$html);
 
+    # Add onto the contamination report
+    push(@report,join("\t",$sampleName,$expectedSpecies,$percentContaminated));
+    symlink($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html") or die $!;
+
+    # Report anything with >10% contamination to the printout.
     if($percentContaminated > 10){
       logmsg "$sampleName (taxon: $expectedSpecies) is $percentContaminated% contaminated";
     }
   }
+
+  # print the report to a file
+  unshift(@report,join("\t",qw(NAME TAXON PERCENT_CONTAMINATION)));
+  open(KRAKENREPORT,">","$outdir/report.tsv") or die "ERROR: could not open $outdir/report.tsv for writing: $!";
+  print KRAKENREPORT join("\n",@report)."\n";
+  close KRAKENREPORT;
+
+  return $outdir;
 }
 
 sub runKraken{
@@ -66,6 +85,7 @@ sub runKraken{
   return if(-e $html);
 
   my $reads=join(" ",@{ $$sample{fastq} });
+  return if(!$reads);
   
   command("$KRAKENDIR/kraken --fastq-input --paired --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out $reads");
 
@@ -78,6 +98,7 @@ sub runKraken{
   ");
 
   # TODO kraken-report
+  command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
 }
@@ -104,8 +125,10 @@ sub reportContamination{
       $numContaminantReads+=$numReads;
     }
   }
+  close TAXONOMY;
   
   my $percentContamination=$numContaminantReads/($numContaminantReads+$numCorrectReads) * 100;
+  return ($percentContamination, "$sampledir/report.html") if wantarray;
   return $percentContamination;
 }
 
