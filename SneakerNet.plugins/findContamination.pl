@@ -41,7 +41,7 @@ sub main{
 sub runKrakenOnDir{
   my($dir,$settings)=@_;
   my $outdir="$dir/SneakerNet/kraken";
-  mkdir $outdir;
+  system("mkdir -p $outdir");
 
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
@@ -51,7 +51,7 @@ sub runKrakenOnDir{
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
 
     my $sampledir="$outdir/$sampleName";
-    mkdir $sampledir;
+    system("mkdir -p $sampledir");
     logmsg "Running Kraken on $sampleName";
     runKraken($s,$sampledir,$settings);
 
@@ -60,7 +60,7 @@ sub runKrakenOnDir{
     next if(!$html);
 
     # Add onto the contamination report
-    push(@report,join("\t",$sampleName,$expectedSpecies,$percentContaminated,$bestGuess));
+    push(@report,join("\t",$sampleName,$expectedSpecies,$bestGuess,$percentContaminated));
     symlink($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
@@ -69,10 +69,11 @@ sub runKrakenOnDir{
     }
   }
 
-  # print the report to a file
-  unshift(@report,join("\t",qw(NAME TAXON PERCENT_CONTAMINATION BEST_GUESS)));
-  push(@report,"NOTE: <=10% has not been shown to indicate contamination and is currently considered background");
-  push(@report,"NOTE: 'contamination' is the percentage of reads whose first match is not the expected genus or species listed in the sample spreadsheet");
+  # print the report to a file.
+  # Note: Taylor reports 20% unclassified and a 4% contamination in one genome, which was considered uncontaminated.  Further testing is needed.
+  unshift(@report,join("\t",qw(NAME LABELED_TAXON BEST_GUESS PERCENTAGE_OF_GENOME_IS_BEST_GUESS)));
+  push(@report,"NOTE: A genome with >90% reads in agreement with its species has not been shown to indicate contamination");
+  push(@report,"NOTE: More testing needs to be performed before any conclusion can be made from this spreadsheet, and it is given for general information only. For more information, please see your local bioinformatician and/or open the relevant Kraken report.");
   open(KRAKENREPORT,">","$outdir/report.tsv") or die "ERROR: could not open $outdir/report.tsv for writing: $!";
   print KRAKENREPORT join("\n",@report)."\n";
   close KRAKENREPORT;
@@ -128,7 +129,14 @@ sub reportContamination{
     } else {
       $numContaminantReads+=$numReads;
     }
-    $bestGuess{$scientificName}+=$numReads;
+
+    # Decide on a best guess for what this taxon is.
+    for my $tier($scientificName, $genus, $family, $order, $class, $phylum, $kingdom, $domain){
+      $tier||="";
+      next if($tier=~/^\s*$/); # don't consider this tier if it's empty
+      $bestGuess{$tier}+=$numReads;
+      last;
+    }
   }
   close TAXONOMY;
 
