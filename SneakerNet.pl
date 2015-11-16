@@ -68,6 +68,9 @@ sub main{
     open($logfileFh,'>>',$logfile) or die "ERROR: could not open $logfile for writing: $!";
     symlink($logfile,"$$d{dir}/SneakerNet/forEmail/sneakernet.log");
 
+    # Give the rest to sequencermaster, now that it has all been moved over
+    system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
+
     # Run all plugins as sequencermaster, using ssh to act as sequencermaster
     my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
 
