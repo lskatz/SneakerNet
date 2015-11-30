@@ -50,6 +50,14 @@ sub runKrakenOnDir{
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
 
+    # Skip any samples without reads, ie, samples that are misnamed or not sequenced.
+    # There is no way to predict how a sample is misnamed and so it does not fall under
+    # this script's purview.
+    if(!defined($$s{fastq}) || !@{ $$s{fastq} }){
+      logmsg "WARNING: I could not find the reads for $sampleName. Skipping.";
+      next;
+    }
+
     my $sampledir="$outdir/$sampleName";
     system("mkdir -p $sampledir");
     logmsg "Running Kraken on $sampleName";
@@ -64,9 +72,9 @@ sub runKrakenOnDir{
     symlink($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
-    if($percentContaminated > 10){
-      logmsg "$sampleName (taxon: $expectedSpecies) is $percentContaminated% contaminated";
-    }
+    #if($percentContaminated > 10){
+      #logmsg "$sampleName (taxon: $expectedSpecies) is $percentContaminated% contaminated";
+    #}
   }
 
   # print the report to a file.
@@ -100,7 +108,6 @@ sub runKraken{
     ' | sort -k1,1nr > $sampledir/kraken.taxonomy
   ");
 
-  # TODO kraken-report
   command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
