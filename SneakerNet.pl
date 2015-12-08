@@ -50,7 +50,7 @@ sub main{
   for my $d(@$dirInfo){
     logmsg "Going to move $$d{dir}";
     waitForAnyChanges($d,$settings);
-    #takeOwnership($d,$settings); # not sure if root really needs to own this first
+
     moveDir($d,$settings);
     giveToSequencermaster($d,$settings);
 
@@ -220,13 +220,6 @@ sub waitForAnyChanges{
   }
   logmsg "No changes detected. Onward!";
   return 1;
-}
-
-sub takeOwnership{
-  my($info,$settings)=@_;
-  my $user=$ENV{USER};
-  command("chown -Rv $user.$user $$info{dir}");
-  die if $?;
 }
 
 sub moveDir{
