@@ -5,8 +5,8 @@ A pipeline for processing reads from a sequencing run. Currently only for Illumi
 # Synopsis
 
 What do you do with a MiSeq run after it finishes? Are there basic analyses that you run 
-such as counting how many reads you obtained? Checking for contamination? SneakerNet performs
-all these initial analyses with a nice report that is emailed to you at the end. Additionally,
+such as counting how many reads you obtained? Checking for contamination? **SneakerNet performs
+all these initial analyses with a nice report that is emailed to you at the end.** Additionally,
 there is a plugins directory such that each installation is expandable.
 
 # Installation
