@@ -70,6 +70,7 @@ Add this line to the crontab file, and then save it.
 
 You will need to edit some files for configuration before using SneakerNet.
 
+    $ cp -r config.bak config
     $ cd config
 
 #### emails
