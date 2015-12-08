@@ -15,9 +15,13 @@ How to make a plugin
 2. Test the script with a run directory.
   1. The first positional argument must be the MiSeq run directory
   2. The script must accept the following flags with the following example 
-     values
+     values (or no values)
      1. `--help`
      2. `--numcpus 1`
      3. `--debug`
+  3. If any files are added to the run directory, please add them to 
+     `runDirectory/SneakerNet/customdirectory`, and add any results for the
+     resulting email to `runDirectory/SneakerNet/forEmail`. Any files under
+     this directory will be emailed with the SneakerNet email.
 3. If everything runs properly, chmod the script for the sequencing user, so
    that it is executable.
