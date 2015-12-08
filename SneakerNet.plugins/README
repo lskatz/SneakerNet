@@ -1,4 +1,5 @@
-#SYNOPSIS
+SYNOPSIS
+========
 
 Any executable in this directory will be run when SneakerNet is executed.  If 
 permissions are not set as executable, then the script will not be run as a
@@ -7,7 +8,8 @@ folder but don't make it executable.
 
 Each executable will be run with standard options and ARGV=="run directory"
 
-#How to make a plugin
+How to make a plugin
+====================
 
 1. Place it in the SneakerNet.plugins folder.
 2. Test the script with a run directory.
