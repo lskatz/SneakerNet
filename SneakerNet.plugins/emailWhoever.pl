@@ -41,8 +41,9 @@ sub emailWhoever{
   my $readMetrics="$dir/readMetrics.tsv";
 
   # Figure out who we are mailing
-  # Send here by default
-  my @to=("gzu2\@cdc.gov","wwm8\@cdc.gov","pfge\@cdc.gov","wvt2\@cdc.gov","fid4\@cdc.gov");
+  # Start off with what emails are in the config
+  my @to=flatten(@{ $$settings{emails} });
+
   # Read the sample sheet for something like
   #                                   Investigator Name,ALS (IAU3)
   # And then make IAU3 into a CDC email.
@@ -90,6 +91,11 @@ sub emailWhoever{
 ################
 # Utility subs #
 ################
+
+# http://stackoverflow.com/a/20359734
+sub flatten {
+  map { ref $_ ? flatten(@{$_}) : $_ } @_;
+}
 
 sub usage{
   "Find all reads directories under the inbox
