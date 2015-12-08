@@ -2,6 +2,13 @@
 
 A pipeline for processing reads from a sequencing run. Currently only for Illumina-based runs.
 
+# Synopsis
+
+What do you do with a MiSeq run after it finishes? Are there basic analyses that you run 
+such as counting how many reads you obtained? Checking for contamination? SneakerNet performs
+all these initial analyses with a nice report that is emailed to you at the end. Additionally,
+there is a plugins directory such that each installation is expandable.
+
 # Installation
 
 ## As root
@@ -40,7 +47,7 @@ inbox must have permissions like so:
     $ cd bin
     $ git clone git@git.biotech.cdc.gov:gzu2/sneakernet.git
 
-### Set up the cron job
+### Set up the cron job (optional)
 
 Log in again as sequencermaster and set up a cronjob to run once an hour. SneakerNet
 will check for run directories once an hour. It will do nothing if there is no 
