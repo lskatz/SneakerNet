@@ -13,6 +13,10 @@ there is a plugins directory such that each installation is expandable.
 
 ## As root
 
+For these steps, log in as root.
+
+    $ sudo su
+
 ### Create a dedicated user
 
 There should be a special user that has permissions for sequencing runs.  Ours is 
@@ -40,9 +44,12 @@ inbox must have permissions like so:
 
 ## As 'sequencermaster'
 
-### Download the software
+For these steps, log in as sequencermaster.
 
     $ ssh sequencermaster@localhost
+
+### Download the software
+
     $ mkdir ~/bin
     $ cd bin
     $ git clone git@git.biotech.cdc.gov:gzu2/sneakernet.git
