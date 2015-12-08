@@ -52,7 +52,7 @@ sub main{
     waitForAnyChanges($d,$settings);
 
     moveDir($d,$settings);
-    giveToSequencermaster($d,$settings);
+    #giveToSequencermaster($d,$settings);
 
     # At this point, the log file should be put into this current directory.
     # Also, a SneakerNet directory should be created.
@@ -232,6 +232,27 @@ sub moveDir{
   if(-e $destinationDir){
     die "ERROR: destination directory already exists!\n  $destinationDir";
   }
+
+  # Copy and then delete, so that permissions are retained for sequencermaster
+  command("cp --no-clobber -vr $$info{dir} $destinationDir && rm -vfr $$info{dir}");
+
+  # Update some attributes about this run
+  $$info{source_dir}=$$info{dir};
+  $$info{subdir}=$subdir;
+  $$info{dir}=$destinationDir;
+}
+
+=cut
+sub moveDirDeprecated{
+  my($info,$settings)=@_;
+
+  $$info{comment}||="";
+  my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
+  $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
+  my $destinationDir="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
+  if(-e $destinationDir){
+    die "ERROR: destination directory already exists!\n  $destinationDir";
+  }
   command("mv --no-clobber -v $$info{dir} $destinationDir");
 
   $$info{source_dir}=$$info{dir};
@@ -243,6 +264,7 @@ sub giveToSequencermaster{
   my($info,$settings)=@_;
   command("chown -Rv sequencermaster.sequencermaster $$info{dir}");
 }
+=cut
 
 ################
 # Utility subs #
