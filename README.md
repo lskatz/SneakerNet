@@ -29,9 +29,10 @@ users for sequencing runs, you will add them to the sequencingmaster group.
 
 ### Create a log file
 
-    $ touch /var/log/SneakerNet.log
-    $ chown sequencermaster.sequencermaster /var/log/SneakerNet.log
-    $ chmod 664 /var/log/SneakerNet.log
+    $ logfile=/var/log/SneakerNet.log
+    $ touch $logfile
+    $ chown sequencermaster.sequencermaster $logfile
+    $ chmod 664 $logfile
 
 ### Create an 'inbox'
 
@@ -39,8 +40,9 @@ The inbox is some directory where sequencing runs will be deposited. In our lab,
 is a samba folder, but it could simply be a directory that user `cp` files to. The
 inbox must have permissions like so:
 
-    $ chmod +s /path/to/inbox/
-    $ chown sequencermaster.sequencermaster /path/to/inbox/
+    $ inbox=/path/to/inbox
+    $ chmod g+s $inbox                             
+    $ chown sequencermaster.sequencermaster $inbox 
 
 ## As 'sequencermaster'
 
@@ -53,6 +55,15 @@ For these steps, log in as sequencermaster.
     $ mkdir ~/bin
     $ cd bin
     $ git clone git@git.biotech.cdc.gov:gzu2/sneakernet.git
+
+There are also a couple of prerequisites that the sequencermaster needs to install:
+
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* Multithreaded Perl (already installed on most computers)
+* Perl modules
+  * Email::Stuffer
+* Kraken: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
 
 ### Set up the cron job (optional)
 
