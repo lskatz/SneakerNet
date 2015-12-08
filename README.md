@@ -66,7 +66,30 @@ Add this line to the crontab file, and then save it.
 
       1  *  *  *   *     ((date; /usr/bin/perl /home/sequencermaster/bin/SneakerNet.pl; echo;) >> /var/log/SneakerNet.log 2>&1)
 
+### Configuration
+
+You will need to edit some files for configuration before using SneakerNet.
+
+    $ cd config
+
+#### emails
+
+List any emails here, one per line. These emails will be sent reports by default for each
+SneakerNet run.
+
+#### genomeSizes
+
+This is a tab-delimited file with the following fields: Perl-style regular expression, genome size in bp, taxon.
+If you want the read metrics script to be able to understand what taxon each file represents
+by its name alone, list it here. Otherwise, leave this file blank.
+
+#### settings
+
+This file has certain key/values and should be left alone, unless you are a developer.
+
 ### Test it
+
+If you have altered the configuration properly, then go ahead and test the software!
 
     $ ~/bin/SneakerNet.pl --test --now --numcpus 4
 
