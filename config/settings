@@ -1,0 +1,4 @@
+# key/value pairs
+KRAKEN_DEFAULT_DB	/opt/kraken/full-20140723
+REPOSITORY_DIRECTORY	/mnt/monolith0Data/RawSequenceData
+inbox	/mnt/monolith0Data/dropbox/inbox
