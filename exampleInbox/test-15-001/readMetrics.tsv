@@ -1,0 +1,5 @@
+File	avgReadLength	totalBases	minReadLength	maxReadLength	avgQuality	numReads	PE?	coverage	readScore	medianFragmentLength
+/mnt/monolith0Data/RawSequenceData/test/test-15-001/B_1.fastq.gz	150.00	59999999	150	150	40.00	400000	no	150.00	.	.	
+/mnt/monolith0Data/RawSequenceData/test/test-15-001/A_1.fastq.gz	150.00	60000000	150	150	40.00	400000	no	150.00	.	.	
+/mnt/monolith0Data/RawSequenceData/test/test-15-001/A_2.fastq.gz	150.00	60000000	150	150	40.00	400000	no	150.00	.	.	
+/mnt/monolith0Data/RawSequenceData/test/test-15-001/B_2.fastq.gz	150.00	60000000	150	150	40.00	400000	no	150.00	.	.	
