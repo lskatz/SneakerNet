@@ -13,6 +13,9 @@ use FindBin;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
+use lib "$FindBin::RealBin/lib";
+use SneakerNet qw/readConfig/;
+
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 local $0=fileparse $0;
@@ -32,9 +35,10 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i inbox=s debug now test)) or die $!;
+  GetOptions($settings,qw(help numcpus=i inbox=s debug now test email!)) or die $!;
   die usage() if($$settings{help});
   $$settings{numcpus}||=1;
+  $$settings{email}//=1;
 
   if($$settings{test}){
     $$settings{now}=1;
@@ -52,7 +56,6 @@ sub main{
     waitForAnyChanges($d,$settings);
 
     moveDir($d,$settings);
-    #giveToSequencermaster($d,$settings);
 
     # At this point, the log file should be put into this current directory.
     # Also, a SneakerNet directory should be created.
@@ -69,7 +72,8 @@ sub main{
     symlink($logfile,"$$d{dir}/SneakerNet/forEmail/sneakernet.log");
 
     # Give the rest to sequencermaster, now that it has all been moved over
-    system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
+    # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
+    # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
     # Run all plugins as sequencermaster, using ssh to act as sequencermaster
     my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
@@ -77,7 +81,7 @@ sub main{
     # Put the email script in last and remove files that are
     # not executable and not files.
     @exe=grep {!/emailWhoever.pl/} @exe;
-    push(@exe,"$FindBin::RealBin/SneakerNet.plugins/emailWhoever.pl");
+    push(@exe,"$FindBin::RealBin/SneakerNet.plugins/emailWhoever.pl") if($$settings{email});
     @exe=map{ 
       $_ if(-f $_ && -x $_);
     } @exe;
@@ -228,7 +232,7 @@ sub moveDir{
   $$info{comment}||="";
   my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
   $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
-  my $destinationDir="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
+  my $destinationDir="$$settings{REPOSITORY_DIRECTORY}/$$info{machine}/$subdir";
   if(-e $destinationDir){
     die "ERROR: destination directory already exists!\n  $destinationDir";
   }
@@ -242,35 +246,11 @@ sub moveDir{
   $$info{dir}=$destinationDir;
 }
 
-=cut
-sub moveDirDeprecated{
-  my($info,$settings)=@_;
-
-  $$info{comment}||="";
-  my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
-  $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
-  my $destinationDir="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
-  if(-e $destinationDir){
-    die "ERROR: destination directory already exists!\n  $destinationDir";
-  }
-  command("mv --no-clobber -v $$info{dir} $destinationDir");
-
-  $$info{source_dir}=$$info{dir};
-  $$info{subdir}=$subdir;
-  $$info{dir}="/mnt/monolith0Data/RawSequenceData/$$info{machine}/$subdir";
-}
-
-sub giveToSequencermaster{
-  my($info,$settings)=@_;
-  command("chown -Rv sequencermaster.sequencermaster $$info{dir}");
-}
-=cut
-
 ################
 # Utility subs #
 ################
 
-sub readConfig{
+sub readConfigOld{
   my @file=glob("$FindBin::RealBin/config/*");
   my $settings={};
   for(@file){
@@ -305,9 +285,10 @@ sub usage{
   All executable scripts under SneakerNet.plugins will also be run.
 
   Usage: $0 [-i inboxDir/]
-  -i dir  # choose a different 'inbox' to look at
-  --test  # Create a test directory 
-  --debug # Show debugging information
-  --now   # Get this show on the road!!
+  --inbox  dir  # choose a different 'inbox' to look at
+  --test        # Create a test directory. Implies --now.
+  --noemail     # Do not send an email at the end.
+  --debug       # Show debugging information
+  --now         # Do not check whether the directory contents are still being modified.
   "
 }
