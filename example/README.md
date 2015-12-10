@@ -64,5 +64,12 @@ to get help.
 
 To run SneakerNet on the example, use this syntax:
 
-    $ SneakerNet.pl --inbox example/inbox
+    $ SneakerNet.pl --inbox example/inbox --now
+
+Using the `--now` flag assumes that no one can modify the run directory before you use it. Without 
+this flag, SneakerNet monitors the inbox for two minutes to be sure that no one is 
+currently adding a run, so that the run does not get corrupted. Therefore you should not 
+use the `--now` flag in everyday use when others have access to the inbox.
+
+
 
