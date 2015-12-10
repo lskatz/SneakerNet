@@ -30,18 +30,18 @@ Dilution" tab.
 As..." a "CSV (Comma delimited) (*.csv)" file on a USB portable hard drive. 
   * Note: Because the workbook contains several tabs, a message might pop up along
 the lines of "The selected file type does not support workbooks that contain 
-multiple sheets..." Click OK to save only the SampleSheet tab. 
+multiple sheets..." Click OK to save only the SampleSheet tab.  
 ![Save as...](images/saveAs.jpg)
   * Excel will continue to ask you the OK/Cancel question about there being multiple sheets 
 until you click Cancel. The file is saved where you specify when you click OK 
-the first time, so hit Cancel when prompted the second time.
+the first time, so hit Cancel when prompted the second time.  
 ![Warning](images/warning1.jpg)
   * Then, because the SampleSheet tab contains formulas, a second warning will pop up
   "Some features in your workbook might be lost... Do you want to keep using
   that format?" Click No, and the file will be auto-saved to your selected
-  drive. (See warning above about second OK/Cancel prompt)
+  drive. (See warning above about second OK/Cancel prompt)  
 ![Warning](images/warning2.jpg)
-4. On the MiSeq, open the Illumina Experiment Manager, and choose "Edit Sample Sheet"
+4. On the MiSeq, open the Illumina Experiment Manager, and choose "Edit Sample Sheet"  
 ![EditSheet](images/MiSeqSampleEditSheet.jpg)
 5. Navigate to your sample sheet csv file, and make sure all relevant fields are filled in, including the "Use Adapter Trimming" checkbox on the right side of the screen, and all indices used are present and compatible.
 
