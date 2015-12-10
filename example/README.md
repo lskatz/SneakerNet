@@ -20,11 +20,11 @@ this documentation and spreadsheets.
 
 1. Ensure that the full header (i.e., "Run Name", "Sample Plate Name", "Sample 
 Sheet Name", "Library Prep Date", and "Technician" fields) and 
-sample-related fields for each sample (i.e., "Sample Name", "organism", "Index
+sample-related fields for each sample (i.e., "Sample Name", "Organism", "Index
 1", "Index 2", and "Genome Size Estimate") are filled in on the "Initial
 Dilution" tab.
 
-2. Optional: If raw read files are to be automatically transferred from teh storage space to another location (e.g., Calculation Engine of BioNumerics), then enter "Yes" in the appropriate column for each sample to transfer on the "Raw Read Routing" tab.
+2. Optional: If raw read files are to be automatically transferred from the storage space to another location (e.g., Calculation Engine of BioNumerics), then enter "Yes" in the appropriate column for each sample to transfer on the "Raw Read Routing" tab.
 
 3. Navigate to the "SampleSheet" tab of the Library Prep Workbook, and "Save
 As..." a "CSV (Comma delimited) (*.csv)" file on a USB portable hard drive. 
