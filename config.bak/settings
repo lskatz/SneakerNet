@@ -1,4 +1,10 @@
 # key/value pairs
-KRAKEN_DEFAULT_DB	/opt/kraken/full-20140723
-REPOSITORY_DIRECTORY	/mnt/monolith0Data/RawSequenceData
 inbox	/mnt/monolith0Data/dropbox/inbox
+REPOSITORY_DIRECTORY	/mnt/monolith0Data/RawSequenceData
+
+## findContamination.pl
+KRAKEN_DEFAULT_DB	/opt/kraken/full-20140723
+
+## transferFilesToRemoteComputers.pl
+# This username/path is used in an rsync command
+transfer_destination_string	edlb-sneakernet@biolinux.biotech.cdc.gov:/scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine
