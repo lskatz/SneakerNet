@@ -1,4 +1,10 @@
-# The Rover spreadsheet
+# Example and tutorial for SneakerNet
+
+This directory contains an example for how you would use SneakerNet. There is an 'inbox'
+and a Rover Spreadsheet. First, this document will describe Rover; second, this
+document will describe how to use SneakerNet.
+
+## The Rover spreadsheet
 
 Rover is a spreadsheet that can explore your reads and return basic information
 for you. This is a double meaning between the NASA planatary vehicles and a dog
@@ -7,7 +13,7 @@ sequencing run because the wet lab is outside of the scope of this project.
 However, this example will show you how to fill in the appropriate sample
 spreadsheet for the MiSeq, which SneakerNet will also read.
 
-# How to use the Rover spreadsheet
+### How to use the Rover spreadsheet
 
 There are two rover spreadsheet examples in this directory, and they differ
 only on the number of samples.
@@ -45,4 +51,18 @@ the first time, so hit Cancel when prompted the second time.
 ![EditSheet](images/MiSeqSampleEditSheet.jpg)
 5. Navigate to your sample sheet csv file, and make sure all relevant fields are filled in, including the "Use Adapter Trimming" checkbox on the right side of the screen, and all indices used are present and compatible.
 
+## Using SneakerNet
+
+If you have installed SneakerNet correctly including editing the config files, 
+then all you need to do is run it on the simulated example in the inbox folder.
+
+Use `--help` to get SneakerNet help. You can also use `--help` on any SneakerNet plugin
+to get help.
+
+    $ SneakerNet.pl --help
+    $ addReadMetrics.pl --help
+
+To run SneakerNet on the example, use this syntax:
+
+    $ SneakerNet.pl --inbox example/inbox
 
