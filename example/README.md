@@ -71,5 +71,20 @@ this flag, SneakerNet monitors the inbox for two minutes to be sure that no one 
 currently adding a run, so that the run does not get corrupted. Therefore you should not 
 use the `--now` flag in everyday use when others have access to the inbox.
 
+### Requirements for a run
 
+Currently, SneakerNet can only be used on Illumina-based run directories. The following
+files must be present in a run directory before SneakerNet will accept it.
+
+* QC information
+  * `QC` - this is a folder that you create manually
+  * `QC/runInfo.xml`
+  * `QC/runParameters.xml`
+  * `QC/CompletedJobInfo.xml`
+  * `QC/GenerateFASTQRunStatistics.xml`
+  * `QC/InterOp/` - this is a folder from an Illumina run with QC information. Keep all files in it intact.
+* Data and metadata
+  * `*.fastq.gz`
+  * `SampleSheet.csv`, usually derived from Rover
+  * `config.xml`
 

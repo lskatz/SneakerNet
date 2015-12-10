@@ -105,3 +105,4 @@ If you have altered the configuration properly, then go ahead and test the softw
 
     $ ~/bin/SneakerNet.pl --test --now --numcpus 4
 
+Also, please look at the `example` folder for another readme file and example dataset.
