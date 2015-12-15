@@ -75,9 +75,8 @@ sub main{
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
-    # Run all plugins as sequencermaster, using ssh to act as sequencermaster
+    # Run all plugins, but filter the plugins to those that are executable.
     my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
-
     # Put the email script in last and remove files that are
     # not executable and not files.
     @exe=grep {!/emailWhoever.pl/} @exe;
