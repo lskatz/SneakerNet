@@ -89,7 +89,7 @@ sub main{
 
     # Execute all plugins
     for(my $i=0;$i<@exe;$i++){
-      command("ssh sequencermaster\@localhost $exe[$i] $$d{dir} --numcpus $$settings{numcpus}");
+      command("$exe[$i] $$d{dir} --numcpus $$settings{numcpus}");
     }
   }
 
