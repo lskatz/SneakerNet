@@ -20,7 +20,6 @@ How to make a plugin
      2. `--numcpus 1`
      3. `--debug`
      4. `--tempdir /some/directory`
-     5. `--help`
   3. Add any desired soft-coded variables into config.bak/settings and config/settings
   4. If any files are added to the run directory, please add them to 
      `runDirectory/SneakerNet/customdirectory`, and add any results for the
