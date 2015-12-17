@@ -73,8 +73,16 @@ use the `--now` flag in everyday use when others have access to the inbox.
 
 ### Requirements for a run
 
-Currently, SneakerNet can only be used on Illumina-based run directories. The following
-files must be present in a run directory before SneakerNet will accept it.
+Currently, SneakerNet can only be used on Illumina-based run directories. The
+directory name must be in the form of `machineName-year-runNumber-comment`
+where machine name is a custom name, e.g., M0347 for a MiSeq. The year is a 
+2 or 4-digit year. The run number is an integer. The comment is optional
+but can be used to help indicate the date of a run or whatever else.
+Collectively, `machineName-year-runNumber-comment` is the runId that might be
+referred elsewhere in the documentation.
+
+The following files must be present in a run directory before SneakerNet 
+will accept it.
 
 * QC information
   * `QC` - this is a folder that you create manually
@@ -87,4 +95,3 @@ files must be present in a run directory before SneakerNet will accept it.
   * `*.fastq.gz`
   * `SampleSheet.csv`, usually derived from Rover
   * `config.xml`
-
