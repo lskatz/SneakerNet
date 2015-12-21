@@ -181,6 +181,9 @@ sub parseReadsDir{
     $dirInfo{is_good}=0;
   }
 
+  # Is this Illumina?  Ion Torrent? ...?
+  $$dirInfo{type}||=detectType($dir,$settings);
+
   # See if there are actually reads in the directory
   if(!glob("$dir/*.fastq.gz")){
     $dirInfo{why_not}.= "Could not find fastq.gz files in $dir\n";
@@ -236,6 +239,7 @@ sub moveDir{
     die "ERROR: destination directory already exists!\n  $destinationDir";
   }
 
+  die Dumper $info;
   # Copy and then delete, so that permissions are retained for sequencermaster
   command("cp --no-clobber -vr $$info{dir} $destinationDir && rm -vfr $$info{dir}");
 
