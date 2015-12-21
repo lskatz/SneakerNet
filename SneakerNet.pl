@@ -170,33 +170,57 @@ sub findReadsDir{
 sub parseReadsDir{
   my($dir,$settings)=@_;
 
-  my %dirInfo=(dir=>$dir,is_good=>1,why_not=>"");
+  my %dirInfo=(dir=>$dir,is_good=>1,why_not=>"", runType=>"");
 
   my $b=basename $dir;
   ($dirInfo{machine},$dirInfo{year},$dirInfo{run},$dirInfo{comment})=split(/\-/,$b);
 
   # If the run name isn't even there, then it's not a run directory
   if(!defined($dirInfo{run})){
-    $dirInfo{why_not}.="Run is not defined for $dir\n";
+    $dirInfo{why_not}.="Run name is not defined for $dir. Run name syntax should be Machine-year-runNumber-comment.\n";
     $dirInfo{is_good}=0;
+    return \%dirInfo;
   }
 
-  # Is this Illumina?  Ion Torrent? ...?
-  $$dirInfo{type}||=detectType($dir,$settings);
+  # Test for Illumina at the same time as seeing if all the files are in there
+  if(!$dirInfo{is_good} || !$dirInfo{runType}){
 
-  # See if there are actually reads in the directory
-  if(!glob("$dir/*.fastq.gz")){
-    $dirInfo{why_not}.= "Could not find fastq.gz files in $dir\n";
-    $dirInfo{is_good}=0;
-  }
+    my $foundAllFiles=1;
 
-  # See if the misc. files are in there too
-  for(qw(config.xml SampleSheet.csv QC/CompletedJobInfo.xml QC/InterOp QC/runParameters.xml QC/GenerateFASTQRunStatistics.xml QC/RunInfo.xml)){
-    if(!-e "$dir/$_"){
-      $dirInfo{why_not}.="Could not find $dir/$_\n";
-      $dirInfo{is_good}=0;
+    # See if there are actually reads in the directory
+    if(!glob("$dir/*.fastq.gz")){
+      $dirInfo{why_not}.= "[Illumina] Could not find fastq.gz files in $dir\n";
+      $foundAllFiles=0;
     }
+
+    # See if the misc. files are in there too
+    for(qw(config.xml SampleSheet.csv QC/CompletedJobInfo.xml QC/InterOp QC/runParameters.xml QC/GenerateFASTQRunStatistics.xml QC/RunInfo.xml)){
+      if(!-e "$dir/$_"){
+        $dirInfo{why_not}.="[Illumina] Could not find $dir/$_\n";
+        $foundAllFiles=0;
+      }
+    }
+    
+    $dirInfo{runType}="Illumina" if($foundAllFiles);
   }
+
+  # Test for Ion Torrent at the same time as seeing if all the files are in there
+  if(!$dirInfo{is_good} || !$dirInfo{runType}){
+
+    my $foundAllFiles=1;
+    
+    # See if there are reads in the directory
+    my @fastq=(glob("$dir/plugin_out/downloads/*.fastq"),glob("$dir/plugin_out/downloads/*.fastq.gz"));
+    if(!@fastq){
+      $dirInfo{why_not}.= "[IonTorrent] Could not find fastq[.gz] files in $dir/plugin_out/downloads\n";
+      $foundAllFiles=0;
+    }
+    
+    $dirInfo{runType}="IonTorrent" if($foundAllFiles);
+  }
+
+  die Dumper \%dirInfo;
+
 
   return \%dirInfo;
 }
