@@ -219,7 +219,7 @@ sub parseReadsDir{
     $dirInfo{runType}="IonTorrent" if($foundAllFiles);
   }
 
-  die Dumper \%dirInfo;
+  #die Dumper \%dirInfo;
 
 
   return \%dirInfo;
@@ -263,7 +263,7 @@ sub moveDir{
     die "ERROR: destination directory already exists!\n  $destinationDir";
   }
 
-  die Dumper $info;
+  #die Dumper $info;
   # Copy and then delete, so that permissions are retained for sequencermaster
   command("cp --no-clobber -vr $$info{dir} $destinationDir && rm -vfr $$info{dir}");
 
