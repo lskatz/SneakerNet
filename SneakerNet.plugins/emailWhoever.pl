@@ -22,7 +22,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i inbox=s debug)) or die $!;
+  GetOptions($settings,qw(help numcpus=i debug tempdir=s)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -98,9 +98,9 @@ sub flatten {
 }
 
 sub usage{
-  "Find all reads directories under the inbox
-  Usage: $0 [-i inboxDir/]
-  -i dir  # choose a different 'inbox' to look at
-  --debug # Show debugging information
+  "Email a SneakerNet run's results
+  Usage: $0 run-dir
+  --debug      Show debugging information
+  --numcpus 1  Number of CPUs (has no effect on this script)
   "
 }
