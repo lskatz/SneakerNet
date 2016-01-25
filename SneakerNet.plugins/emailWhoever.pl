@@ -42,7 +42,7 @@ sub emailWhoever{
 
   # Figure out who we are mailing
   # Start off with what emails are in the config
-  my @to=flatten(@{ $$settings{emails} });
+  my @to=flatten(@{ $$settings{'emails.conf'} });
 
   # Read the sample sheet for something like
   #                                   Investigator Name,ALS (IAU3)
