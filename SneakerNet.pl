@@ -35,10 +35,11 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i inbox=s debug now test email!)) or die $!;
+  GetOptions($settings,qw(help numcpus=i inbox=s debug now test email! preserve)) or die $!;
   die usage() if($$settings{help});
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
+  $$settings{preserve}//=0;
 
   if($$settings{test}){
     $$settings{now}=1;
@@ -75,20 +76,13 @@ sub main{
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
-    # Run all plugins, but filter the plugins to those that are executable.
-    my @exe=glob("$FindBin::RealBin/SneakerNet.plugins/*");
-    # Put the email script in last and remove files that are
-    # not executable and not files.
-    @exe=grep {!/emailWhoever.pl/} @exe;
-    push(@exe,"$FindBin::RealBin/SneakerNet.plugins/emailWhoever.pl") if($$settings{email});
-    @exe=map{ 
-      $_ if(-f $_ && -x $_);
-    } @exe;
-    @exe=grep {/./} @exe;
+    my @exe=flatten($$settings{'plugins.conf'});
+    for my $exe(@exe){
+      if(!$$settings{email} && $exe=~/emailWhoever.pl/){
+        next;
+      }
 
-    # Execute all plugins
-    for(my $i=0;$i<@exe;$i++){
-      command("$exe[$i] $$d{dir} --numcpus $$settings{numcpus}");
+      command("$FindBin::RealBin/SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
     }
   }
 
@@ -265,7 +259,8 @@ sub moveDir{
 
   #die Dumper $info;
   # Copy and then delete, so that permissions are retained for sequencermaster
-  command("cp --no-clobber -vr $$info{dir} $destinationDir && rm -vfr $$info{dir}");
+  command("cp --no-clobber -vr $$info{dir} $destinationDir");
+  command("rm -vfr $$info{dir}") if(!$$settings{preserve});
 
   # Update some attributes about this run
   $$info{source_dir}=$$info{dir};
@@ -306,6 +301,10 @@ sub command{
   die "ERROR running command\n  $command" if $exit_code;
 }
 
+sub flatten {
+  map { ref $_ ? flatten(@{$_}) : $_ } @_;
+}
+
 sub usage{
   "Find all reads directories under the inbox, puts them into the right
   place on Monolith0 and gives ownership to sequencermaster.
@@ -315,6 +314,7 @@ sub usage{
   --inbox  dir  # choose a different 'inbox' to look at
   --test        # Create a test directory. Implies --now.
   --noemail     # Do not send an email at the end.
+  --preserve    # Do not delete the source run (Default: cp and then rm -r)
   --debug       # Show debugging information
   --now         # Do not check whether the directory contents are still being modified.
   "

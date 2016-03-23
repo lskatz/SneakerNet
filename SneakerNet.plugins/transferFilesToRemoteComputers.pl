@@ -37,6 +37,9 @@ sub transferFilesToRemoteComputers{
   # Find information about each genome
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
+  # Which files should be skipped according to Q/C?
+  my $toSkip=identifyBadRuns($dir,$sampleInfo,$settings);
+
   # Which files should be transferred?
   my %filesToTransfer=(); # hash keys are species names
   while(my($sampleName,$s)=each(%$sampleInfo)){
@@ -81,6 +84,30 @@ sub transferFilesToRemoteComputers{
   }
 }
 
+sub identifyBadRuns{
+  my($dir,$sampleInfo,$settings)=@_;
+
+  my %toSkip=();
+
+  open(READMETRICS,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
+  my @header=split(/\t/,<READMETRICS>); chomp(@header);
+  while(<READMETRICS>){
+    chomp;
+    my %F;
+    @F{@header}=split(/\t/,$_);
+    my $samplename=basename($F{File},'.fastq.gz');
+    $samplename=~s/_S\d+_.*//;
+
+    next if($samplename=~/^Undetermined/);
+
+    #die Dumper [$samplename,$$sampleInfo{$samplename}];
+
+    if($F{coverage} ne '.'){
+      
+    }
+  }
+
+}
 
 sub usage{
   "Find all reads directories under the inbox
