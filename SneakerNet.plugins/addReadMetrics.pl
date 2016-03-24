@@ -40,7 +40,7 @@ sub main{
 sub addReadMetrics{
   my($dir,$settings)=@_;
 
-  #return if(-e "$dir/readMetrics.tsv");
+  return if(-e "$dir/readMetrics.tsv");
 
   logmsg "Reading sample $dir/SampleSheet.csv";
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
