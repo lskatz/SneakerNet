@@ -40,7 +40,7 @@ sub main{
 sub addReadMetrics{
   my($dir,$settings)=@_;
 
-  return if(-e "$dir/readMetrics.tsv");
+  #return if(-e "$dir/readMetrics.tsv");
 
   logmsg "Reading sample $dir/SampleSheet.csv";
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
@@ -90,36 +90,19 @@ sub calculateCoverage{
   # $h contains read metrics for this one row.
 
   my $file=basename($$h{File});
-  my $samplename=$$sampleInfo{$$h{File}} || "";
+  my $samplename=$file || "";
+  $samplename=~s/_S\d+_.*?$//;
 
   # Find out if this file has an expected genome size from the Sample Sheet.
   my $expectedGenomeSize=0;
   my $organism="";
   if($$sampleInfo{$samplename}{expectedgenomesize}){
     $expectedGenomeSize=$$sampleInfo{$samplename}{expectedgenomesize} * 10**6;
+  }elsif($$sampleInfo{$samplename}{taxonRules}{genomeSize}){
+    $expectedGenomeSize=$$sampleInfo{$samplename}{taxonRules}{genomeSize};
   }
-  if($$sampleInfo{$samplename}{species}){
-    $organism=$$sampleInfo{$samplename}{species};
-  }
-  
 
   my $coverage=$$h{coverage} || 0; 
-
-  # See if we can recalculate the coverage based on the filename
-  if(!$expectedGenomeSize){
-    # See if this filename matches any organism regex
-    for my $info(@{ $$settings{genomeSizes} }){
-      my($regex,$expectedGenomeSizeFromConfig);
-      ($regex,$expectedGenomeSizeFromConfig,$organism)=@$info;
-
-      # Calculate coverage from either the config file, the SampleSheet,
-      # or else you just can't calculate.
-      if($file=~/$regex/){
-        $expectedGenomeSize=$expectedGenomeSizeFromConfig;
-        last;
-      }
-    }
-  }
 
   # Recalculate coverage, if it's possible
   if($expectedGenomeSize > 0){
