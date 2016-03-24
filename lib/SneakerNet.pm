@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
+use Config::Simple;
 use Data::Dumper;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
@@ -12,27 +13,24 @@ our @EXPORT_OK = qw(
   command logmsg
 );
 
+
+my $thisdir=dirname($INC{'SneakerNet.pm'});
+
 sub logmsg{print STDERR "$0: @_\n";}
 
 sub readConfig{
-  #my @file=glob("$FindBin::RealBin/../config/*");
-  my @file=glob(dirname($INC{'SneakerNet.pm'})."/../config/*");
   my $settings={};
-  for(@file){
-    open(CONFIGFILE,$_) or die "ERROR: could not open config file $_: $!";
-    my $key=basename $_;
-    while(<CONFIGFILE>){
-      s/^\s+|\s+$//g; # trim
-      next if(/^$/);
-      next if(/^#/);
-      my $configLine=[split(/\t/,$_)];
-      push(@{ $$settings{$key} },$configLine);
 
-      my $subkey=$$configLine[0];
-      my $value=join("\t",@$configLine[1..@$configLine-1]);
-      $$settings{$subkey}=$value;
+  my @file=glob("$thisdir/../config/*.conf");
+  for my $file(@file){
+    my $cfg = new Config::Simple();
+    if(!$cfg->read($file)){
+      logmsg "WARNING: could not read $file: ".$cfg->error;
+      next;
     }
-    close CONFIGFILE;
+    my %vars= $cfg->vars();
+    $$settings{$_}=$vars{$_} for(keys(%vars));
+    $$settings{obj}{basename($file)}=$cfg; # save the obj too
   }
   return $settings;
 }
@@ -86,6 +84,26 @@ sub samplesheetInfo{
             last;
           }
         }
+      }
+
+      # What rules under taxonProperties.conf does this
+      # genome mostly align with?
+      my $alignedWith="";
+      my %taxonProperties=%{ $$settings{obj}{"taxonProperties.conf"}->vars };
+      #die Dumper $$settings{obj}{"taxonProperties.conf"}->param(-block=>'Salmonella');
+      while(my($key,$value)=each(%taxonProperties)){
+        my($taxon,$property)=split(/\./,$key);
+
+        # Guess the taxon based on some rules
+        if( 
+          ($property eq 'regex' && $F{sample_id}=~/$value/i) || 
+          $F{species}=~/$taxon/i
+        ){
+          $F{taxonRules}=$$settings{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
+          $F{taxonRules}{taxon}=$taxon;
+          last;
+        }
+          
       }
 
       $sample{$F{sample_id}}=\%F;

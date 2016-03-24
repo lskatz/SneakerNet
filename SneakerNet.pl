@@ -76,7 +76,8 @@ sub main{
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
-    my @exe=flatten($$settings{'plugins.conf'});
+    #my @exe=flatten($$settings{'plugins.conf'});
+    my @exe=@{ $$settings{'default.plugins'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){
         next;

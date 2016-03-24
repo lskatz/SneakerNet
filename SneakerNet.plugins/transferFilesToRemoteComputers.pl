@@ -47,43 +47,31 @@ sub transferFilesToRemoteComputers{
     my $taxon=$$s{species} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
     if(grep {/calcengine/i} @{ $$s{route} }){
-      $filesToTransfer{$taxon}.=join(" ",@{ $$s{fastq} })." ";
+      for(@{ $$s{fastq} }){
+        next if($$toSkip{basename($_)});
+        my $subfolder=$$s{taxonRules}{dest_subfolder} || "SneakerNet";
+        $filesToTransfer{$subfolder}.=$_." ";
+      }
       logmsg "One route for sample $sampleName is the Calculation Engine";
     } else {
       logmsg "Note: The route for $sampleName was not listed in the sample sheet.";
     }
   }
 
-
   #die "ERROR: no files to transfer" if (!$filesToTransfer);
   logmsg "WARNING: no files will be transferred" if(!keys(%filesToTransfer));
 
   # Make the transfers based on taxon.
-  # TODO consider putting this taxon logic into a config file.
-  while(my($taxon,$fileString)=each(%filesToTransfer)){
-
-    # Which folder under /scicomp/groups/OID/NCEZID/DFWED/EDLB/share/out/Calculation_Engine
-    # is appropriate?  SneakerNet if nothing else is found.
-    my $subfolder="SneakerNet";
-    if($taxon =~ /Listeria|^L\.$/i){
-      $subfolder="LMO";
-    } elsif ($taxon =~ /Salmonella/i){
-      $subfolder="Salm";
-    } elsif ($taxon =~ /Campy|Arcobacter|Helicobacter/i){
-      $subfolder="Campy";
-    } elsif ($taxon =~ /^E\.$|STEC|Escherichia|Shigella/i){
-      $subfolder="STEC";
-    } elsif ($taxon =~ /Vibrio|cholerae|cholera/i){
-      $subfolder="Vibrio";
-    } else {
-      logmsg "WARNING: cannot figure out the correct subfolder for taxon $taxon. The following files will be sent to $subfolder instead.";
-    }
+  while(my($subfolder,$fileString)=each(%filesToTransfer)){
 
     logmsg "Transferring to $subfolder:\n  $fileString";
     command("rsync --update -av $fileString $$settings{transfer_destination_string}/$subfolder/");
   }
 }
 
+# Which runs should be skipped based on bad quality
+# or bad coverage, or whatever?
+# Returns filenames.
 sub identifyBadRuns{
   my($dir,$sampleInfo,$settings)=@_;
 
@@ -96,17 +84,34 @@ sub identifyBadRuns{
     my %F;
     @F{@header}=split(/\t/,$_);
     my $samplename=basename($F{File},'.fastq.gz');
-    $samplename=~s/_S\d+_.*//;
+    $samplename=~s/_S\d+_.*//; # figure out the sample name before the the _S1_ pattern
 
-    next if($samplename=~/^Undetermined/);
-
-    #die Dumper [$samplename,$$sampleInfo{$samplename}];
-
-    if($F{coverage} ne '.'){
-      
+    # Skip anything that says undetermined.
+    if($samplename=~/^Undetermined/){
+      $toSkip{basename($F{File})}=1;
+      next;
     }
-  }
 
+    #die Dumper [$samplename,$$sampleInfo{$samplename},\%F];
+
+    # Compare coverage of one read against half of the
+    # threshold coverage because of PE reads.
+    if($F{coverage} ne '.'){ # dot means coverage is unknown.
+      if($F{coverage} < $$sampleInfo{$samplename}{taxonRules}{coverage}/2){
+        $toSkip{basename($F{File})}=1;
+        logmsg "Low coverage in $F{File}";
+      }
+    }
+
+    if($F{avgQuality} < $$sampleInfo{$samplename}{taxonRules}{quality}){
+      my @file=@{$$sampleInfo{$samplename}{fastq}};
+      $toSkip{basename($_)}=1 for(@file);
+      logmsg "low quality in $F{File}\n  Skipping @file";
+    }
+
+  }
+  
+  return \%toSkip;
 }
 
 sub usage{
