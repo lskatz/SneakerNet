@@ -20,9 +20,9 @@ For these steps, log in as root.
 ### Create a dedicated user
 
 There should be a special user that has permissions for sequencing runs.  Ours is 
-'sequencingmaster'. All files made by sequencingmaster should have privileges for 
+'sequencermaster'. All files made by sequencermaster should have privileges for 
 both group and user. In this way, if you want to give special privileges to other
-users for sequencing runs, you will add them to the sequencingmaster group.
+users for sequencing runs, you will add them to the sequencermaster group.
     
     $ useradd -m -s bash sequencermaster
     $ passwd sequencermaster
