@@ -38,11 +38,16 @@ users for sequencing runs, you will add them to the sequencermaster group.
 
 The inbox is some directory where sequencing runs will be deposited. In our lab, this
 is a samba folder, but it could simply be a directory that user `cp` files to. The
-inbox must have permissions like so:
+inbox must have permissions like so.  In our example, we have a special group name
+for this inbox so that other users can contribute to it. However, the group name
+`sequencermaster` would also work.
 
     $ inbox=/path/to/inbox
     $ chmod g+s $inbox                             
-    $ chown sequencermaster.sequencermaster $inbox 
+    $ chown sequencermaster.edlb $inbox 
+    $ ls -ld $inbox
+      #  drwxrwsr-x. 4 sequencermaster edlb 4 Apr 18 12:03 /path/to/inbox
+
 
 ## As 'sequencermaster'
 
@@ -54,7 +59,7 @@ For these steps, log in as sequencermaster.
 
     $ mkdir ~/bin
     $ cd bin
-    $ git clone git@git.biotech.cdc.gov:gzu2/sneakernet.git
+    $ git clone https://github.com/lskatz/SneakerNet.git
 
 There are also a couple of prerequisites that the sequencermaster needs to install:
 
@@ -86,14 +91,15 @@ You will need to edit some files for configuration before using SneakerNet.
 
 #### emails
 
-List any emails here, one per line. These emails will be sent reports by default for each
+List any emails here, comma-separated. These emails will be sent reports by default for each
 SneakerNet run.
 
-#### genomeSizes
+#### taxonProperties
 
-This is a tab-delimited file with the following fields: Perl-style regular expression, genome size in bp, taxon.
-If you want the read metrics script to be able to understand what taxon each file represents
-by its name alone, list it here. Otherwise, leave this file blank.
+Each taxon that you might have sequences for is defined here. If not defined here, nothing bad
+will happen though.  For each taxon, you can show the minimum quality and coverage thresholds;
+the genome size in bp; the regular expression to match filename to taxon; and the destination
+folder on the remote computer.
 
 #### settings
 
