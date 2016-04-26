@@ -260,6 +260,7 @@ sub moveDir{
 
   #die Dumper $info;
   # Copy and then delete, so that permissions are retained for sequencermaster
+  command("mkdir -p $$settings{REPOSITORY_DIRECTORY}/$$info{machine}");
   command("cp --no-clobber -vr $$info{dir} $destinationDir");
   command("rm -vfr $$info{dir}") if(!$$settings{preserve});
 
