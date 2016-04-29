@@ -35,6 +35,7 @@ sub main{
 
   # make the report emailable 
   symlink(rel2abs("$outdir/report.tsv"), "$dir/SneakerNet/forEmail/kraken.tsv");
+  command("cd $dir/SneakerNet/forEmail && zip -v kraken.zip *.kraken.html && rm -v *.kraken.html");
 
   return 0;
 }
