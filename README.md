@@ -34,6 +34,29 @@ users for sequencing runs, you will add them to the sequencermaster group.
     $ chown sequencermaster.sequencermaster $logfile
     $ chmod 664 $logfile
 
+### Take care of the log file with logrotate
+    
+Cat the following contents into a logrotate config file and use ctrl-D to signify the end of the file.  This config file will key into the logrotate command so that you don't have to worry about maintaining the sneakernet log.
+
+**Tips:** The name of the file does not matter except it must be in the `/etc/logrotate.d` directory.  A good tutorial is at http://www.thegeekstuff.com/2010/07/logrotate-examples/.
+
+    $ cat > /etc/logrotate.d/sneakernet
+      /var/log/SneakerNet.log {
+          missingok
+          notifempty
+          compress
+          delaycompress
+          copytruncate
+          size 1M
+          create 0644 sequencermaster sequencermaster
+          dateext
+          monthly
+          maxage 9999999999999
+          compressext .gz
+      }
+      ^D
+
+
 ### Create an 'inbox'
 
 The inbox is some directory where sequencing runs will be deposited. In our lab, this
