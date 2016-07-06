@@ -76,38 +76,45 @@ sub samplesheetInfo{
       delete($F{description});
 
       # What taxon is this if not listed?
-      if(!$F{species}){
-        for my $taxonArr(@{ $$config{genomeSizes} }){
-          my($regex,$size,$possibleTaxon)=@$taxonArr;
-          if($F{sample_id}=~/$regex/){
-            $F{species}=$possibleTaxon;
-            last;
-          }
-        }
-      }
-      $F{species}//="UNKNOWN"; # set it to the unknown if it's still not known
+      #if(!$F{species}){
+      #  for my $taxonArr(@{ $$config{genomeSizes} }){
+      #    my($regex,$size,$possibleTaxon)=@$taxonArr;
+      #    if($F{sample_id}=~/$regex/){
+      #      $F{species}=$possibleTaxon;
+      #      last;
+      #    }
+      #  }
+      #}
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
       my $alignedWith="";
       my %taxonProperties=%{ $$settings{obj}{"taxonProperties.conf"}->vars };
+      my @taxa=$$settings{obj}{"taxonProperties.conf"}->get_block;
       #die Dumper $$settings{obj}{"taxonProperties.conf"}->param(-block=>'Salmonella');
-      while(my($key,$value)=each(%taxonProperties)){
-        my($taxon,$property)=split(/\./,$key);
+      for my $taxon(@taxa){
+        my $taxonRegex=$$settings{obj}{"taxonProperties.conf"}->param("$taxon.regex");
+        
+        if(
+              $F{sample_id} =~ /$taxonRegex/
+           || ($F{species} && $F{species}=~/$taxon/)
+          ){
 
-        # Guess the taxon based on some rules
-        if( 
-          ($property eq 'regex' && $F{sample_id}=~/$value/i) || 
-          $F{species}=~/$taxon/i
-        ){
           $F{taxonRules}=$$settings{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
           $F{taxonRules}{taxon}=$taxon;
+          $F{species}=$taxon;
           last;
         }
-          
+      }
+      # set it to the unknown if it's still not known
+      if(!$F{species}){
+        $F{species}="UNKNOWN";
+        $F{taxonRules}=$$settings{obj}{"taxonProperties.conf"}->param(-block=>$F{species});
+        $F{taxonRules}{taxon}=$F{species};
       }
 
       $sample{$F{sample_id}}=\%F;
+      
     }
   }
   close SAMPLE;
