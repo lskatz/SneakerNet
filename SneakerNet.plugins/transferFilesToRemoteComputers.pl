@@ -89,7 +89,7 @@ sub transferFilesToRemoteComputers{
   while(my($subfolder,$fileString)=each(%filesToTransfer)){
 
     logmsg "Transferring to $subfolder:\n  $fileString";
-    command("rsync --update -av $fileString $$settings{transfer_destination_string}/$subfolder/");
+    command("rsync --update -av --no-g $fileString $$settings{transfer_destination_string}/$subfolder/");
   }
 }
 
