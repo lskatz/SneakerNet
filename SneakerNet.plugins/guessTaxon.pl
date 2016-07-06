@@ -65,12 +65,16 @@ sub runKrakenOnDir{
     logmsg "Running Kraken on $sampleName";
     runKraken($s,$sampledir,$settings);
 
-    my $expectedSpecies=$$s{species} || "";
+    my $expectedSpecies=$$s{species} || "UNKNOWN";
     my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
-    next if(!$html);
+    if(!$html){
+      logmsg "WARNING: html file not found: $html";
+      next;
+    }
 
     # Add onto the contamination report
     push(@report,join("\t",$sampleName,$expectedSpecies,$bestGuess,$percentContaminated));
+    logmsg "Including for email: $html";
     symlink(rel2abs($html),"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
@@ -117,7 +121,7 @@ sub runKraken{
 
 sub reportContamination{
   my($sampledir,$expectedSpecies,$settings)=@_;
-  return 100 if(!$expectedSpecies);
+  #return 100 if(!$expectedSpecies);
 
   my $taxfile="$sampledir/kraken.taxonomy";
 
