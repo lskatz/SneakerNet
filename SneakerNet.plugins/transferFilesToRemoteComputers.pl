@@ -131,8 +131,8 @@ sub identifyBadRuns{
         for (@file){
           my $f=basename($_); # avoid the directory name
           $toSkip{$f}=1;
-          $whatFailed{$f}{coverage}=1;
         }
+        $whatFailed{$F{File}}=1;
         logmsg "Low coverage in $F{File}";
       }
     }
@@ -141,8 +141,8 @@ sub identifyBadRuns{
       for (@file){
         my $f=basename($_); # avoid the directory name
         $toSkip{$f}=1;
-        $whatFailed{$f}{avgQuality}=1;
       }
+      $whatFailed{$F{File}}=1;
       logmsg "low quality in $F{File}\n  Skipping @file";
     }
 
