@@ -22,7 +22,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s)) or die $!;
+  GetOptions($settings,qw(help numcpus=i debug tempdir=s email-only=s)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -55,6 +55,10 @@ sub emailWhoever{
     push(@to,@cdcids);
   } else {
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
+  }
+
+  if($$settings{'email-only'}){
+    @to=($$settings{'email-only'});
   }
 
   # Send one email per recipient.
@@ -100,7 +104,9 @@ sub flatten {
 sub usage{
   "Email a SneakerNet run's results
   Usage: $0 run-dir
-  --debug      Show debugging information
-  --numcpus 1  Number of CPUs (has no effect on this script)
+  --debug          Show debugging information
+  --numcpus     1  Number of CPUs (has no effect on this script)
+  --email-only  '' Choose the email to send the report to instead
+                   of what is supplied.
   "
 }
