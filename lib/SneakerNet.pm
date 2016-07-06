@@ -97,7 +97,7 @@ sub samplesheetInfo{
         
         if(
               $F{sample_id} =~ /$taxonRegex/
-           || ($F{species} && $F{species}=~/$taxon/)
+           || ($F{species} && $F{species}=~/$taxon/i)
           ){
 
           $F{taxonRules}=$$settings{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
