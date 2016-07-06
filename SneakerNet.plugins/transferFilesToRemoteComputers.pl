@@ -127,6 +127,8 @@ sub identifyBadRuns{
     # Compare coverage of one read against half of the
     # threshold coverage because of PE reads.
     if($F{coverage} ne '.'){ # dot means coverage is unknown.
+      $F{coverage}||=0;
+      $$sampleInfo{$samplename}{taxonRules}{coverage}||=0;
       if($F{coverage} < $$sampleInfo{$samplename}{taxonRules}{coverage}/2){
         for (@file){
           my $f=basename($_); # avoid the directory name
@@ -137,6 +139,8 @@ sub identifyBadRuns{
       }
     }
 
+    $F{avgQuality} ||= 0;
+    $$sampleInfo{$samplename}{taxonRules}{quality}||=0;
     if($F{avgQuality} < $$sampleInfo{$samplename}{taxonRules}{quality}){
       for (@file){
         my $f=basename($_); # avoid the directory name
