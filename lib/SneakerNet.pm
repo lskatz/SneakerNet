@@ -85,6 +85,7 @@ sub samplesheetInfo{
           }
         }
       }
+      $F{species}//="UNKNOWN"; # set it to the unknown if it's still not known
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
