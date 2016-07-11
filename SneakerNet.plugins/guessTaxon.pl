@@ -23,7 +23,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help tempdir=s numcpus=i)) or die $!;
+  GetOptions($settings,qw(help debug tempdir=s numcpus=i)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings";
@@ -66,14 +66,15 @@ sub runKrakenOnDir{
     runKraken($s,$sampledir,$settings);
 
     my $expectedSpecies=$$s{species} || "UNKNOWN";
-    my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
+    #my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
+    my($percentTaxon,$html,$bestGuess)=guessTaxon($sampledir,$settings);
     if(!$html){
       logmsg "WARNING: html file not found: $html";
       next;
     }
 
     # Add onto the contamination report
-    push(@report,join("\t",$sampleName,$expectedSpecies,$bestGuess,$percentContaminated));
+    push(@report,join("\t",$sampleName,$expectedSpecies,$bestGuess,$percentTaxon));
     logmsg "Including for email: $html";
     symlink(rel2abs($html),"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
@@ -119,45 +120,43 @@ sub runKraken{
   command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
 }
 
-sub reportContamination{
-  my($sampledir,$expectedSpecies,$settings)=@_;
-  #return 100 if(!$expectedSpecies);
+sub guessTaxon{
+  my($sampledir,$settings)=@_;
+  logmsg $sampledir;
 
   my $taxfile="$sampledir/kraken.taxonomy";
 
+  my $numReads=0;
   my %bestGuess;
-  my $numCorrectReads=0;
-  my $numContaminantReads=0;
+  my @header=qw(numReads toplevel domain kingdom phylum class order family genus species);
+  my @tier=@header[2..9];
   open(TAXONOMY,'<',$taxfile) or die "ERROR: could not open $taxfile for reading: $!";
   while(<TAXONOMY>){
     chomp;
-    my($numReads,undef, $domain, $kingdom, $phylum, $class, $order, $family, $genus, $species)=split /\t/;
-    $genus||="";
-    $species||="";
-    $species=~s/^.+\s+(.+)/$1/; # sometimes there are genus and species in the species column, but you just want the second word to be the species.
-    my $scientificName="$genus $species";
-
-    if($expectedSpecies eq $genus || $expectedSpecies eq $species || $expectedSpecies eq $scientificName){
-      $numCorrectReads+=$numReads;
-    } else {
-      $numContaminantReads+=$numReads;
-    }
-
+    my %F;
+    @F{@header}=split /\t/;
+    $F{$_}//="" for(@header);
+    $numReads+=$F{numReads};
+    #$F{species}=~s/^.+\s+(.+)/$1/; # sometimes there are genus and species in the species column, but you just want the second word to be the species.
+    # Refine the species to the scientific name
+    #$F{species}=join(" ",$F{genus},$F{species});
+    
     # Decide on a best guess for what this taxon is.
-    for my $tier($scientificName, $genus, $family, $order, $class, $phylum, $kingdom, $domain){
-      $tier||="";
-      next if($tier=~/^\s*$/); # don't consider this tier if it's empty
-      $bestGuess{$tier}+=$numReads;
+    for (reverse @tier){
+      my $tier=$F{$_};
+      next if(!$tier || $tier=~/^\s*$/); # don't consider this tier if it's empty
+      $bestGuess{$tier}+=$F{numReads};
       last;
     }
   }
   close TAXONOMY;
 
   my $bestGuess=(sort{$bestGuess{$b} <=> $bestGuess{$a}} keys(%bestGuess))[0];
+
+  my $percentBestGuess=sprintf("%0.2f%%",$bestGuess{$bestGuess}/$numReads*100);
   
-  my $percentContamination=$numContaminantReads/($numContaminantReads+$numCorrectReads) * 100;
-  return ($percentContamination, "$sampledir/report.html", $bestGuess) if wantarray;
-  return $percentContamination;
+  return ($percentBestGuess, "$sampledir/report.html", $bestGuess) if wantarray;
+  return $percentBestGuess;
 }
 
 sub usage{
