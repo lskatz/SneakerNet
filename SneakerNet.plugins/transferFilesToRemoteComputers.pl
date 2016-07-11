@@ -122,6 +122,7 @@ sub identifyBadRuns{
     #die Dumper [$samplename,$$sampleInfo{$samplename},\%F];
 
     # Get the name of all files linked to this file through the sample.
+    $$sampleInfo{$samplename}{fastq}//=[];
     my @file=@{$$sampleInfo{$samplename}{fastq}};
     
     # Compare coverage of one read against half of the
