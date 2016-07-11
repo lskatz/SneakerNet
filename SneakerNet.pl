@@ -85,10 +85,11 @@ sub main{
 
       command("$FindBin::RealBin/SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
     }
+    
+    # Add permissions for the sequencermaster group
+    command("chmod -R g+wr $$d{dir}");
   }
   
-  # Add permissions for the sequencermaster group
-  command("chmod -R g+wr $destinationDir");
 
   return 0;
 }
