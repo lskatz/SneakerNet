@@ -264,6 +264,9 @@ sub moveDir{
   command("cp --no-clobber -vr $$info{dir} $destinationDir");
   command("rm -vfr $$info{dir}") if(!$$settings{preserve});
 
+  # add permissions for the sequencermaster group
+  command("chmod -R g+wr $destinationDir");
+
   # Update some attributes about this run
   $$info{source_dir}=$$info{dir};
   $$info{subdir}=$subdir;
