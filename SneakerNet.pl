@@ -86,6 +86,9 @@ sub main{
       command("$FindBin::RealBin/SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
     }
   }
+  
+  # Add permissions for the sequencermaster group
+  command("chmod -R g+wr $destinationDir");
 
   return 0;
 }
@@ -264,7 +267,7 @@ sub moveDir{
   command("cp --no-clobber -vr $$info{dir} $destinationDir");
   command("rm -vfr $$info{dir}") if(!$$settings{preserve});
 
-  # add permissions for the sequencermaster group
+  # Add permissions for the sequencermaster group
   command("chmod -R g+wr $destinationDir");
 
   # Update some attributes about this run
