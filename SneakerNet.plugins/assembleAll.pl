@@ -8,8 +8,10 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
-use FindBin;
+use Bio::SeqIO;
+use Bio::FeatureIO::gff;
 
+use FindBin;
 use lib "$FindBin::RealBin/../lib";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg fullPathToExec/;
 
@@ -27,13 +29,13 @@ sub main{
   my $dir=$ARGV[0];
 
   # Check for required executables
-  for (qw(megahit run_assembly_metrics.pl)){
+  for (qw(megahit prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
     fullPathToExec($_);
   }
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
-  assembleAll($dir,$settings);
+  my $metricsOut=assembleAll($dir,$settings);
 
   return 0;
 }
@@ -46,17 +48,33 @@ sub assembleAll{
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
 
-    my $assembly=assembleSample($sample,$info,$settings);
-    next if(!$assembly);
     my $outdir="$dir/SneakerNet/assemblies/$sample";
-    mkdir $outdir;
-    cp($assembly,$outdir) or die "ERROR copying $assembly to $outdir/: $!";
+    my $outassembly="$outdir/$sample.megahit.fasta";
+    my $outgbk="$outdir/$sample.megahit.gbk";
 
-    # TODO run prokka
+    # Run the assembly
+    if(!-e $outassembly){
+      my $assembly=assembleSample($sample,$info,$settings);
+      next if(!$assembly);
+
+      # Save the assembly
+      mkdir $outdir;
+      command("run_assembly_filterContigs.pl -l 500 $assembly > $outassembly");
+    }
+
+    # Genome annotation
+    if(!-e $outgbk){
+      my $gbk=annotateFasta($sample,$outassembly,$settings);
+      cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
+    }
   }
   
-  # TODO run assembly metrics with min contig size=0.5kb
-  # TODO compare genome size vs expected
+  # run assembly metrics with min contig size=0.5kb
+  my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+  logmsg "Running metrics on the genbank files at $metricsOut";
+  command("run_prediction_metrics.pl $dir/SneakerNet/assemblies/*/*.megahit.gbk > $metricsOut");
+  
+  return $metricsOut;
 }
 
 sub assembleSample{
@@ -65,11 +83,11 @@ sub assembleSample{
   my $R1=$$sampleInfo{fastq}[0];
   my $R2=$$sampleInfo{fastq}[1];
   if(!$R1){
-    logmsg "Could not find R1 for $sample. Skipping";
+    logmsg "Could not find R1 for $sample. Skipping.";
     return "";
   }
   if(!$R2){
-    logmsg "Could not find R2 for $sample. Skipping";
+    logmsg "Could not find R2 for $sample. Skipping.";
     return "";
   }
 
@@ -82,6 +100,47 @@ sub assembleSample{
   die "ERROR with running megahit on $sample: $!" if $?;
 
   return "$outdir/final.contigs.fa";
+}
+
+# I _would_ use prokka, except it depends on having an up to date tbl2asn
+# which is not really necessary for what I'm doing here.
+sub annotateFasta{
+  my($sample,$assembly,$settings)=@_;
+
+  my $outdir="$$settings{tempdir}/$sample/prokka";
+  system("rm -rf $outdir");
+  mkdir $outdir;
+  my $outgff="$outdir/prodigal.gff";
+  my $outgbk="$outdir/prodigal.gbk";
+
+  logmsg "Predicting genes on $sample with Prodigal";
+  command("prodigal -q -i $assembly -o $outgff -f gff -g 11 1>&2");
+
+  # Read the assembly sequence
+  my %seqObj;
+  my $seqin=Bio::SeqIO->new(-file=>$assembly);
+  while(my $seq=$seqin->next_seq){
+    $seqObj{$seq->id}=$seq;
+  }
+  $seqin->close;
+
+  # Add seq features
+  my $gffin=Bio::FeatureIO->new(-file=>$outgff);
+  while(my $feat=$gffin->next_feature){
+    # put the features onto the seqobj and write it to file
+    my $id=$feat->seq_id;
+    $seqObj{$id}->add_SeqFeature($feat);
+  }
+  $gffin->close;
+
+  # Convert to gbk
+  my $gbkObj=Bio::SeqIO->new(-file=>">$outgbk",-format=>"genbank");
+  for my $seq(values(%seqObj)){
+    $gbkObj->write_seq($seq);
+  }
+  $gbkObj->close;
+
+  return $outgbk;
 }
 
 sub usage{
