@@ -10,13 +10,30 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo 
-  command logmsg
+  command logmsg fullPathToExec
 );
 
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
 sub logmsg{print STDERR "$0: @_\n";}
+
+# If argument is an executable in the current path, returns 
+# the full path to it, otherwise dies.
+sub fullPathToExec($;$) {
+	my ($executable,$settings) = @_;
+	my $fullpath="";
+	for ('',split(/:/, $ENV{PATH})) {
+    my $path=$_."/".$executable;
+		if (-x $path && -f $path) { $fullpath = File::Spec->rel2abs($path); last; }
+    if (-x $path && -l $path && -f readlink($path)){ $fullpath = File::Spec->rel2abs(readlink($path)); last; }
+	}
+  if(! -x $fullpath){
+	  my $errStr="Error finding full path to executable ($executable)";
+    die $errStr;
+  }
+	return $fullpath;
+}
 
 sub readConfig{
   my $settings={};
