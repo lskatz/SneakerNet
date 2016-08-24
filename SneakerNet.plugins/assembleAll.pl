@@ -96,7 +96,9 @@ sub assembleSample{
   my $outdir="$$settings{tempdir}/$sample";
   
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
-  command("megahit -1 $R1 -2 $R2 --out-dir '$outdir' -t $$settings{numcpus} 1>&2");
+  my $numcpus=$$settings{numcpus};
+  $numcpus=2 if($numcpus < 2); # megahit requires at least two
+  command("megahit -1 $R1 -2 $R2 --out-dir '$outdir' -t $numcpus 1>&2");
   die "ERROR with running megahit on $sample: $!" if $?;
 
   return "$outdir/final.contigs.fa";
