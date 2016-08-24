@@ -75,6 +75,7 @@ sub baseBalance{
   for my $fastq(@{ $$sHash{fastq} }){
     my $i=0;
     my %nt;
+    $nt{$_}=1 for(@nt); # give a pseudocount just in case anything ends up being zero.
     open(my $fastqFh,"<",$fastq) or die "ERROR: could not open $fastq for reading: $!";
     while(<$fastqFh>){
       my $mod = ++$i % 4;
