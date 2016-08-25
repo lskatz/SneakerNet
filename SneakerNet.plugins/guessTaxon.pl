@@ -105,17 +105,17 @@ sub runKraken{
   my($sample,$sampledir,$settings)=@_;
 
   my $html="$sampledir/report.html";
-  return if(-e $html);
+  return 1 if(-e $html);
 
   my $reads=join(" ",@{ $$sample{fastq} });
-  return if(!$reads);
+  return 0 if(!$reads);
 
   # Skip small file sizes.
   # TODO: use something better like readMetrics.pl 
   for(@{ $$sample{fastq} }){
     if(-s $_ < 10000){
-      logmsg "There are few reads in $$sample{sample_name}. Skipping.";
-      return;
+      logmsg "There are few reads in $$sample{sample_id}. Skipping.";
+      return 0;
     }
   }
   
