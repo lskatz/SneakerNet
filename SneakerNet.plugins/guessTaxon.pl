@@ -109,7 +109,7 @@ sub runKraken{
   # TODO: use something better like readMetrics.pl 
   for(@{ $$sample{fastq} }){
     if(-s $_ < 10000){
-      logmsg "There are few reads in $sample. Skipping.";
+      logmsg "There are few reads in $$sample{sample_name}. Skipping.";
       return;
     }
   }
@@ -160,9 +160,12 @@ sub guessTaxon{
   }
   close TAXONOMY;
 
-  my $bestGuess=(sort{$bestGuess{$b} <=> $bestGuess{$a}} keys(%bestGuess))[0];
-
-  my $percentBestGuess=sprintf("%0.2f%%",$bestGuess{$bestGuess}/$numReads*100);
+  my $bestGuess="";
+  my $percentBestGuess="0%";
+  if($numReads > 10){
+    $bestGuess=(sort{$bestGuess{$b} <=> $bestGuess{$a}} keys(%bestGuess))[0] || "";
+    $percentBestGuess=sprintf("%0.2f%%",$bestGuess{$bestGuess}/$numReads*100);
+  }
   
   return ($percentBestGuess, "$sampledir/report.html", $bestGuess) if wantarray;
   return $percentBestGuess;
