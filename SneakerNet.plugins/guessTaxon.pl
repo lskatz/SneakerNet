@@ -104,6 +104,15 @@ sub runKraken{
 
   my $reads=join(" ",@{ $$sample{fastq} });
   return if(!$reads);
+
+  # Skip small file sizes.
+  # TODO: use something better like readMetrics.pl 
+  for(@{ $$sample{fastq} }){
+    if(-s $_ < 10000){
+      logmsg "There are few reads in $sample. Skipping.";
+      return;
+    }
+  }
   
   command("$KRAKENDIR/kraken --fastq-input --paired --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out $reads");
 
