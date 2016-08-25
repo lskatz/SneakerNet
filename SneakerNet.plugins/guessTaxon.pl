@@ -63,7 +63,12 @@ sub runKrakenOnDir{
     my $sampledir="$outdir/$sampleName";
     system("mkdir -p $sampledir");
     logmsg "Running Kraken on $sampleName";
-    runKraken($s,$sampledir,$settings);
+    my $krakenWorked=runKraken($s,$sampledir,$settings);
+
+    if(!$krakenWorked){
+      logmsg "Kraken was not completed successfully on $sampleName. I will not output results for $sampleName";
+      next;
+    }
 
     my $expectedSpecies=$$s{species} || "UNKNOWN";
     #my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
@@ -127,6 +132,12 @@ sub runKraken{
   command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
+
+  if(! -e "$sampledir/kraken.taxonomy"){
+    return 0;
+  }
+
+  return 1;
 }
 
 sub guessTaxon{
