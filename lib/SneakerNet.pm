@@ -5,6 +5,7 @@ use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
 use Config::Simple;
 use Data::Dumper;
+use Carp qw/croak confess/;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
@@ -160,7 +161,7 @@ sub command{
   system($command);
   if($?){
     my $msg="ERROR running command\n  $command";
-    die $msg;
+    confess $msg;
   }
 }
 
