@@ -46,7 +46,18 @@ sub addReadMetrics{
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
   logmsg "Running fast read metrics";
-  command("run_assembly_readMetrics.pl --numcpus $$settings{numcpus} --fast $dir/*.fastq.gz | sort -k3,3n > $dir/readMetrics.tsv.tmp");
+
+  eval{
+    command("run_assembly_readMetrics.pl --numcpus $$settings{numcpus} --fast $dir/*.fastq.gz > $dir/readMetrics.tsv.tmp");
+    return 1;
+  };
+  if($@){
+    logmsg "There was an error running run_assembly_readMetrics.pl.  This might be because of a divide-by-zero error. This can be solved by running the metrics without subsampling the reads which is slower.\n";
+    logmsg "Rerunning without --fast.";
+    command("run_assembly_readMetrics.pl --numcpus $$settings{numcpus} $dir/*.fastq.gz > $dir/readMetrics.tsv.tmp");
+  } 
+
+  command("sort -k3,3n $dir/readMetrics.tsv.tmp > $dir/readMetrics.tsv");
 
 
   # edit read metrics to include genome sizes
