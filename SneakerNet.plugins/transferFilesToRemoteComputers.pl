@@ -89,8 +89,12 @@ sub transferFilesToRemoteComputers{
   while(my($subfolder,$fileString)=each(%filesToTransfer)){
 
     logmsg "Transferring to $subfolder:\n  $fileString";
-    if(!$$settings{debug}){
+    next if($$settings{debug});
+    eval{
       command("rsync --update -av --no-g $fileString $$settings{transfer_destination_string}/$subfolder/");
+    };
+    if($@){
+      logmsg "ERROR: I could not transfer these files. If it is a permissions issue, one cause is if the destination file already exists but under a different username.";
     }
   }
 }
@@ -159,6 +163,7 @@ sub identifyBadRuns{
 sub usage{
   "Find all reads directories under the inbox
   Usage: $0 MiSeq_run_dir
+  --debug  No files will actually be transferred
   "
 }
 
