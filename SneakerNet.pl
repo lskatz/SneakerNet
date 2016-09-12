@@ -72,6 +72,9 @@ sub main{
     open($logfileFh,'>>',$logfile) or die "ERROR: could not open $logfile for writing: $!";
     symlink($logfile,"$$d{dir}/SneakerNet/forEmail/sneakernet.log");
 
+    # also add in the Sample Sheet for email for later
+    symlink("$$d{dir}/SampleSheet.csv","$sneakernetDir/forEmail/SampleSheet.csv");
+
     # Give the rest to sequencermaster, now that it has all been moved over
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
