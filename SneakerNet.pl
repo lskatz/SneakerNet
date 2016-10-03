@@ -221,6 +221,10 @@ sub parseReadsDir{
     $dirInfo{runType}="IonTorrent" if($foundAllFiles);
   }
 
+  if(!$dirInfo{runType}){
+    die "ERROR: could not determine the run type of $dir (e.g., Illumina or IonTorrent)"
+  }
+
   #die Dumper \%dirInfo;
 
 
