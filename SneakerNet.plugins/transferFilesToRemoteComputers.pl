@@ -20,13 +20,38 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(help inbox=s debug force numcpus=i)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
 
+  # Remote pid file, to block multiple transfers
+  $$settings{transfer_destination_string} =~ m/(.+?\@)?(.+?)\:(.+)?/;
+  my($username,$url,$remotePath)=($1,$2,$3);
+  if(!$url){
+    logmsg "WARNING: I could not parse $$settings{transfer_destination_string} for a remote server!";
+  }
+  $username//="";
+  $username=~s/\@$//;
+
+  my $remotePid="$remotePath/.SneakerNet/pid.txt";
+
+  # Check for the remote pid file
+  my $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null` + 0;
+  logmsg "WARNING: I could not check for the remote pid file: $!" if $?;
+  
+  if($pid > 0 && !$$settings{force}){
+    die "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
+  }
+
+  # Make the pid file
+  command("ssh -q $username\@$url 'mkdir $remotePath/.SneakerNet; echo $$ > $remotePid'");
+
   transferFilesToRemoteComputers($dir,$settings);
+
+  # Remove the remote pid file
+  command("ssh -q $username\@$url rm $remotePid");
 
   return 0;
 }
@@ -91,7 +116,7 @@ sub transferFilesToRemoteComputers{
     logmsg "Transferring to $subfolder:\n  $fileString";
     next if($$settings{debug});
     eval{
-      command("rsync --update -av --no-g $fileString $$settings{transfer_destination_string}/$subfolder/");
+      command("rsync -q --no-motd --update -av --no-g $fileString $$settings{transfer_destination_string}/$subfolder/");
     };
     if($@){
       logmsg "ERROR: I could not transfer these files. If it is a permissions issue, one cause is if the destination file already exists but under a different username.";
@@ -164,6 +189,7 @@ sub usage{
   "Find all reads directories under the inbox
   Usage: $0 MiSeq_run_dir
   --debug  No files will actually be transferred
+  --force  Ignore some warnings
   "
 }
 
