@@ -195,6 +195,11 @@ sub parseReadsDir{
       $foundAllFiles=0;
     }
 
+    # MiniSeq fix: it uses SampleSheetUsed.csv instead of SampleSheet.csv.
+    if(-e "$dir/SampleSheetUsed.csv"){
+      symlink("SampleSheetUsed.csv","$dir/SampleSheet.csv"); # relative path because they're both in the same folder
+    }
+
     # See if the misc. files are in there too
     for(qw(config.xml SampleSheet.csv QC/CompletedJobInfo.xml QC/InterOp QC/runParameters.xml QC/GenerateFASTQRunStatistics.xml QC/RunInfo.xml)){
       if(!-e "$dir/$_"){
@@ -222,7 +227,7 @@ sub parseReadsDir{
   }
 
   if(!$dirInfo{runType}){
-    die "ERROR: could not determine the run type of $dir (e.g., Illumina or IonTorrent)"
+    die "ERROR: could not determine the run type of $dir (e.g., Illumina or IonTorrent). Additional info to complete the run for any particular chemistry:\n$dirInfo{why_not}";
   }
 
   #die Dumper \%dirInfo;
