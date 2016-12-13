@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Data::Dumper;
-use File::Copy qw/move copy/;
+use File::Copy qw/move copy mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
@@ -195,9 +195,22 @@ sub parseReadsDir{
       $foundAllFiles=0;
     }
 
-    # MiniSeq fix: it uses SampleSheetUsed.csv instead of SampleSheet.csv.
+    # How do we tell it is a miniseq run?  My best guess
+    # is if we see "SampleSheetUsed.csv" instead of
+    # "SampleSheet.csv."
     if(-e "$dir/SampleSheetUsed.csv"){
-      symlink("SampleSheetUsed.csv","$dir/SampleSheet.csv"); # relative path because they're both in the same folder
+      logmsg "Detected $dir/SampleSheetUsed.csv: it could be a miniseq run.";
+      # cp the sample sheet to SampleSheet.csv to make it compatible.
+      cp("SampleSheetUsed.csv","$dir/SampleSheet.csv");
+
+      # TODO edit the sample sheet to remove the run
+      removeRunNumberFromSamples("$dir/SampleSheet.csv", $settings);
+      
+      # Make empty files for compatibility
+      for("$dir/QC/runParameters.xml", "$dir/config.xml"){
+        open(EMPTYFILE,">>", $_) or die "ERROR: could not make an empty file $_: $!";
+        close EMPTYFILE;
+      }
     }
 
     # See if the misc. files are in there too
@@ -287,6 +300,46 @@ sub moveDir{
   $$info{source_dir}=$$info{dir};
   $$info{subdir}=$subdir;
   $$info{dir}=$destinationDir;
+}
+
+# Edit a sample sheet in-place to remove a run identifier
+# from the sample names. For some reason the Miniseq
+# appends a four digit number, e.g. "-6006" to the end
+# of each sample name.
+sub removeRunNumberFromSamples{
+  my($samplesheet,$settings)=@_;
+
+  my $newSamplesheetString="";
+  open(SAMPLESHEET,"<", $samplesheet) or die "ERROR: could not read $samplesheet: $!";
+  my $reachedSamples=0;
+  my $runid="";
+  while(<SAMPLESHEET>){
+    # Make a note of the run ID when I see it
+    if(/Local Run Manager Analysis Id,\s*(\d+)/){
+      $runid=$1;
+    }
+
+    if(!$reachedSamples){
+      $newSamplesheetString.=$_;
+      if(/Sample_ID,/){
+        $reachedSamples=1;
+      }
+    }
+    # Read the samples and remove the run ID
+    else {
+      my($samplename,@therest)=split(/,/,$_);
+      $samplename=~s/\-$runid$//;
+      $newSamplesheetString.=join(",",$samplename,@therest);
+    }
+  }
+  close SAMPLESHEET;
+
+  # Now rewrite the sample sheet
+  open(SAMPLESHEET,">", $samplesheet) or die "ERROR: could not write to $samplesheet: $!";
+  print SAMPLESHEET $newSamplesheetString;
+  close SAMPLESHEET;
+
+  return 1;
 }
 
 ################
