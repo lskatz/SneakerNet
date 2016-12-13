@@ -40,9 +40,15 @@ sub emailWhoever{
   my $machineName=basename(dirname($dir));
   my $readMetrics="$dir/readMetrics.tsv";
 
-  # Figure out who we are mailing
-  # Start off with what emails are in the config
-  my @to=@{$$settings{'default.emails'}};
+  # Figure out who we are mailing.
+  # Start off with what emails are in the config, but pay
+  # attention to whether there is just one or many.
+  my @to;
+  if(ref($$settings{'default.emails'}) eq "ARRAY"){
+    push(@to, @{$$settings{'default.emails'}});
+  } else {
+    push(@to, $$settings{'default.emails'});
+  }
 
   # Read the sample sheet for something like
   #                                   Investigator Name,ALS (IAU3)
