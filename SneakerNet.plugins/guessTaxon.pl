@@ -14,8 +14,10 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
 
-my $KRAKENDIR="/opt/kraken";
-my $KRONADIR="/opt/KronaTools-2.6/bin";
+# Get the executable directories
+my $tmpSettings=readConfig();
+my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
+my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
 $ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
 
 local $0=fileparse $0;
