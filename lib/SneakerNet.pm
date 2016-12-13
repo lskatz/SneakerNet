@@ -76,6 +76,7 @@ sub samplesheetInfo{
       my %F;
       @F{@header}=split(/,/,$_);
       $F{route}||=[]; # force route to be an array
+      $F{description}||="";
       for my $keyvalue(split(/;/,lc($F{description}))){
         my($key,$value)=split(/=/,$keyvalue);
         $key=~s/^\s+|\s+$//g;      #whitespace trim
