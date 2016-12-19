@@ -13,7 +13,7 @@ use FindBin;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-use lib "$FindBin::RealBin/lib/perl5";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
