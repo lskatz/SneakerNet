@@ -10,7 +10,7 @@ use File::Temp;
 use FindBin;
 use List::Util qw/sum/;
 
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";

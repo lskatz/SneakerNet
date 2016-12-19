@@ -9,7 +9,7 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 
 use FindBin;
-use lib "$FindBin::RealBin/lib";
+use lib "$FindBin::RealBin/lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";

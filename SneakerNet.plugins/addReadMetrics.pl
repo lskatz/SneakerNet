@@ -10,10 +10,10 @@ use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/../lib/perl5";
+use Email::Stuffer;
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";

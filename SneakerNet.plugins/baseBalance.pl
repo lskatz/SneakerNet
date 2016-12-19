@@ -12,7 +12,7 @@ use File::Basename qw/fileparse basename dirname/;
 use List::MoreUtils qw/uniq/;
 use FindBin;
 
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
 use Email::Stuffer;
 

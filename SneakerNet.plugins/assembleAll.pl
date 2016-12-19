@@ -12,7 +12,7 @@ use Bio::SeqIO;
 use Bio::FeatureIO::gff;
 
 use FindBin;
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg fullPathToExec/;
 
 local $0=fileparse $0;
