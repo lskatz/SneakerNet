@@ -201,9 +201,9 @@ sub parseReadsDir{
     if(-e "$dir/SampleSheetUsed.csv"){
       logmsg "Detected $dir/SampleSheetUsed.csv: it could be a miniseq run.";
       # cp the sample sheet to SampleSheet.csv to make it compatible.
-      cp("SampleSheetUsed.csv","$dir/SampleSheet.csv");
+      cp("$dir/SampleSheetUsed.csv","$dir/SampleSheet.csv");
 
-      # TODO edit the sample sheet to remove the run
+      # edit the sample sheet to remove the run
       removeRunNumberFromSamples("$dir/SampleSheet.csv", $settings);
       
       # Make empty files for compatibility
