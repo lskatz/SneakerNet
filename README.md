@@ -83,15 +83,18 @@ For these steps, log in as sequencermaster.
     $ mkdir ~/bin
     $ cd bin
     $ git clone https://github.com/lskatz/SneakerNet.git
+    $ cd SneakerNet
 
 There are also a couple of prerequisites that the sequencermaster needs to install:
 
 * CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
 * Multithreaded Perl (already installed on most computers)
-* Perl modules
-  * Email::Stuffer
 * Kraken: http://ccb.jhu.edu/software/kraken/
 * Krona: https://github.com/marbl/Krona/
+
+When ready with the prerequisites, run the Makefile
+
+    $ make
 
 ### Set up the cron job (optional)
 
