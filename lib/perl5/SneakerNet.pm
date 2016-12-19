@@ -39,7 +39,7 @@ sub fullPathToExec($;$) {
 sub readConfig{
   my $settings={};
 
-  my @file=glob("$thisdir/../config/*.conf");
+  my @file=glob("$thisdir/../../config/*.conf");
   for my $file(@file){
     my $cfg = new Config::Simple();
     if(!$cfg->read($file)){
