@@ -94,16 +94,11 @@ sub samplesheetInfo{
       }
       delete($F{description});
 
-      # What taxon is this if not listed?
-      #if(!$F{species}){
-      #  for my $taxonArr(@{ $$config{genomeSizes} }){
-      #    my($regex,$size,$possibleTaxon)=@$taxonArr;
-      #    if($F{sample_id}=~/$regex/){
-      #      $F{species}=$possibleTaxon;
-      #      last;
-      #    }
-      #  }
-      #}
+      # The HiSeq seems to use 'sampleid' instead of 'sample_id'
+      if(!$F{sample_id}){
+        $F{sample_id}=$F{sampleid};
+      }
+      die "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
