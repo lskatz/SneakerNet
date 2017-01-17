@@ -8,9 +8,12 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Copy qw/move copy/;
 use File::Basename qw/fileparse basename dirname/;
-use File::Temp;
+use File::Temp qw/tempdir/;
 use FindBin;
 use List::MoreUtils qw/uniq/;
+
+use threads;
+use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use Email::Stuffer;
@@ -23,9 +26,11 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug test numcpus=i)) or die $!;
+  GetOptions($settings,qw(help inbox=s debug test numcpus=i tempdir=s)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
+  $$settings{tempdir}||=tempdir($0.".XXXXXX", TMPDIR=>1, CLEANUP=>1);
+  logmsg "Tempdir is $$settings{tempdir}";
   
   my $dir=$ARGV[0];
 
@@ -47,18 +52,20 @@ sub addReadMetrics{
 
   logmsg "Running fast read metrics";
 
-  eval{
-    command("run_assembly_readMetrics.pl --numcpus $$settings{numcpus} --fast $dir/*.fastq.gz > $dir/readMetrics.tsv.tmp");
-    return 1;
-  };
-  if($@){
-    logmsg "There was an error running run_assembly_readMetrics.pl.  This might be because of a divide-by-zero error. This can be solved by running the metrics without subsampling the reads which is slower.\n";
-    logmsg "Rerunning without --fast.";
-    command("run_assembly_readMetrics.pl --numcpus $$settings{numcpus} $dir/*.fastq.gz > $dir/readMetrics.tsv.tmp");
-  } 
+  my $Q=Thread::Queue->new(glob("$dir/*.fastq.gz"));
+  my @thr;
+  for (0..$$settings{numcpus}-1){
+    $thr[$_]=threads->new(\&readMetricsWorker, $Q, $settings);
+    $Q->enqueue(undef);
+  }
 
-  command("sort -k3,3n $dir/readMetrics.tsv.tmp > $dir/readMetrics.tsv");
+  for(@thr){
+    $_->join;
+  }
 
+  system("cat $$settings{tempdir}/*/readMetrics.tsv | head -n 1 > $dir/readMetrics.tsv.tmp"); # header
+  system("sort -k3,3n $$settings{tempdir}/*/readMetrics.tsv | uniq -u >> $dir/readMetrics.tsv.tmp"); # content
+  die if $?;
 
   # edit read metrics to include genome sizes
   logmsg "Backfilling values in $dir/readMetrics.tsv";
@@ -92,6 +99,26 @@ sub addReadMetrics{
   # Clean up by removing the temporary file
   unlink("$dir/readMetrics.tsv.tmp");
 }
+
+sub readMetricsWorker{
+  my($Q, $settings)=@_;
+
+  my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
+  while(defined(my $fastq=$Q->dequeue)){
+    logmsg "read metrics for $fastq";
+    eval{
+      command("run_assembly_readMetrics.pl --numcpus 1 --fast $fastq >> $tempdir/readMetrics.tsv");
+      return 1;
+    };
+    if($@){
+      logmsg "There was an error running run_assembly_readMetrics.pl.  This might be because of a divide-by-zero error. This can be solved by running the metrics without subsampling the reads which is slower.\n";
+      logmsg "Rerunning without --fast.";
+      command("run_assembly_readMetrics.pl --numcpus 1 $fastq >> $tempdir/readMetrics.tsv");
+    } 
+
+  }
+}
+
 
 # Use a hash of a line from a readmetrics output 
 # to determine genome coverage.
@@ -134,6 +161,8 @@ sub usage{
   "Find all reads directories under the inbox
   Usage: $0 runDir
   --debug # Show debugging information
+  --numcpus  1
+  --tempdir ''
   "
 }
 
