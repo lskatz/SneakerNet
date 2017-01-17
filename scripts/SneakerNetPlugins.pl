@@ -36,7 +36,7 @@ sub main{
         next;
       }
 
-      command("$FindBin::RealBin/SneakerNet.plugins/$exe $dir --numcpus $$settings{numcpus}");
+      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $dir --numcpus $$settings{numcpus}");
     }
   }
   
