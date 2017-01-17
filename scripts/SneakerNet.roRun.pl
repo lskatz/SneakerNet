@@ -101,7 +101,9 @@ sub bcl2fastq{
 
 sub saveSneakernetDir{
   my($tmpdir,$outdir,$settings)=@_;
-  File::Copy::mv($tmpdir,$outdir) or die "ERROR: could not move $tmpdir to $outdir: $!";
+  system("mv -v $tmpdir $outdir 1>&2");
+  die if $?;
+  #File::Copy::mv($tmpdir,$outdir) or die "ERROR: could not move $tmpdir to $outdir: $!";
   return 1;
 }
 
@@ -123,5 +125,6 @@ sub usage{
   Usage: $0 illuminaDirectory [illuminaDirectory2...]
   
   --numcpus  1
+  --outdir   ''
   "
 }
