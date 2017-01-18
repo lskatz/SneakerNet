@@ -76,7 +76,7 @@ sub emailWhoever{
        $body.=" - TSV files can be opened in Excel\n";
        $body.=" - LOG files can be opened in Wordpad\n";
        $body.=" - HTML files can be opened in Internet Explorer\n";
-       $body.="\nThis message was brought to you by SneakerNet!\n";
+       $body.="\nThis message was brought to you by SneakerNet v$$settings{version}!\n";
 
     my $email=Email::Stuffer->from($from)
                                ->subject($subject)
