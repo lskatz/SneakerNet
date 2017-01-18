@@ -37,7 +37,7 @@ sub main{
   addReadMetrics($dir,$settings);
 
   # Mark this file as something to attach for an email later
-  symlink("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv");
+  link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv");
 
   return 0;
 }
@@ -87,6 +87,7 @@ sub addReadMetrics{
     # find the genome size based on the filename
     my $coverage=calculateCoverage(\%h,$sampleInfo,$settings);
     $h{coverage}=$coverage;
+    $h{File}=basename($h{File});
 
     for(@header){
       print READMETRICSFINAL "$h{$_}\t";
