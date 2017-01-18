@@ -56,9 +56,13 @@ sub emailWhoever{
   my $pocLine=`grep -m 1 'Investigator' $dir/SampleSheet.csv`;
   if($pocLine=~/\((.+)\)/){
     my $cdcids=$1;
-    $cdcids=~s/\s+//g;
-    my @cdcids=map {"$_\@cdc.gov"} split(/,/,$cdcids);
-    push(@to,@cdcids);
+    $cdcids=~s/\s+//g; # remove whitespace
+    for my $email(split(/[;,]/,$cdcids)){
+      if($email !~ /\@/){
+        $email.="\@cdc.gov";
+      }
+      push(@to,$email);
+    }
   } else {
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
