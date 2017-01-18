@@ -26,7 +26,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug test numcpus=i tempdir=s)) or die $!;
+  GetOptions($settings,qw(help force inbox=s debug test numcpus=i tempdir=s)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir($0.".XXXXXX", TMPDIR=>1, CLEANUP=>1);
@@ -45,7 +45,7 @@ sub main{
 sub addReadMetrics{
   my($dir,$settings)=@_;
 
-  return if(-e "$dir/readMetrics.tsv");
+  return if(-e "$dir/readMetrics.tsv" && !$$settings{force});
 
   logmsg "Reading sample $dir/SampleSheet.csv";
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
@@ -131,14 +131,18 @@ sub calculateCoverage{
   my $file=basename($$h{File});
   my $samplename=$file || "";
   $samplename=~s/_S\d+_.*?$//;
+  # Parse HiSeq names correctly
+  if($file=~/(^.+_SAN\d+\w\d+)/){ # e.g., 2015V-1036_SAN5927A15_TCCGGAGA-CAGGACGT_L001_R1_001.fastq.gz
+    $samplename=$1;               #       2015V-1036_SAN5927A15
+  }
 
   # Find out if this file has an expected genome size from the Sample Sheet.
   my $expectedGenomeSize=0;
   my $organism="";
   if($$sampleInfo{$samplename}{expectedgenomesize}){
     $expectedGenomeSize=$$sampleInfo{$samplename}{expectedgenomesize} * 10**6;
-  }elsif($$sampleInfo{$samplename}{taxonRules}{genomeSize}){
-    $expectedGenomeSize=$$sampleInfo{$samplename}{taxonRules}{genomeSize};
+  }elsif($$sampleInfo{$samplename}{taxonRules}{genomesize}){
+    $expectedGenomeSize=$$sampleInfo{$samplename}{taxonRules}{genomesize};
   }
 
   my $coverage=$$h{coverage} || 0; 
@@ -149,7 +153,7 @@ sub calculateCoverage{
     $coverage=sprintf("%0.2f",$coverage); # round it
     logmsg "Decided that $$h{File} is $organism with expected genome size $expectedGenomeSize. Calculated coverage: $coverage";
   } else {
-    logmsg "Warning: could not understand what organism $$h{File} belongs to; coverage was not recalculated. Reported coverage: $coverage";
+    logmsg "Warning: could not understand what organism $$h{File} belongs to. I tried to look it up by $samplename. Coverage was not recalculated.";
   }
   return $coverage;
 }
@@ -164,6 +168,7 @@ sub usage{
   --debug # Show debugging information
   --numcpus  1
   --tempdir ''
+  --force
   "
 }
 
