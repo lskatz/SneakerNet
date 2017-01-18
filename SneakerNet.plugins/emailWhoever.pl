@@ -14,7 +14,7 @@ use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
 
 local $0=fileparse $0;
@@ -56,9 +56,13 @@ sub emailWhoever{
   my $pocLine=`grep -m 1 'Investigator' $dir/SampleSheet.csv`;
   if($pocLine=~/\((.+)\)/){
     my $cdcids=$1;
-    $cdcids=~s/\s+//g;
-    my @cdcids=map {"$_\@cdc.gov"} split(/,/,$cdcids);
-    push(@to,@cdcids);
+    $cdcids=~s/\s+//g; # remove whitespace
+    for my $email(split(/[;,]/,$cdcids)){
+      if($email !~ /\@/){
+        $email.="\@cdc.gov";
+      }
+      push(@to,$email);
+    }
   } else {
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
@@ -76,7 +80,7 @@ sub emailWhoever{
        $body.=" - TSV files can be opened in Excel\n";
        $body.=" - LOG files can be opened in Wordpad\n";
        $body.=" - HTML files can be opened in Internet Explorer\n";
-       $body.="\nThis message was brought to you by SneakerNet!\n";
+       $body.="\nThis message was brought to you by SneakerNet v$$settings{version}!\n";
 
     my $email=Email::Stuffer->from($from)
                                ->subject($subject)
