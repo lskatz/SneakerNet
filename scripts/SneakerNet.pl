@@ -202,12 +202,13 @@ sub parseReadsDir{
       logmsg "Detected $dir/SampleSheetUsed.csv: it could be a miniseq run.";
       # cp the sample sheet to SampleSheet.csv to make it compatible.
       cp("$dir/SampleSheetUsed.csv","$dir/SampleSheet.csv");
+      cp("$dir/QC/RunParameters.xml","$dir/QC/runParameters.xml");
 
       # edit the sample sheet to remove the run
       removeRunNumberFromSamples("$dir/SampleSheet.csv", $settings);
       
       # Make empty files for compatibility
-      for("$dir/QC/runParameters.xml", "$dir/config.xml"){
+      for("$dir/config.xml"){
         open(EMPTYFILE,">>", $_) or die "ERROR: could not make an empty file $_: $!";
         close EMPTYFILE;
       }
