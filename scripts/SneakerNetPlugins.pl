@@ -26,10 +26,15 @@ sub main{
   GetOptions($settings,qw(help numcpus=i email!)) or die $!;
   die usage() if($$settings{help});
   $$settings{numcpus}||=1;
+  $$settings{email}//=1;
 
   my @dir=@ARGV;
 
   for my $dir(@dir){
+    # Make the basic SneakerNet folders
+    for("$dir/SneakerNet", "$dir/SneakerNet/forEmail"){
+      mkdir $_;
+    }
     my @exe=@{ $$settings{'default.plugins'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){
