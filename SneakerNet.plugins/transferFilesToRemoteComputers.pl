@@ -38,8 +38,10 @@ sub main{
   my $remotePid="$remotePath/.SneakerNet/pid.txt";
 
   # Check for the remote pid file
-  my $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null` + 0;
-  logmsg "WARNING: I could not check for the remote pid file: $!" if $?;
+  my $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
+  logmsg "WARNING: I could not check for the remote pid file (pid: $pid): $!" if $?;
+  $pid||=0;
+  $pid+=0;
   
   if($pid > 0 && !$$settings{force}){
     die "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
