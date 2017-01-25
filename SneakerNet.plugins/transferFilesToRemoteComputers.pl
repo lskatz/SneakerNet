@@ -11,7 +11,7 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
+use SneakerNet qw/readConfig samplesheetInfo command logmsg passfail/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -64,29 +64,7 @@ sub transferFilesToRemoteComputers{
   # Find information about each genome
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
-  # Which files should be skipped according to Q/C?
-  # Read the passfail file which should have Sample as a
-  # header and then the rest of the headers are pass
-  # or fail values.
-  my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
-  my %failure;
-  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!";
-  my $header=<$passfailFh>;
-  chomp($header);
-  my @header=split(/\t/,$header);
-  while(<$passfailFh>){
-    chomp;
-    my @F=split(/\t/,$_);
-    my %F;
-    @F{@header}=@F;
-
-    # Remove the sample header so that all values of 
-    # %failure have to do with pass/fail
-    my $sample=$F{Sample};
-    delete($F{Sample});
-    $failure{$sample}=\%F;
-  }
-  close $passfailFh;
+  my $failure=passfail($dir,$settings);
   
   # Which files should be transferred?
   my %filesToTransfer=(); # hash keys are species names
@@ -101,7 +79,7 @@ sub transferFilesToRemoteComputers{
         # If the sample fails on anything, then don't
         # transfer it.
         my $pass=1;
-        while(my($category,$value)=each(%{$failure{$fastq}})){
+        while(my($category,$value)=each(%{$$failure{$fastq}})){
           if($value==1){
             $pass=0;
             last;
