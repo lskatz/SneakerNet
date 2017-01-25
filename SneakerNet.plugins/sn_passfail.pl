@@ -52,7 +52,7 @@ sub passfail{
     }
     print $failFh "\n";
   }
-  print $failFh "1: fail\n0: pass\n-1: unknown\n";
+  print $failFh "#1: fail\n#0: pass\n#-1: unknown\n";
   close $failFh;
 
   return $failFile;
