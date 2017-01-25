@@ -10,7 +10,7 @@ use Carp qw/croak confess/;
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
-  readConfig samplesheetInfo 
+  readConfig samplesheetInfo passfail
   command logmsg fullPathToExec
 );
 
@@ -161,4 +161,37 @@ sub command{
   }
 }
 
+# Which files failed?
+sub passfail{
+  my($dir,$settings)=@_;
+
+  # Which files should be skipped according to Q/C?
+  # Read the passfail file which should have Sample as a
+  # header and then the rest of the headers are pass
+  # or fail values.
+  my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
+  my %failure;
+  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!";
+  my $header=<$passfailFh>;
+  chomp($header);
+  my @header=split(/\t/,$header);
+  while(<$passfailFh>){
+    next if(/^#/);
+    chomp;
+    my @F=split(/\t/,$_);
+    my %F;
+    @F{@header}=@F;
+
+    # Remove the sample header so that all values of 
+    # %failure have to do with pass/fail
+    my $sample=$F{Sample};
+    delete($F{Sample});
+    $failure{$sample}=\%F;
+  }
+  close $passfailFh;
+  
+  return \%failure;
+}
+
+1;
 
