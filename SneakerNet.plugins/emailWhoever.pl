@@ -74,7 +74,7 @@ sub emailWhoever{
   # Send one email per recipient.
   for my $to(uniq(@to)){
     logmsg "To: $to";
-    my $from="sequencermaster\@monolith0.edlb.cdc.gov";
+    my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
     my $subject="$subdir QC";
     my $body ="Please open the following attachments for QC information on $subdir.\n";
        $body.=" - TSV files can be opened in Excel\n";
