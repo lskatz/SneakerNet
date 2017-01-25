@@ -9,13 +9,13 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
-use Email::Stuffer;
-use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
+use Email::Stuffer;
+use List::MoreUtils qw/uniq/;
 
 local $0=fileparse $0;
 exit(main());
