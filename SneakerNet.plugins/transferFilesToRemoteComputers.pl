@@ -38,8 +38,10 @@ sub main{
   my $remotePid="$remotePath/.SneakerNet/pid.txt";
 
   # Check for the remote pid file
-  my $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null` + 0;
+  my $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
   logmsg "WARNING: I could not check for the remote pid file: $!" if $?;
+  chomp($pid);
+  $pid||=0;
   
   if($pid > 0 && !$$settings{force}){
     die "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
@@ -63,15 +65,28 @@ sub transferFilesToRemoteComputers{
   my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
 
   # Which files should be skipped according to Q/C?
-  my $tmp=identifyBadRuns($dir,$sampleInfo,$settings);
-  my $toSkip=$$tmp{toSkip};
-  my $whatFailed=$$tmp{whatFailed};
-
-  # Make a file detailing what passed or failed.
-  my @header=qw(File coverage quality failed);
+  # Read the passfail file which should have Sample as a
+  # header and then the rest of the headers are pass
+  # or fail values.
   my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
-  open(PASSFAIL,">",$passfail) or die "ERROR: could not open $passfail for writing: $!";
-  print PASSFAIL join("\t",@header)."\n";
+  my %failure;
+  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!";
+  my $header=<$passfailFh>;
+  chomp($header);
+  my @header=split(/\t/,$header);
+  while(<$passfailFh>){
+    chomp;
+    my @F=split(/\t/,$_);
+    my %F;
+    @F{@header}=@F;
+
+    # Remove the sample header so that all values of 
+    # %failure have to do with pass/fail
+    my $sample=$F{Sample};
+    delete($F{Sample});
+    $failure{$sample}=\%F;
+  }
+  close $passfailFh;
   
   # Which files should be transferred?
   my %filesToTransfer=(); # hash keys are species names
@@ -79,33 +94,29 @@ sub transferFilesToRemoteComputers{
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
     my $taxon=$$s{species} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
+
+    # Transfer the file only if calcengine was specified in the routing
     if(grep {/calcengine/i} @{ $$s{route} }){
-      for(@{ $$s{fastq} }){
-        # Write out the status
-        # The key of each filename is its basename
-        my $f=basename($_);
-        # Set a default hash here
-        $$whatFailed{$f}//={coverage=>0,quality=>0};
+      for my $fastq(@{ $$s{fastq} }){
+        # If the sample fails on anything, then don't
+        # transfer it.
+        my $pass=1;
+        while(my($category,$value)=each(%{$failure{$fastq}})){
+          if($value==1){
+            $pass=0;
+            last;
+          }
+        }
+        next if(!$pass);
 
-        # The boolean $failed is calculated based on whether any of the values are true
-        # and should be equal to what is in %$toSkip.
-        my $failed=int(!!sum(values(%{ $$whatFailed{$f} })));
-        $$whatFailed{$f}{coverage}//=0;
-        $$whatFailed{$f}{quality}//=0;
-        print PASSFAIL join("\t",$f,$$whatFailed{$f}{coverage},$$whatFailed{$f}{quality},$failed)."\n";
-
-        next if($$toSkip{basename($_)});
         my $subfolder=$$s{taxonRules}{dest_subfolder} || "SneakerNet";
-        $filesToTransfer{$subfolder}.=$_." ";
+        $filesToTransfer{$subfolder}.=$fastq." ";
       }
       logmsg "One route for sample $sampleName is the Calculation Engine";
     } else {
       logmsg "Note: The route for $sampleName was not listed in the sample sheet.";
     }
   }
-  print PASSFAIL "# 1 (one) indicates a failure in a particular category.\n";
-  print PASSFAIL "# 1 in the failed category means that the sample failed in any category.\n";
-  close PASSFAIL;
 
   #die "ERROR: no files to transfer" if (!$filesToTransfer);
   logmsg "WARNING: no files will be transferred" if(!keys(%filesToTransfer));
@@ -124,66 +135,6 @@ sub transferFilesToRemoteComputers{
   }
 }
 
-# Which runs should be skipped based on bad quality
-# or bad coverage, or whatever?
-# Returns filenames.
-sub identifyBadRuns{
-  my($dir,$sampleInfo,$settings)=@_;
-
-  my %toSkip=();      # boolean fail
-  my %whatFailed=();  # reasons why it failed
-
-  open(READMETRICS,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
-  my @header=split(/\t/,<READMETRICS>); chomp(@header);
-  while(<READMETRICS>){
-    chomp;
-    my %F;
-    @F{@header}=split(/\t/,$_);
-    my $samplename=basename($F{File},'.fastq.gz');
-    $samplename=~s/_S\d+_.*//; # figure out the sample name before the the _S1_ pattern
-
-    # Skip anything that says undetermined.
-    if($samplename=~/^Undetermined/){
-      $toSkip{basename($F{File})}=1;
-      next;
-    }
-
-    #die Dumper [$samplename,$$sampleInfo{$samplename},\%F];
-
-    # Get the name of all files linked to this file through the sample.
-    $$sampleInfo{$samplename}{fastq}//=[];
-    my @file=@{$$sampleInfo{$samplename}{fastq}};
-    
-    # Compare coverage of one read against half of the
-    # threshold coverage because of PE reads.
-    if($F{coverage} ne '.'){ # dot means coverage is unknown.
-      $F{coverage}||=0;
-      $$sampleInfo{$samplename}{taxonRules}{coverage}||=0;
-      if($F{coverage} < $$sampleInfo{$samplename}{taxonRules}{coverage}/2){
-        for (@file){
-          my $f=basename($_); # avoid the directory name
-          $toSkip{$f}=1;
-        }
-        $whatFailed{$F{File}}=1;
-        logmsg "Low coverage in $F{File}";
-      }
-    }
-
-    $F{avgQuality} ||= 0;
-    $$sampleInfo{$samplename}{taxonRules}{quality}||=0;
-    if($F{avgQuality} < $$sampleInfo{$samplename}{taxonRules}{quality}){
-      for (@file){
-        my $f=basename($_); # avoid the directory name
-        $toSkip{$f}=1;
-      }
-      $whatFailed{$F{File}}=1;
-      logmsg "low quality in $F{File}\n  Skipping @file";
-    }
-
-  }
-
-  return {toSkip=>\%toSkip,whatFailed=>\%whatFailed};
-}
 
 sub usage{
   "Find all reads directories under the inbox
