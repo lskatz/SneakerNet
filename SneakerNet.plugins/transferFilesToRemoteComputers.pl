@@ -42,6 +42,7 @@ sub main{
   logmsg "WARNING: I could not check for the remote pid file: $!" if $?;
   chomp($pid);
   $pid||=0;
+  $pid+=0;
   
   if($pid > 0 && !$$settings{force}){
     die "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
