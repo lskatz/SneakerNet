@@ -14,7 +14,7 @@ use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig/;
+use SneakerNet qw/readConfig command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -86,7 +86,7 @@ sub main{
         next;
       }
 
-      command("$FindBin::RealBin/SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
+      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
     }
     
     # Add permissions for the sequencermaster group
@@ -365,16 +365,6 @@ sub readConfigOld{
   return $settings;
 }
 
-
-sub command{
-  my($command,$settings)=@_;
-  logmsg "COMMAND\n  $command" if($$settings{debug});
-  my $stdout=`$command 2>&1`;
-  my $exit_code=$?;
-  print STDERR $stdout;
-  print $logfileFh $stdout;
-  die "ERROR running command\n  $command" if $exit_code;
-}
 
 sub flatten {
   map { ref $_ ? flatten(@{$_}) : $_ } @_;
