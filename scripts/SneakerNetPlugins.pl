@@ -23,7 +23,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i email!)) or die $!;
+  GetOptions($settings,qw(help numcpus=i email! force!)) or die $!;
   die usage() if($$settings{help});
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
@@ -41,7 +41,9 @@ sub main{
         next;
       }
 
-      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $dir --numcpus $$settings{numcpus}");
+      my $command="$FindBin::RealBin/../SneakerNet.plugins/$exe $dir --numcpus $$settings{numcpus}";
+      $command.=" --force" if($$settings{force});
+      command($command);
     }
   }
   
@@ -53,5 +55,6 @@ sub usage{
   Usage: $0 dir [dir2...]
   --noemail     # Do not send an email at the end.
   --numcpus 1
+  --force
   "
 }
