@@ -14,7 +14,8 @@ How to make a plugin
   2. The script must accept the following flags with the following example 
      values (or no values).  The script does not necessarily need to _use_
      these flags however.
-  3. Add any desired soft-coded variables into `config.bak/settings` and `config/settings`
+  3. Add any desired soft-coded variables such as the location of a blast database
+     into `config.bak/settings` and `config/settings`
   4. If the plugin generates any files, please organize them into 
      `runDirectory/SneakerNet/customdirectory`, and add any results for the
      resulting email to `runDirectory/SneakerNet/forEmail`. Any files under
