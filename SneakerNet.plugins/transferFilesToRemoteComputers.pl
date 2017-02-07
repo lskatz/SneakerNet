@@ -68,6 +68,7 @@ sub transferFilesToRemoteComputers{
   my $tmp=identifyBadRuns($dir,$sampleInfo,$settings);
   my $toSkip=$$tmp{toSkip};
   my $whatFailed=$$tmp{whatFailed};
+  print Dumper $whatFailed;
 
   # Make a file detailing what passed or failed.
   my @header=qw(File coverage quality failed);
@@ -166,7 +167,7 @@ sub identifyBadRuns{
           my $f=basename($_); # avoid the directory name
           $toSkip{$f}=1;
         }
-        $whatFailed{$F{File}}=1;
+        $whatFailed{$F{File}}{coverage}=1;
         logmsg "Low coverage in $F{File}";
       }
     }
@@ -178,7 +179,7 @@ sub identifyBadRuns{
         my $f=basename($_); # avoid the directory name
         $toSkip{$f}=1;
       }
-      $whatFailed{$F{File}}=1;
+      $whatFailed{$F{File}}{quality}=1;
       logmsg "low quality in $F{File}\n  Skipping @file";
     }
 
