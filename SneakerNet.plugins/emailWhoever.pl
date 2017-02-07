@@ -9,13 +9,13 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
-use Email::Stuffer;
-use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig command logmsg/;
+use SneakerNet qw/readConfig passfail command logmsg/;
+use Email::Stuffer;
+use List::MoreUtils qw/uniq/;
 
 local $0=fileparse $0;
 exit(main());
@@ -52,6 +52,7 @@ sub emailWhoever{
 
   # Read the sample sheet for something like
   #                                   Investigator Name,ALS (IAU3)
+  #     or:                           Investigator Name,ALS (IAU3;GZU2)
   # And then make IAU3 into a CDC email.
   my $pocLine=`grep -m 1 'Investigator' $dir/SampleSheet.csv`;
   if($pocLine=~/\((.+)\)/){
@@ -67,6 +68,9 @@ sub emailWhoever{
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
 
+  # Which files failed?
+  my $failure=passfail($dir,$settings);
+
   if($$settings{'email-only'}){
     @to=($$settings{'email-only'});
   }
@@ -74,13 +78,26 @@ sub emailWhoever{
   # Send one email per recipient.
   for my $to(uniq(@to)){
     logmsg "To: $to";
-    my $from="sequencermaster\@monolith0.edlb.cdc.gov";
+    my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
     my $subject="$subdir QC";
     my $body ="Please open the following attachments for QC information on $subdir.\n";
        $body.=" - TSV files can be opened in Excel\n";
        $body.=" - LOG files can be opened in Wordpad\n";
        $body.=" - HTML files can be opened in Internet Explorer\n";
        $body.="\nThis message was brought to you by SneakerNet v$$settings{version}!\n";
+
+    # Failure messages in the body
+    $body.="\nAny samples that have failed QC as shown in passfail.tsv are listed below.\n";
+    for my $fastq(keys(%$failure)){
+      my $failureMessage="";
+      for my $failureCategory(keys(%{$$failure{$fastq}})){
+        if($$failure{$fastq}{$failureCategory} == 1){
+          $failureMessage.=$fastq."\n";
+          last; # just list a given failed fastq once
+        }
+      }
+      $body.=$failureMessage;
+    }
 
     my $email=Email::Stuffer->from($from)
                                ->subject($subject)
