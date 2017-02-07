@@ -68,7 +68,6 @@ sub transferFilesToRemoteComputers{
   my $tmp=identifyBadRuns($dir,$sampleInfo,$settings);
   my $toSkip=$$tmp{toSkip};
   my $whatFailed=$$tmp{whatFailed};
-  print Dumper $whatFailed;
 
   # Make a file detailing what passed or failed.
   my @header=qw(File coverage quality failed);
