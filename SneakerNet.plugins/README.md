@@ -15,15 +15,18 @@ How to make a plugin
 2. Test the script with a run directory.
   1. The first positional argument must be the MiSeq run directory
   2. The script must accept the following flags with the following example 
-     values (or no values)
+     values (or no values).  The script does not necessarily need to _use_
+     these flags however.
      1. `--help`
      2. `--numcpus 1`
      3. `--debug`
      4. `--tempdir /some/directory`
-  3. Add any desired soft-coded variables into config.bak/settings and config/settings
-  4. If any files are added to the run directory, please add them to 
+     5. `--force`
+  3. Add any desired soft-coded variables into `config.bak/settings` and `config/settings`
+  4. If the plugin generates any files, please add them to 
      `runDirectory/SneakerNet/customdirectory`, and add any results for the
      resulting email to `runDirectory/SneakerNet/forEmail`. Any files under
      this directory will be emailed with the SneakerNet email.
-3. If everything runs properly, chmod the script for the sequencing user, so
-   that it is executable.
+3. Activate the plugin
+  1. chmod the script to be executable
+  2. Add the plugin to the list of plugins in `config.bak/plugins` and `config/plugins` 
