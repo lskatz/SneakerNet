@@ -75,44 +75,44 @@ sub emailWhoever{
     @to=($$settings{'email-only'});
   }
 
-  # Send one email per recipient.
-  for my $to(uniq(@to)){
-    logmsg "To: $to";
-    my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
-    my $subject="$subdir QC";
-    my $body ="Please open the following attachments for QC information on $subdir.\n";
-       $body.=" - TSV files can be opened in Excel\n";
-       $body.=" - LOG files can be opened in Wordpad\n";
-       $body.=" - HTML files can be opened in Internet Explorer\n";
-       $body.="\nThis message was brought to you by SneakerNet v$$settings{version}!\n";
 
-    # Failure messages in the body
-    $body.="\nAny samples that have failed QC as shown in passfail.tsv are listed below.\n";
-    for my $fastq(keys(%$failure)){
-      my $failureMessage="";
-      for my $failureCategory(keys(%{$$failure{$fastq}})){
-        if($$failure{$fastq}{$failureCategory} == 1){
-          $failureMessage.=$fastq."\n";
-          last; # just list a given failed fastq once
-        }
+  # Get the email together for sending
+  my $to=join(",",@to);
+  logmsg "To: $to";
+  my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
+  my $subject="$subdir QC";
+  my $body ="Please open the following attachments for QC information on $subdir.\n";
+     $body.=" - TSV files can be opened in Excel\n";
+     $body.=" - LOG files can be opened in Wordpad\n";
+     $body.=" - HTML files can be opened in Internet Explorer\n";
+     $body.="\nThis message was brought to you by SneakerNet v$$settings{version}!\n";
+
+  # Failure messages in the body
+  $body.="\nAny samples that have failed QC as shown in passfail.tsv are listed below.\n";
+  for my $fastq(keys(%$failure)){
+    my $failureMessage="";
+    for my $failureCategory(keys(%{$$failure{$fastq}})){
+      if($$failure{$fastq}{$failureCategory} == 1){
+        $failureMessage.=$fastq."\n";
+        last; # just list a given failed fastq once
       }
-      $body.=$failureMessage;
     }
+    $body.=$failureMessage;
+  }
 
-    my $email=Email::Stuffer->from($from)
-                               ->subject($subject)
-                               ->to($to)
-                               ->text_body($body);
+  my $email=Email::Stuffer->from($from)
+                             ->subject($subject)
+                             ->to($to)
+                             ->text_body($body);
 
-    for my $file(glob("$dir/SneakerNet/forEmail/*")){
-      $email->attach_file($file);
-    }
+  for my $file(glob("$dir/SneakerNet/forEmail/*")){
+    $email->attach_file($file);
+  }
 
-    my $was_sent=$email->send;
+  my $was_sent=$email->send;
 
-    if(!$was_sent){
-      logmsg "Warning: Email was not sent to $to!";
-    }
+  if(!$was_sent){
+    logmsg "Warning: Email was not sent to $to!";
   }
 
   return \@to;
