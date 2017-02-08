@@ -41,7 +41,7 @@ sub passfail{
   my $failHash=identifyBadRuns($dir,$sampleInfo,$settings);
   
   my @sample=keys(%$failHash);
-  my @failHeader=keys($$failHash{$sample[0]});
+  my @failHeader=keys(%{ $$failHash{$sample[0]} });
 
   open(my $failFh, ">", $failFile) or die "ERROR: could not write to $failFile: $!";
   print $failFh join("\t", "Sample", @failHeader)."\n";
