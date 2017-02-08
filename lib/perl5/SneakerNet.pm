@@ -171,7 +171,7 @@ sub passfail{
   # or fail values.
   my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
   my %failure;
-  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!";
+  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!\n  Please make sure that sn_passfail.pl is run before this script, but after the read metrics script.";
   my $header=<$passfailFh>;
   chomp($header);
   my @header=split(/\t/,$header);
