@@ -15,7 +15,6 @@ use threads;
 use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
 
