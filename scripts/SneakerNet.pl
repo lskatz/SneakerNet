@@ -10,7 +10,6 @@ use File::Copy qw/move copy mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
