@@ -133,7 +133,7 @@ sub samplesheetInfo{
   }
   close SAMPLE;
 
-  if(keys(%F) == 0){
+  if(keys(%sample) == 0){
     logmsg "WARNING: there were zero samples found in the sample sheet. Is there a section labeled [data]?\n  in $samplesheet";
   }
 
@@ -158,11 +158,13 @@ sub samplesheetInfo{
 sub command{
   my($command,$settings)=@_;
   logmsg "COMMAND\n  $command" if($$settings{debug});
-  system($command);
+  my $stdout=`$command`;
   if($?){
     my $msg="ERROR running command\n  $command";
     confess $msg;
   }
+
+  return $stdout;
 }
 
 # Which files failed?
