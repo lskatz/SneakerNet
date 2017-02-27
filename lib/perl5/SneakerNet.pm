@@ -133,6 +133,10 @@ sub samplesheetInfo{
   }
   close SAMPLE;
 
+  if(keys(%sample) == 0){
+    logmsg "WARNING: there were zero samples found in the sample sheet. Is there a section labeled [data]?\n  in $samplesheet";
+  }
+
   # Try to associate samples to files
   # Warning: this adds a mix of strings into a set of hashes and so
   # the variable type (ref) needs to be checked sometimes.
@@ -154,11 +158,13 @@ sub samplesheetInfo{
 sub command{
   my($command,$settings)=@_;
   logmsg "COMMAND\n  $command" if($$settings{debug});
-  system($command);
+  my $stdout=`$command`;
   if($?){
     my $msg="ERROR running command\n  $command";
     confess $msg;
   }
+
+  return $stdout;
 }
 
 # Which files failed?

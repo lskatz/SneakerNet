@@ -10,7 +10,6 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Copy qw/mv/;
-use List::MoreUtils qw/uniq/;
 use FindBin;
 
 use threads;
@@ -18,7 +17,7 @@ use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
-use Email::Stuffer;
+use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 

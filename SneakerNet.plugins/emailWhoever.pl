@@ -101,9 +101,9 @@ sub emailWhoever{
   }
 
   my $email=Email::Stuffer->from($from)
-                             ->subject($subject)
-                             ->to($to)
-                             ->text_body($body);
+                          ->subject($subject)
+                          ->to($to)
+                          ->text_body($body);
 
   for my $file(glob("$dir/SneakerNet/forEmail/*")){
     $email->attach_file($file);

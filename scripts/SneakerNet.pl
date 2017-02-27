@@ -10,11 +10,10 @@ use File::Copy qw/move copy mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig command/;
+use SneakerNet qw/readConfig/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -86,7 +85,7 @@ sub main{
         next;
       }
 
-      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
+      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus} 2>&1");
     }
     
     # Add permissions for the sequencermaster group
@@ -365,6 +364,14 @@ sub readConfigOld{
   return $settings;
 }
 
+sub command{
+  my($command,$settings)=@_;
+  my $stdout=SneakerNet::command($command,$settings);
+
+  print $logfileFh $stdout;
+
+  return $stdout;
+}
 
 sub flatten {
   map { ref $_ ? flatten(@{$_}) : $_ } @_;
