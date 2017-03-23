@@ -11,8 +11,11 @@ use File::Copy qw/mv cp/;
 use Bio::SeqIO;
 use Bio::FeatureIO::gff;
 
+use threads;
+use Thread::Queue;
+
 use FindBin;
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg fullPathToExec/;
 
 local $0=fileparse $0;
@@ -36,6 +39,7 @@ sub main{
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
   my $metricsOut=assembleAll($dir,$settings);
+  logmsg "Metrics can be found in $metricsOut";
 
   return 0;
 }
@@ -72,10 +76,85 @@ sub assembleAll{
   # run assembly metrics with min contig size=0.5kb
   my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
   logmsg "Running metrics on the genbank files at $metricsOut";
-  command("run_prediction_metrics.pl $dir/SneakerNet/assemblies/*/*.megahit.gbk > $metricsOut");
+
+  my @thr;
+  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.megahit.gbk"));
+  for(0..$$settings{numcpus}-1){
+    $thr[$_]=threads->new(\&predictionMetricsWorker,$Q,$settings);
+    $Q->enqueue(undef);
+  }
+  for(@thr){
+    $_->join;
+  }
+  
+  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
+  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
   
   return $metricsOut;
 }
+
+sub predictionMetricsWorker{
+  my($Q,$settings)=@_;
+  my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
+  my $predictionOut="$tempdir/predictionMetrics.tsv";
+  my $assemblyOut  ="$tempdir/assemblyMetrics.tsv";
+  my $metricsOut   ="$tempdir/metrics.tsv";
+  command("touch $predictionOut $assemblyOut");
+
+  my $numMetrics=0;
+  while(defined(my $gbk=$Q->dequeue)){
+    # Metrics for the fasta: the fasta file has the same
+    # base name but with a fasta extension
+    my $fasta=$gbk;
+    $fasta=~s/gbk$/fasta/;
+    
+    logmsg "gbk metrics for $gbk";
+    command("run_prediction_metrics.pl $gbk >> $predictionOut");
+    logmsg "asm metrics for $fasta";
+    command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta >> $assemblyOut");
+    $numMetrics++;
+  }
+  # Don't do any combining if no metrics were performed
+  return if($numMetrics==0);
+
+  # Combine the files
+  open(my $predFh,$predictionOut) or die "ERROR: could not read $predictionOut: $!";
+  open(my $assemblyFh, $assemblyOut) or die "ERROR: could not read $assemblyOut: $!";
+  open(my $metricsFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
+
+  # Get and paste the header into the output metrics file
+  my $predHeader=<$predFh>;
+  my $assemblyHeader=<$assemblyFh>;
+  chomp($predHeader,$assemblyHeader);
+  my @predHeader=split(/\t/,$predHeader);
+  my @assemblyHeader=split(/\t/,$assemblyHeader);
+  print $metricsFh "File\tgenomeLength";
+  for(@predHeader, @assemblyHeader){
+    next if($_ =~ /File|genomeLength/);
+    print $metricsFh "\t".$_;
+  }
+  print $metricsFh "\n";
+
+  # Get and paste the metrics from asm and pred into the output file
+  while(my $predLine=<$predFh>){
+    my $assemblyLine=<$assemblyFh>;
+    chomp($predLine,$assemblyLine);
+    
+    my %F;
+    @F{@predHeader}=split(/\t/,$predLine);
+    @F{@assemblyHeader}=split(/\t/,$assemblyLine);
+    $F{File}=basename($F{File},qw(.gbk .fasta));
+
+    print $metricsFh $F{File}."\t".$F{genomeLength};
+    for(@predHeader, @assemblyHeader){
+      next if($_ =~ /File|genomeLength/);
+      print $metricsFh "\t".$F{$_}
+    }
+    print $metricsFh "\n";
+  }
+  close $_ for($predFh,$assemblyFh,$metricsFh);
+}
+
 
 sub assembleSample{
   my($sample,$sampleInfo,$settings)=@_;

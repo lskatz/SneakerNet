@@ -10,10 +10,9 @@ use File::Copy qw/move copy mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-use lib "$FindBin::RealBin/lib";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -86,7 +85,7 @@ sub main{
         next;
       }
 
-      command("$FindBin::RealBin/SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus}");
+      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus} 2>&1");
     }
     
     # Add permissions for the sequencermaster group
@@ -202,12 +201,13 @@ sub parseReadsDir{
       logmsg "Detected $dir/SampleSheetUsed.csv: it could be a miniseq run.";
       # cp the sample sheet to SampleSheet.csv to make it compatible.
       cp("$dir/SampleSheetUsed.csv","$dir/SampleSheet.csv");
+      cp("$dir/QC/RunParameters.xml","$dir/QC/runParameters.xml");
 
       # edit the sample sheet to remove the run
       removeRunNumberFromSamples("$dir/SampleSheet.csv", $settings);
       
       # Make empty files for compatibility
-      for("$dir/QC/runParameters.xml", "$dir/config.xml"){
+      for("$dir/config.xml"){
         open(EMPTYFILE,">>", $_) or die "ERROR: could not make an empty file $_: $!";
         close EMPTYFILE;
       }
@@ -364,15 +364,13 @@ sub readConfigOld{
   return $settings;
 }
 
-
 sub command{
   my($command,$settings)=@_;
-  logmsg "COMMAND\n  $command" if($$settings{debug});
-  my $stdout=`$command 2>&1`;
-  my $exit_code=$?;
-  print STDERR $stdout;
+  my $stdout=SneakerNet::command($command,$settings);
+
   print $logfileFh $stdout;
-  die "ERROR running command\n  $command" if $exit_code;
+
+  return $stdout;
 }
 
 sub flatten {

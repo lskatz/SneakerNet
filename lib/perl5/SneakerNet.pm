@@ -10,7 +10,7 @@ use Carp qw/croak confess/;
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
-  readConfig samplesheetInfo 
+  readConfig samplesheetInfo passfail
   command logmsg fullPathToExec
 );
 
@@ -39,7 +39,7 @@ sub fullPathToExec($;$) {
 sub readConfig{
   my $settings={};
 
-  my @file=glob("$thisdir/../config/*.conf");
+  my @file=glob("$thisdir/../../config/*.conf");
   for my $file(@file){
     my $cfg = new Config::Simple();
     if(!$cfg->read($file)){
@@ -94,16 +94,11 @@ sub samplesheetInfo{
       }
       delete($F{description});
 
-      # What taxon is this if not listed?
-      #if(!$F{species}){
-      #  for my $taxonArr(@{ $$config{genomeSizes} }){
-      #    my($regex,$size,$possibleTaxon)=@$taxonArr;
-      #    if($F{sample_id}=~/$regex/){
-      #      $F{species}=$possibleTaxon;
-      #      last;
-      #    }
-      #  }
-      #}
+      # The HiSeq seems to use 'sampleid' instead of 'sample_id'
+      if(!$F{sample_id}){
+        $F{sample_id}=$F{sampleid};
+      }
+      die "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
@@ -138,6 +133,10 @@ sub samplesheetInfo{
   }
   close SAMPLE;
 
+  if(keys(%sample) == 0){
+    logmsg "WARNING: there were zero samples found in the sample sheet. Is there a section labeled [data]?\n  in $samplesheet";
+  }
+
   # Try to associate samples to files
   # Warning: this adds a mix of strings into a set of hashes and so
   # the variable type (ref) needs to be checked sometimes.
@@ -159,11 +158,46 @@ sub samplesheetInfo{
 sub command{
   my($command,$settings)=@_;
   logmsg "COMMAND\n  $command" if($$settings{debug});
-  system($command);
+  my $stdout=`$command`;
   if($?){
     my $msg="ERROR running command\n  $command";
     confess $msg;
   }
+
+  return $stdout;
 }
 
+# Which files failed?
+sub passfail{
+  my($dir,$settings)=@_;
+
+  # Which files should be skipped according to Q/C?
+  # Read the passfail file which should have Sample as a
+  # header and then the rest of the headers are pass
+  # or fail values.
+  my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
+  my %failure;
+  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!\n  Please make sure that sn_passfail.pl is run before this script, but after the read metrics script.";
+  my $header=<$passfailFh>;
+  chomp($header);
+  my @header=split(/\t/,$header);
+  while(<$passfailFh>){
+    next if(/^#/);
+    chomp;
+    my @F=split(/\t/,$_);
+    my %F;
+    @F{@header}=@F;
+
+    # Remove the sample header so that all values of 
+    # %failure have to do with pass/fail
+    my $sample=$F{Sample};
+    delete($F{Sample});
+    $failure{$sample}=\%F;
+  }
+  close $passfailFh;
+  
+  return \%failure;
+}
+
+1;
 

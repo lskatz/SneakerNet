@@ -9,12 +9,15 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use List::MoreUtils qw/uniq/;
+use File::Copy qw/mv/;
 use FindBin;
 
-use lib "$FindBin::RealBin/../lib";
+use threads;
+use Thread::Queue;
+
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
-use Email::Stuffer;
+use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -50,11 +53,23 @@ sub baseBalanceAll{
   mkdir $outdir; die if $?;
   my @outfile;
   my $outfile="$outdir/basebalance.tsv";
+
+  my @thr;
+  my $Q=Thread::Queue->new();
+  for(0..$$settings{numcpus}-1){
+    $thr[$_]=threads->new(\&baseBalanceWorker,$outdir,$Q,$settings);
+  }
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
 
-    my $balanceFile=baseBalance($s,$outdir,$settings);
-    push(@outfile,$balanceFile);
+    $Q->enqueue($s);
+  }
+  for(@thr){
+    $Q->enqueue(undef);
+  }
+  for(@thr){
+    my $balanceFile=$_->join();
+    push(@outfile,@$balanceFile);
   }
   
   open(OUTFILE,">",$outfile) or die "ERROR: could not open $outfile for writing: $!";
@@ -65,12 +80,25 @@ sub baseBalanceAll{
   return $outfile;
 }
 
+sub baseBalanceWorker{
+  my($outdir,$Q,$settings)=@_;
+  
+  my @bbFile=();
+  while(defined(my $sHash=$Q->dequeue)){
+    my $bbFile=baseBalance($sHash,$outdir,$settings);
+    push(@bbFile,$bbFile);
+  }
+  return \@bbFile;
+}
+
 sub baseBalance{
   my($sHash,$outdir,$settings)=@_;
 
   logmsg $$sHash{sample_id};
   my $outfile="$outdir/$$sHash{sample_id}.tsv";;
-  open(my $outFh,">",$outfile) or die "ERROR: could not open $outfile for writing: $!";
+  return $outfile if(-e $outfile);
+
+  open(my $outFh,">","$outfile.tmp") or die "ERROR: could not open $outfile.tmp for writing: $!";
 
   for my $fastq(@{ $$sHash{fastq} }){
     my $i=0;
@@ -91,12 +119,14 @@ sub baseBalance{
     # header
     my $out='#'.join("\t",@sampleHeader)."\n";
     # values
-    $out.=$fastq."\t";
+    $out.=basename($fastq)."\t";
     $out.=$nt{$_}."\t" for(@nt);
     $out.=sprintf("%0.2f",($nt{A}/$nt{T}))."\t".sprintf("%0.2f",($nt{C}/$nt{G}))."\n";
     print $outFh $out;
   }
   close $outFh;
+
+  mv("$outfile.tmp",$outfile) or die "ERROR: could not move $outfile.tmp to $outfile";
    
   return $outfile;
 }

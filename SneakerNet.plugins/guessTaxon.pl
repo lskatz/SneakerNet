@@ -11,7 +11,7 @@ use File::Temp qw/tempdir/;
 use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
 
-use lib "$FindBin::RealBin/../lib";
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
 
 # Get the executable directories

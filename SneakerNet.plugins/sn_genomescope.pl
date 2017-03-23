@@ -9,9 +9,9 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Spec::Functions qw/abs2rel rel2abs/;
 use File::Copy qw/cp/;
-use FindBin;
 
-use lib "$FindBin::RealBin/../lib";
+use FindBin;
+use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
 
 my $JELLYFISHDIR="/usr/local/bin";
