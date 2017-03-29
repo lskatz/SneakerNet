@@ -133,6 +133,18 @@ sub runKraken{
 
   command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
+  # To capture unclassified reads, we can get the third
+  # column of the first row of the report file. This
+  # information can be appended to the taxonomy file
+  # on the last line.
+  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not read $sampledir/kraken.report: $!";
+  my $firstLine=<$reportFh>;
+  close $reportFh;
+  my $unclassifiedReadsCount=(split(/\t/, $firstLine))[2];
+  open(my $taxFh, ">>", "$sampledir/kraken.taxonomy") or die "ERROR: could not append to $sampledir/kraken.taxonomy: $!";
+  print $taxFh $unclassifiedReadsCount."\n";
+  close $taxFh;
+
   command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
 
   if(! -e "$sampledir/kraken.taxonomy"){
