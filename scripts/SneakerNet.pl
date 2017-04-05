@@ -300,6 +300,23 @@ sub moveDir{
   $$info{source_dir}=$$info{dir};
   $$info{subdir}=$subdir;
   $$info{dir}=$destinationDir;
+
+  # Now that the source directory has been 'moved' to a 
+  # new location, in the event of an error, it should
+  # be moved back to the rejects folder.
+  $SIG{__DIE__} = sub{
+    my $rejectFolder="$$settings{inbox}/reject";
+    mkdir $rejectFolder;
+    chmod(oct("2775"),$rejectFolder); # drwxrwsr-x
+
+    # Don't use command() because it has a potential die
+    # statement in there and could cause an infinite loop.
+    system("cp -r $destinationDir $rejectFolder/");
+    system("rm -rf $destinationDir");
+    logmsg "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+
+    die @_;
+  };
 }
 
 # Edit a sample sheet in-place to remove a run identifier
@@ -389,5 +406,6 @@ sub usage{
   --preserve    # Do not delete the source run (Default: cp and then rm -r)
   --debug       # Show debugging information
   --now         # Do not check whether the directory contents are still being modified.
+  --numcpus  1
   "
 }
