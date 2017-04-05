@@ -11,7 +11,7 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo passfail
-  command logmsg fullPathToExec
+  command logmsg fullPathToExec version
 );
 
 
@@ -197,6 +197,30 @@ sub passfail{
   close $passfailFh;
   
   return \%failure;
+}
+
+# Return the version of SneakerNet
+sub version{
+
+  my $codeRepoVer="-1";
+  my $configVer="-1";
+
+  my $cfg = new Config::Simple();
+  if(!$cfg->read("$thisdir/../../config.bak/settings.conf")){
+    logmsg "WARNING: could not read $thisdir/../../config.bak/settings.conf: ".$cfg->error;
+  }
+  $codeRepoVer=$cfg->param("version");
+
+  # See if the code's version matches the custom version
+  my %settings=%{ readConfig() };
+  $configVer=$settings{version} if($settings{version});
+
+  if($configVer ne $codeRepoVer){
+    logmsg "WARNING: the codebase version is reported differently than the configuration. Please review the config folder to update any new options and to update the version number.";
+    logmsg "The current code repository version is $codeRepoVer.  The custom version is $configVer";
+  }
+
+  return $codeRepoVer;
 }
 
 1;

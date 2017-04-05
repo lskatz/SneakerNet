@@ -13,9 +13,11 @@ use FindBin;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig passfail command logmsg/;
+use SneakerNet qw/readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
+
+my $snVersion=version();
 
 local $0=fileparse $0;
 exit(main());
@@ -85,7 +87,7 @@ sub emailWhoever{
      $body.=" - TSV files can be opened in Excel\n";
      $body.=" - LOG files can be opened in Wordpad\n";
      $body.=" - HTML files can be opened in Internet Explorer\n";
-     $body.="\nThis message was brought to you by SneakerNet v$$settings{version}!\n";
+     $body.="\nThis message was brought to you by SneakerNet v$snVersion!\n";
 
   # Failure messages in the body
   $body.="\nAny samples that have failed QC as shown in passfail.tsv are listed below.\n";
