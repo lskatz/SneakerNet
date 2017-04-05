@@ -305,7 +305,7 @@ sub moveDir{
   # new location, in the event of an error, it should
   # be moved back to the rejects folder.
   $SIG{__DIE__} = sub{
-    my $rejectFolder="$$settings{inbox}/reject";
+    my $rejectFolder="$$settings{inbox}/rejected";
     mkdir $rejectFolder;
     chmod(oct("2775"),$rejectFolder); # drwxrwsr-x
 
