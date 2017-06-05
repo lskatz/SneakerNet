@@ -20,7 +20,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug force numcpus=i)) or die $!;
+  GetOptions($settings,qw(help inbox=s debug force force-transfer numcpus=i)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -73,7 +73,7 @@ sub transferFilesToRemoteComputers{
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
     my $taxon=$$s{species} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
-    if(grep {/calcengine/i} @{ $$s{route} }){
+    if($$settings{'force-transfer'} || grep {/calcengine/i} @{ $$s{route} }){
       FASTQ: for(@{ $$s{fastq} }){
         # Write out the status
         # The key of each filename is its basename
@@ -95,7 +95,7 @@ sub transferFilesToRemoteComputers{
   }
 
   #die "ERROR: no files to transfer" if (!$filesToTransfer);
-  logmsg "WARNING: no files will be transferred" if(!keys(%filesToTransfer));
+  logmsg "WARNING: no files will be transferred. Use --force-transfer to override." if(!keys(%filesToTransfer));
 
   # Make the transfers based on taxon.
   while(my($subfolder,$fileString)=each(%filesToTransfer)){
@@ -114,8 +114,10 @@ sub transferFilesToRemoteComputers{
 sub usage{
   "Find all reads directories under the inbox
   Usage: $0 MiSeq_run_dir
-  --debug  No files will actually be transferred
-  --force  Ignore some warnings
+  --debug            No files will actually be transferred
+  --force            Ignore some warnings
+  --force-transfer   Transfer the reads despite the routing
+                     entry in the spreadsheet.
   "
 }
 
