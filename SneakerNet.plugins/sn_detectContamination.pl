@@ -70,11 +70,19 @@ sub kmerContaminationDetection{
     logmsg "$dir/SneakerNet/kmerHistogram/$sample";
     for my $fastq(@{$$info{fastq}}){
       logmsg "Counting kmers for $fastq";
-      my $histFile="$dir/SneakerNet/kmerHistogram/$sample/".basename($fastq).".tsv";
-      next if(!$$settings{force} && -e $histFile);
+      my $histGraph="$dir/SneakerNet/kmerHistogram/$sample/".basename($fastq).".graph.tsv";
+      my $histTable="$dir/SneakerNet/kmerHistogram/$sample/".basename($fastq).".tsv";
+      next if(!$$settings{force} && -e $histGraph);
 
       my $kmer=Bio::Kmer->new($fastq, {kmercounter=>"jellyfish",numcpus=>$$settings{numcpus}});
       my $hist=$kmer->histogram();
+
+      # Write the histogram to disk
+      open(my $histFh, ">", $histTable) or die "ERROR: could not write to $histTable: $!";
+      for(my $i=0; $i<@$hist;$i++){
+        print $histFh join("\t",$i,$$hist[$i])."\n";
+      }
+      close $histFh;
 
       # After kmer counting, find peaks and valleys
       my $peaksValleys=findThePeaksAndValleys($hist, 100, $settings);
@@ -94,9 +102,12 @@ sub kmerContaminationDetection{
         $histLine.="\t".$$peaksValleys{valleys}[$i][0];
       }
       logmsg $histLine;
-      open(my $fh, ">", $histFile) or die "ERROR: could not write to $histFile: $!";
+      open(my $fh, ">", $histGraph) or die "ERROR: could not write to $histGraph: $!";
       print $fh $histLine."\n";
       close $fh;
+
+      # Do some cleanup
+      $kmer->close;
 
       if(++$i>3 && $$settings{debug}){
         last;
