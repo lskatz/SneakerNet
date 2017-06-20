@@ -125,6 +125,10 @@ sub samplesheetInfo{
         $F{species}="UNKNOWN";
         $F{taxonRules}=$$settings{obj}{"taxonProperties.conf"}->param(-block=>$F{species});
         $F{taxonRules}{taxon}=$F{species};
+        if($F{taxonRules}{dest_subfolder}){
+          logmsg "WARNING: dest_subfolder was set for UNKNOWN in taxonProperties.conf. This parameter is deprecated for UNKNOWN and will be ignored in the future. Please remove dest_subfolder under UNKNOWN in taxonProperties.conf and instead set catchall_subfolder in settings.conf.";
+        }
+        $F{taxonRules}{dest_subfolder} ||= $$settings{catchall_subfolder};
       }
 
       $sample{$F{sample_id}}=\%F;

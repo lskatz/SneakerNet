@@ -85,7 +85,15 @@ sub transferFilesToRemoteComputers{
             next FASTQ;
           }
         }
-        my $subfolder=$$s{taxonRules}{dest_subfolder} || "SneakerNet";
+        # low-priority TODO: use ssh to see if subfolder exists
+        my $subfolder=$$s{taxonRules}{dest_subfolder};
+        if(!defined $$s{taxonRules}{dest_subfolder}){
+          if($$s{catchall_subfolder}){
+            $subfolder=$$s{catchall_subfolder};
+          } else {
+            $subfolder="SneakerNet";
+          }
+        }
         $filesToTransfer{$subfolder}.=$_." ";
       }
       logmsg "One route for sample $sampleName is the Calculation Engine";
