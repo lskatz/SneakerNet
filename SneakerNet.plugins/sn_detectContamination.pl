@@ -74,7 +74,7 @@ sub kmerContaminationDetection{
       my $histTable="$dir/SneakerNet/kmerHistogram/$sample/".basename($fastq).".tsv";
       next if(!$$settings{force} && -e $histGraph);
 
-      my $kmer=Bio::Kmer->new($fastq, {kmercounter=>"jellyfish",numcpus=>$$settings{numcpus}});
+      my $kmer=Bio::Kmer->new($fastq, {numcpus=>$$settings{numcpus}});
       my $hist=$kmer->histogram();
 
       # Write the histogram to disk
