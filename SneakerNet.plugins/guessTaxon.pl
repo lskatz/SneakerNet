@@ -7,6 +7,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
+use File::Copy qw/cp/;
 use File::Temp qw/tempdir/;
 use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
@@ -36,7 +37,7 @@ sub main{
   my $outdir=runKrakenOnDir($dir,$settings);
 
   # make the report emailable 
-  symlink(rel2abs("$outdir/report.tsv"), "$dir/SneakerNet/forEmail/kraken.tsv");
+  cp("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
   command("cd $dir/SneakerNet/forEmail && zip -v kraken.zip *.kraken.html && rm -v *.kraken.html");
 
   return 0;
@@ -83,7 +84,7 @@ sub runKrakenOnDir{
     # Add onto the contamination report
     push(@report,join("\t",$sampleName,$expectedSpecies,$bestGuess,$percentTaxon));
     logmsg "Including for email: $html";
-    symlink(rel2abs($html),"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
+    cp($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
     #if($percentContaminated > 10){
