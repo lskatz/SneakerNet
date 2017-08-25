@@ -40,7 +40,7 @@ sub main{
   open(my $outFh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
   print $outFh join("\t",qw(File numPeaks finalDelta hist firstPeak firstValley secondPeak secondValley...))."\n";
   # Collect all samples
-  for my $fastqKmerCoverageFile (glob("$dir/SneakerNet/kmerHistogram/*/*.tsv")){
+  for my $fastqKmerCoverageFile (glob("$dir/SneakerNet/kmerHistogram/*/*.graph.tsv")){
     open(my $fh, "<", $fastqKmerCoverageFile) or die "ERROR: could not read $fastqKmerCoverageFile: $!";
     my @line=<$fh>;
     close $fh;
