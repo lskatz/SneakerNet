@@ -385,6 +385,7 @@ sub readConfigOld{
 
 sub command{
   my($command,$settings)=@_;
+  logmsg "Executing command\n    $command";
   my $stdout=SneakerNet::command($command,$settings);
 
   print $logfileFh $stdout;
