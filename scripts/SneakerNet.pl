@@ -240,7 +240,9 @@ sub parseReadsDir{
   }
 
   if(!$dirInfo{runType}){
-    die "ERROR: could not determine the run type of $dir (e.g., Illumina or IonTorrent). Additional info to complete the run for any particular chemistry:\n$dirInfo{why_not}";
+    system("mv -v $dir $$settings{inbox}/rejected");
+    logmsg "WARNING: tried to move $dir into $$settings{inbox}/reject but was not able to" if($?);
+    logmsg "ERROR: could not determine the run type of $dir (e.g., Illumina or IonTorrent). Additional info to complete the run for any particular chemistry:\n$dirInfo{why_not}";
   }
 
   #die Dumper \%dirInfo;
