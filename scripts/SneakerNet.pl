@@ -313,9 +313,14 @@ sub moveDir{
 
     # Don't use command() because it has a potential die
     # statement in there and could cause an infinite loop.
-    system("cp -r $destinationDir $rejectFolder/");
-    system("rm -rf $destinationDir");
-    logmsg "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+    eval{
+      system("cp -rv $destinationDir $rejectFolder/");
+      system("rm -rf $destinationDir");
+      logmsg "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+    };
+    if($@){
+      logmsg "ERROR: there was a problem copying $destinationDir to $rejectFolder/.";
+    }
 
     die @_;
   };
