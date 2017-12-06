@@ -9,6 +9,7 @@ use Data::Dumper;
 use File::Copy qw/move copy mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
+use File::Find qw/find/;
 use FindBin;
 use List::MoreUtils qw/uniq/;
 
@@ -309,13 +310,24 @@ sub moveDir{
   $SIG{__DIE__} = sub{
     my $rejectFolder="$$settings{inbox}/rejected";
     mkdir $rejectFolder;
+    # Recursively set special permissions on all folders
     chmod(oct("2775"),$rejectFolder); # drwxrwsr-x
+    find(
+      {
+        no_chdir => 1,
+        wanted   => sub{
+          my $dir=$File::Find::name;
+          return if(!-d $dir);
+          chmod(oct("2775"), $dir); # drwxrwsr-x
+        }
+      }
+      , $rejectFolder
+    );
 
     # Don't use command() because it has a potential die
     # statement in there and could cause an infinite loop.
     eval{
-      system("cp -rv $destinationDir $rejectFolder/");
-      system("rm -rf $destinationDir");
+      system("cp -rv $destinationDir $rejectFolder/ && rm -rf $destinationDir");
       logmsg "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
     };
     if($@){
@@ -324,6 +336,7 @@ sub moveDir{
 
     die @_;
   };
+  die;
 }
 
 # Edit a sample sheet in-place to remove a run identifier
