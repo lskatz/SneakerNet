@@ -9,6 +9,7 @@ use Data::Dumper;
 use File::Copy qw/move copy mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
+use File::Find qw/find/;
 use FindBin;
 use List::MoreUtils qw/uniq/;
 
@@ -69,10 +70,10 @@ sub main{
     die if $?;
     $logfile=$newLogfile;
     open($logfileFh,'>>',$logfile) or die "ERROR: could not open $logfile for writing: $!";
-    symlink($logfile,"$$d{dir}/SneakerNet/forEmail/sneakernet.log");
+    link($logfile,"$$d{dir}/SneakerNet/forEmail/sneakernet.log"); # hard link to help resolve relative path issues
 
     # also add in the Sample Sheet for email for later
-    symlink("$$d{dir}/SampleSheet.csv","$sneakernetDir/forEmail/SampleSheet.csv");
+    link("$$d{dir}/SampleSheet.csv","$sneakernetDir/forEmail/SampleSheet.csv");
 
     # Give the rest to sequencermaster, now that it has all been moved over
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
@@ -309,16 +310,30 @@ sub moveDir{
   $SIG{__DIE__} = sub{
     my $rejectFolder="$$settings{inbox}/rejected";
     mkdir $rejectFolder;
+    # Recursively set special permissions on all folders
     chmod(oct("2775"),$rejectFolder); # drwxrwsr-x
     close $logfileFh; # flush the log
+    find(
+      {
+        no_chdir => 1,
+        wanted   => sub{
+          my $dir=$File::Find::name;
+          return if(!-d $dir);
+          chmod(oct("2775"), $dir); # drwxrwsr-x
+        }
+      }
+      , $rejectFolder
+    );
 
     # Don't use command() because it has a potential die
     # statement in there and could cause an infinite loop.
-    system("cp -r $destinationDir $rejectFolder/");
-    system("rm -rf $destinationDir");
-    # Don't use logmsg because the log fh has been closed,
-    # and the log has been moved.
-    warn "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+    eval{
+      system("cp -rv $destinationDir $rejectFolder/ && rm -rf $destinationDir");
+      warn "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+    };
+    if($@){
+      warn "ERROR: there was a problem copying $destinationDir to $rejectFolder/.";
+    }
 
     die @_;
   };

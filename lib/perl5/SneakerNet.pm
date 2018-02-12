@@ -147,6 +147,9 @@ sub samplesheetInfo{
   my %fastqToName;
   while(my($samplename,$sampleinfo)=each(%sample)){
     my @possibleFastq=glob(dirname($samplesheet)."/$samplename*.fastq.gz");
+    if(!@possibleFastq){
+      logmsg "WARNING: there is a sample $samplename but no files $samplename*.fastq.gz";
+    }
     $sample{$samplename}{fastq}=\@possibleFastq;
     
     # Make some links from file to sample

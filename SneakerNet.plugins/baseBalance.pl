@@ -96,7 +96,7 @@ sub baseBalance{
 
   logmsg $$sHash{sample_id};
   my $outfile="$outdir/$$sHash{sample_id}.tsv";;
-  return $outfile if(-e $outfile);
+  return $outfile if(-e $outfile && (-s $outfile > 0));
 
   open(my $outFh,">","$outfile.tmp") or die "ERROR: could not open $outfile.tmp for writing: $!";
 
