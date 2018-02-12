@@ -35,7 +35,7 @@ sub main{
     for("$dir/SneakerNet", "$dir/SneakerNet/forEmail"){
       mkdir $_;
     }
-    my @exe=@{ $$settings{'default.plugins'} };
+    my @exe=@{ $$settings{'plugins.default'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){
         next;

@@ -34,7 +34,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i inbox=s debug now test email! preserve)) or die $!;
+  GetOptions($settings,qw(help force numcpus=i inbox=s debug now test email! preserve)) or die $!;
   die usage() if($$settings{help});
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
@@ -79,7 +79,7 @@ sub main{
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
     #my @exe=flatten($$settings{'plugins.conf'});
-    my @exe=@{ $$settings{'default.plugins'} };
+    my @exe=@{ $$settings{'plugins.default'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){
         next;
@@ -285,7 +285,7 @@ sub moveDir{
   my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
   $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
   my $destinationDir="$$settings{REPOSITORY_DIRECTORY}/$$info{machine}/$subdir";
-  if(-e $destinationDir){
+  if(!$$settings{force} && -e $destinationDir){
     die "ERROR: destination directory already exists!\n  $destinationDir";
   }
 
@@ -310,12 +310,15 @@ sub moveDir{
     my $rejectFolder="$$settings{inbox}/rejected";
     mkdir $rejectFolder;
     chmod(oct("2775"),$rejectFolder); # drwxrwsr-x
+    close $logfileFh; # flush the log
 
     # Don't use command() because it has a potential die
     # statement in there and could cause an infinite loop.
     system("cp -r $destinationDir $rejectFolder/");
     system("rm -rf $destinationDir");
-    logmsg "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+    # Don't use logmsg because the log fh has been closed,
+    # and the log has been moved.
+    warn "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
 
     die @_;
   };
@@ -408,6 +411,7 @@ sub usage{
   --noemail     # Do not send an email at the end.
   --preserve    # Do not delete the source run (Default: cp and then rm -r)
   --debug       # Show debugging information
+  --force       # overwrite destination dir if it exists
   --now         # Do not check whether the directory contents are still being modified.
   --numcpus  1
   "
