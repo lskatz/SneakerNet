@@ -32,7 +32,7 @@ sub main{
   my $dir=$ARGV[0];
 
   # Check for required executables
-  for (qw(megahit prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
+  for (qw(skesa prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
     fullPathToExec($_);
   }
  
@@ -53,8 +53,10 @@ sub assembleAll{
     next if(ref($info) ne "HASH");
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
-    my $outassembly="$outdir/$sample.megahit.fasta";
-    my $outgbk="$outdir/$sample.megahit.gbk";
+    my $outassembly="$outdir/$sample.skesa.fasta";
+    my $outgbk="$outdir/$sample.skesa.gbk";
+    #my $outassembly="$outdir/$sample.megahit.fasta";
+    #my $outgbk="$outdir/$sample.megahit.gbk";
 
     # Run the assembly
     if(!-e $outassembly){
@@ -78,7 +80,7 @@ sub assembleAll{
   logmsg "Running metrics on the genbank files at $metricsOut";
 
   my @thr;
-  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.megahit.gbk"));
+  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.skesa.gbk"));
   for(0..$$settings{numcpus}-1){
     $thr[$_]=threads->new(\&predictionMetricsWorker,$Q,$settings);
     $Q->enqueue(undef);
@@ -176,11 +178,16 @@ sub assembleSample{
   
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
   my $numcpus=$$settings{numcpus};
-  $numcpus=2 if($numcpus < 2); # megahit requires at least two
-  command("megahit -1 $R1 -2 $R2 --out-dir '$outdir' -t $numcpus 1>&2");
-  die "ERROR with running megahit on $sample: $!" if $?;
 
-  return "$outdir/final.contigs.fa";
+  mkdir $outdir; # Skesa will need this container
+  command("skesa --cores $numcpus --gz --fastq $R1 $R2 > $$settings{tempdir}/$sample.fasta");
+  return "$$settings{tempdir}/$sample.fasta";
+
+  #$numcpus=2 if($numcpus < 2); # megahit requires at least two
+  #command("megahit -1 $R1 -2 $R2 --out-dir '$outdir' -t $numcpus 1>&2");
+  #die "ERROR with running megahit on $sample: $!" if $?;
+
+  #return "$outdir/final.contigs.fa";
 }
 
 # I _would_ use prokka, except it depends on having an up to date tbl2asn
