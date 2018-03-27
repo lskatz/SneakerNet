@@ -195,14 +195,22 @@ sub assembleSample{
 sub annotateFasta{
   my($sample,$assembly,$settings)=@_;
 
-  my $outdir="$$settings{tempdir}/$sample/prokka";
+  my $outdir="$$settings{tempdir}/$sample/prodigal";
   system("rm -rf $outdir");
   mkdir $outdir;
   my $outgff="$outdir/prodigal.gff";
   my $outgbk="$outdir/prodigal.gbk";
 
   logmsg "Predicting genes on $sample with Prodigal";
-  command("prodigal -q -i $assembly -o $outgff -f gff -g 11 1>&2");
+  eval{
+    command("prodigal -q -i $assembly -o $outgff -f gff -g 11 1>&2");
+  };
+  # If there is an issue, push ahead with a zero byte file
+  if($@){
+    logmsg "There was an issue with predicting genes on sample $sample. This might be caused by a poor assembly.";
+    open(my $fh, ">", $outgff) or die "ERROR: could not write to $outgff: $!";
+    close $fh;
+  }
 
   # Read the assembly sequence
   my %seqObj;
