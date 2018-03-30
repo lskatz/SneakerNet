@@ -7,6 +7,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
+use Cwd qw/realpath/;
 use File::Temp;
 use FindBin;
 
@@ -39,6 +40,7 @@ sub emailWhoever{
   my($dir,$settings)=@_;
 
   my $subdir=basename($dir);
+  my $runName=basename(realpath($dir));
   my $machineName=basename(dirname($dir));
   my $readMetrics="$dir/readMetrics.tsv";
 
@@ -82,8 +84,8 @@ sub emailWhoever{
   my $to=join(",",@to);
   logmsg "To: $to";
   my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
-  my $subject="$subdir QC";
-  my $body ="Please open the following attachments for QC information on $subdir.\n";
+  my $subject="$runName QC";
+  my $body ="Please open the following attachments for QC information on $runName.\n";
      $body.=" - TSV files can be opened in Excel\n";
      $body.=" - LOG files can be opened in Wordpad\n";
      $body.=" - HTML files can be opened in Internet Explorer\n";
