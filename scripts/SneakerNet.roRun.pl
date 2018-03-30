@@ -45,7 +45,8 @@ sub makeSneakernetDir{
   mkdir $outdir;
 
   my @fastq       = glob("$dir/Data/Intensities/BaseCalls/*.fastq.gz");
-  my $sampleSheet=  "$dir/Data/Intensities/BaseCalls/SampleSheet.csv";
+  my $snok        = "$dir/snok.txt";
+  my $sampleSheet = "$dir/Data/Intensities/BaseCalls/SampleSheet.csv";
   my $config      =  "$dir/Data/Intensities/BaseCalls/config.xml";
   my @interop     =  glob("$dir/InterOp/*");
   my @xml         = ("$dir/CompletedJobInfo.xml",
@@ -69,11 +70,15 @@ sub makeSneakernetDir{
       die "ERROR: file does not exist: $_";
     }
   }
+  if(!-e $snok){
+    logmsg "snok.txt not found. I will not read from it.";
+  }
 
   for(@fastq, $sampleSheet, $config){
     my $to="$outdir/".basename($_);
     cp($_, $to);
   }
+  cp($snok,"$outdir/".basename($snok));
   mkdir "$outdir/QC";
   for(@xml){
     my $to="$outdir/QC/".basename($_);
