@@ -95,3 +95,13 @@ will accept it.
   * `*.fastq.gz`
   * `SampleSheet.csv`, usually derived from Rover
   * `config.xml`
+
+### Optional files for a run
+
+At least one file at this time is optional
+
+* `snok.txt`
+  * Its presence helps SneakerNet understand that a run is ready to be read by SneakerNet. It can be present in the root directory of a full run instead of a folder with extracted contents.
+  * It can also have key value pairs.  This file is still being developed and can accept the following key/value pairs, without ini-style headers.
+    * `emails = email1@example.com, email2@example.com, ...`
+
