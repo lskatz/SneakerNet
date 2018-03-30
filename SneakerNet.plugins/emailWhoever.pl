@@ -74,14 +74,16 @@ sub emailWhoever{
 
   # Read the run's snok.txt for any emails
   if(-e "$dir/snok.txt"){
+    my @email;
     my $snokCfg = new Config::Simple();
     eval{
       $snokCfg->read("$dir/snok.txt");
+      @email = $snokCfg->param("emails");
+      logmsg "Found emails in snok.txt: @email";
     };
     if($@){
       logmsg "WARNING: could not read snok.txt for any emails, but the file exists!";
     }
-    my @email = $snokCfg->param("emails");
     push(@to,@email);
   }
 
