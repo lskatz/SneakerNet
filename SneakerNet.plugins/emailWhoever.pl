@@ -10,6 +10,7 @@ use File::Basename qw/fileparse basename dirname/;
 use Cwd qw/realpath/;
 use File::Temp;
 use FindBin;
+use Config::Simple;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -39,7 +40,6 @@ sub main{
 sub emailWhoever{
   my($dir,$settings)=@_;
 
-  my $subdir=basename($dir);
   my $runName=basename(realpath($dir));
   my $machineName=basename(dirname($dir));
   my $readMetrics="$dir/readMetrics.tsv";
@@ -72,13 +72,25 @@ sub emailWhoever{
     logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
   }
 
-  # Which files failed?
-  my $failure=passfail($dir,$settings);
+  # Read the run's snok.txt for any emails
+  if(-e "$dir/snok.txt"){
+    my $snokCfg = new Config::Simple();
+    eval{
+      $snokCfg->read("$dir/snok.txt");
+    };
+    if($@){
+      logmsg "WARNING: could not read snok.txt for any emails, but the file exists!";
+    }
+    my @email = $snokCfg->param("emails");
+    push(@to,@email);
+  }
 
   if($$settings{'email-only'}){
     @to=($$settings{'email-only'});
   }
 
+  # Which files failed?
+  my $failure=passfail($dir,$settings);
 
   # Get the email together for sending
   my $to=join(",",@to);
