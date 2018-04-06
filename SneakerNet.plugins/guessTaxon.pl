@@ -148,6 +148,9 @@ sub runKraken{
 
   command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
 
+  # Go ahead and remove kraken.out which is a huge file
+  unlink("$sampledir/kraken.out");
+
   if(! -e "$sampledir/kraken.taxonomy"){
     return 0;
   }
