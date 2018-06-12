@@ -56,7 +56,10 @@ sub main{
     logmsg "Going to move $$d{dir}";
     waitForAnyChanges($d,$settings);
 
-    moveDir($d,$settings);
+    my $moveSuccess=moveDir($d,$settings);
+    if(!$moveSuccess){
+      next;
+    }
 
     # At this point, the log file should be put into this current directory.
     # Also, a SneakerNet directory should be created.
@@ -74,6 +77,14 @@ sub main{
 
     # also add in the Sample Sheet for email for later
     link("$$d{dir}/SampleSheet.csv","$sneakernetDir/forEmail/SampleSheet.csv");
+
+    # Include snok.txt in the report email.
+    # Make an empty snok.txt if it doesn't exist
+    if(! -e "$$d{dir}/snok.txt"){
+      open(my $fh, ">", "$$d{dir}/snok.txt") or die "ERROR: could not write to $$d{dir}/snok.txt: $!";
+      close $fh;
+    }
+    link("$$d{dir}/snok.txt", "$sneakernetDir/forEmail/snok.txt");
 
     # Give the rest to sequencermaster, now that it has all been moved over
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
@@ -287,7 +298,10 @@ sub moveDir{
   $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
   my $destinationDir="$$settings{REPOSITORY_DIRECTORY}/$$info{machine}/$subdir";
   if(!$$settings{force} && -e $destinationDir){
-    die "ERROR: destination directory already exists!\n  $destinationDir";
+    mkdir "$$settings{inbox}/rejected/";
+    system("mv -v $$info{dir} $$settings{inbox}/rejected/");
+    logmsg "ERROR: destination directory already exists!\n  $destinationDir";
+    return 0;
   }
 
   #die Dumper $info;
@@ -337,6 +351,8 @@ sub moveDir{
 
     die @_;
   };
+
+  return 1;
 }
 
 # Edit a sample sheet in-place to remove a run identifier
