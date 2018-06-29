@@ -8,39 +8,60 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
+use File::Spec;
 
 use threads;
 use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg fullPathToExec/;
+use SneakerNet qw/readConfig logmsg /;
+use Email::Stuffer;
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(help force tempdir=s debug numcpus=i email=s)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
-  logmsg "Temporary directory is at $$settings{tempdir}";
+  #logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
 
   my $dirInfo = parseReadsDir($dir,$settings);
 
-  if(!$$dirInfo{runType}){
-    system("mv -v $dir $$settings{inbox}/rejected");
-    logmsg "ERROR: could not determine the run type of $dir. Additional info to complete the run for any particular chemistry:\n$$dirInfo{why_not}";
+  my $runStatus="";
+  my $exitStatus=0;
 
-    # TODO send email using snok.txt?
-
-    return 1;
+  if($$dirInfo{runType}){
+    print $$dirInfo{runType}."\n";
+    $runStatus.="Run type for $$dirInfo{run_name} is $$dirInfo{runType}, and it is ready to run!\n";
+    
+  } else {
+    $runStatus.="ERROR: could not determine the run type of $dir. Additional info to complete the run for any particular chemistry:\n$$dirInfo{why_not}\n";
+    $exitStatus=3;
   }
-  
-  return 0;
+
+  if($$settings{debug}){
+    logmsg $runStatus;
+  }
+
+  # Send email using snok.txt?
+  if(my $to = $$settings{email}){
+    my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
+    my $subject="Initial SneakerNet status for $$dirInfo{run_name}";
+    my $body="SneakerNet took a first glance at $$dirInfo{run_name} and is reporting...\n$runStatus";
+    my $email=Email::Stuffer->from($from)
+                            ->subject($subject)
+                            ->to($to)
+                            ->text_body($body);
+    $email->send;
+  }
+
+  return $exitStatus;
 }
 
 # Figure out if this really is a reads directory
@@ -49,8 +70,10 @@ sub parseReadsDir{
 
   my %dirInfo=(dir=>$dir,is_good=>1,why_not=>"", runType=>"");
 
-  my $b=basename $dir;
+  # The directory name, regardless 
+  my $b=basename(File::Spec->rel2abs($dir));
   ($dirInfo{machine},$dirInfo{year},$dirInfo{run},$dirInfo{comment})=split(/\-/,$b);
+  $dirInfo{run_name}=$b;
 
   # If the run name isn't even there, then it's not a run directory
   if(!defined($dirInfo{run})){
@@ -162,10 +185,10 @@ sub removeRunNumberFromSamples{
 
 
 sub usage{
-  "Figure out the type of run directory. Exit code > 0 if
-  the run is invalid.
+  "Print the type of run directory.\nExit code 3 if the run is invalid.
 
-  Usage: $0 dir/
+  Usage: $0 [options] dir/
+  --debug   Print additional information about the run to stderr
   "
 }
 
