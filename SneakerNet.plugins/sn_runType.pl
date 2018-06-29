@@ -23,7 +23,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force tempdir=s debug numcpus=i email=s)) or die $!;
+  GetOptions($settings,qw(help force tempdir=s debug numcpus=i email:s )) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
@@ -50,7 +50,24 @@ sub main{
   }
 
   # Send email using snok.txt?
-  if(my $to = $$settings{email}){
+  if(defined(my $to = $$settings{email})){
+
+    # append any snok.txt emails
+    # Read the run's snok.txt for any emails
+    if(-e "$dir/snok.txt"){
+      my @email;
+      my $snokCfg = new Config::Simple();
+      eval{
+        $snokCfg->read("$dir/snok.txt");
+        @email = $snokCfg->param("emails");
+        logmsg "Found emails in snok.txt: @email";
+      };
+      if($@){
+        logmsg "WARNING: could not read snok.txt for any emails, but the file exists!";
+      }
+      $to.=",".join(",",@email);
+    }
+      
     my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
     my $subject="Initial SneakerNet status for $$dirInfo{run_name}";
     my $body="SneakerNet took a first glance at $$dirInfo{run_name} and is reporting...\n$runStatus";
@@ -59,7 +76,9 @@ sub main{
                             ->to($to)
                             ->text_body($body);
     $email->send;
+    logmsg "Email sent!";
   }
+    logmsg "Exit: $exitStatus";
 
   return $exitStatus;
 }
@@ -187,8 +206,11 @@ sub removeRunNumberFromSamples{
 sub usage{
   "Print the type of run directory.\nExit code 3 if the run is invalid.
 
-  Usage: $0 [options] dir/
+  Usage: $0 [options] -- dir/
   --debug   Print additional information about the run to stderr
+  --email   If supplied, even without a value, snok.txt will be
+            used for report recipients.  If a value is given,
+            the report will also be sent to that email.
   "
 }
 
