@@ -19,6 +19,7 @@ use SneakerNet qw/readConfig/;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 local $0=fileparse $0;
+my $runOrdinalDelimiter="__";
 
 # All logging will go to a file, which will end up as $run/SneakerNet.txt.
 # The link to the log will be emailed in the email plugin.
@@ -256,13 +257,15 @@ sub parseReadsDir{
   }
 
   if(!$dirInfo{runType}){
-    system("mv -v $dir $$settings{inbox}/rejected");
-    logmsg "WARNING: tried to move $dir into $$settings{inbox}/reject but was not able to" if($?);
+    my $targetDir="$$settings{inbox}/rejected/".basename($dir);
+    my $targetDir2=moveRun($dir,$targetDir,$settings);
+    if(!$targetDir2){
+      logmsg "WARNING: tried to move $dir to $targetDir but was not able to";
+    }
     logmsg "ERROR: could not determine the run type of $dir (e.g., Illumina or IonTorrent). Additional info to complete the run for any particular chemistry:\n$dirInfo{why_not}";
   }
 
   #die Dumper \%dirInfo;
-
 
   return \%dirInfo;
 }
@@ -294,6 +297,7 @@ sub waitForAnyChanges{
   return 1;
 }
 
+# Move the run to the repository
 sub moveDir{
   my($info,$settings)=@_;
 
@@ -302,9 +306,13 @@ sub moveDir{
   $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
   my $destinationDir="$$settings{REPOSITORY_DIRECTORY}/$$info{machine}/$subdir";
   if(!$$settings{force} && -e $destinationDir){
-    mkdir "$$settings{inbox}/rejected/";
-    system("mv -v $$info{dir} $$settings{inbox}/rejected/");
-    logmsg "ERROR: destination directory already exists!\n  $destinationDir";
+    my $targetDir="$$settings{inbox}/rejected/".basename($$info{dir});
+    my $targetDir2=moveRun($$info{dir},$targetDir,$settings);
+    if(!$targetDir2){
+      logmsg "WARNING: tried to move the run to $targetDir but was not able to";
+    }
+
+    logmsg "ERROR: destination directory already exists in the repo!\n  $destinationDir";
     return 0;
   }
 
@@ -326,10 +334,15 @@ sub moveDir{
   # new location, in the event of an error, it should
   # be moved back to the rejects folder.
   $SIG{__DIE__} = sub{
-    my $rejectFolder="$$settings{inbox}/rejected";
-    mkdir $rejectFolder;
+    my $targetDir="$$settings{inbox}/rejected/".basename($$info{dir});
+    my $targetDir2=moveRun($$info{dir},$targetDir,$settings);
+    if(!$targetDir2){
+      logmsg "WARNING: tried to move the run to $targetDir but was not able to";
+      die @_;
+    }
+
     # Recursively set special permissions on all folders
-    chmod(oct("2775"),$rejectFolder); # drwxrwsr-x
+    chmod(oct("2775"),$targetDir2); # drwxrwsr-x
     close $logfileFh; # flush the log
     find(
       {
@@ -340,18 +353,18 @@ sub moveDir{
           chmod(oct("2775"), $dir); # drwxrwsr-x
         }
       }
-      , $rejectFolder
+      , $targetDir2
     );
 
     # Don't use command() because it has a potential die
-    # statement in there and could cause an infinite loop.
-    eval{
-      system("cp -rv $destinationDir $rejectFolder/ && rm -rf $destinationDir");
-      warn "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
-    };
-    if($@){
-      warn "ERROR: there was a problem copying $destinationDir to $rejectFolder/.";
-    }
+    # statement in there and could cause an infinite stall.
+    #eval{
+    #  system("cp -rv $destinationDir $rejectFolder/ && rm -rf $destinationDir");
+    #  warn "ERROR: Moved the error folder from $destinationDir to $rejectFolder";
+    #};
+    #if($@){
+    #  warn "ERROR: there was a problem copying $destinationDir to $rejectFolder/.";
+    #}
 
     die @_;
   };
@@ -402,6 +415,56 @@ sub removeRunNumberFromSamples{
 ################
 # Utility subs #
 ################
+
+# Safely move a run folder to a target folder name.
+# Return new directory name on success, 0 on failure.
+sub moveRun{
+  my($runDir,$targetDir,$settings)=@_;
+
+  if(!-e $runDir){
+    logmsg "ERROR: run directory does not exist $runDir";
+    return 0;
+  }
+
+  # Create the container folder just in case it doesn't exist.
+  # However if it does exist, then mkdir will return an error
+  # which I don't exactly care about. But if the folder
+  # does not exist, then I DO care about that and will return 0.
+  my $parentTargetDir=dirname($targetDir);
+  mkdir $parentTargetDir;
+  if(!-e $parentTargetDir){
+    return 0;
+  }
+
+  # If the target doesn't already exist, then perfect. Move it.
+  if(! -e $targetDir){
+    system("mv -v $runDir $targetDir >&2");
+    if($?){
+      logmsg "ERROR moving the run directory to the target directory";
+      return 0;
+    }
+    return $targetDir;
+  }
+  
+  # If the target already exists, then make a new name.
+  my $ordinal=1;
+  my $newTargetDir=$targetDir."__".$ordinal;
+  while(-e $targetDir){
+    $ordinal++;
+    $newTargetDir=$targetDir."__".$ordinal;
+  }
+  logmsg "Renaming the target run to $newTargetDir";
+
+  # At this point, we have ensured that the target directory
+  # does not exist and that we are free to move the run.
+  system("mv -v $runDir $newTargetDir >&2");
+  if($?){
+    logmsg "ERROR moving the run to $newTargetDir";
+    return 0;
+  }
+  
+  return $newTargetDir;
+}
 
 sub readConfigOld{
   my @file=glob("$FindBin::RealBin/config/*");
