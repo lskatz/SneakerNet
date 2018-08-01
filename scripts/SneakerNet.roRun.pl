@@ -70,15 +70,19 @@ sub makeSneakernetDir{
       die "ERROR: file does not exist: $_";
     }
   }
-  if(!-e $snok){
+  if(-e $snok){
+    cp($snok,"$outdir/".basename($snok));
+  } else {
     logmsg "snok.txt not found. I will not read from it.";
+    # "touch" the snok file
+    open(my $fh, ">>", "$outdir/".basename($snok)) or die "ERROR: could not touch $outdir/".basename($snok).": $!";
+    close $fh;
   }
 
   for(@fastq, $sampleSheet, $config){
     my $to="$outdir/".basename($_);
     cp($_, $to);
   }
-  cp($snok,"$outdir/".basename($snok));
   mkdir "$outdir/QC";
   for(@xml){
     my $to="$outdir/QC/".basename($_);
