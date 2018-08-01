@@ -257,6 +257,8 @@ sub parseReadsDir{
     $dirInfo{runType}="IonTorrent" if($foundAllFiles);
   }
 
+  # There isn't a run type and I don't know what to do with
+  # it: move it to the rejected folder
   if(!$dirInfo{runType}){
     my $targetDir="$$settings{inbox}/rejected/".basename($dir);
     my $targetDir2=moveRun($dir,$targetDir,$settings);
@@ -306,6 +308,9 @@ sub moveDir{
   my $subdir=join("-",$$info{machine},$$info{year},$$info{run},$$info{comment});
   $subdir=~s/\-$//; # remove final dash in case the comment wasn't there
   my $destinationDir="$$settings{REPOSITORY_DIRECTORY}/$$info{machine}/$subdir";
+
+  # The destination directory already exists: move the run
+  # to the rejected folder.
   if(!$$settings{force} && -e $destinationDir){
     my $targetDir="$$settings{inbox}/rejected/".basename($$info{dir});
     my $targetDir2=moveRun($$info{dir},$targetDir,$settings);
@@ -319,7 +324,7 @@ sub moveDir{
 
   #die Dumper $info;
   # Copy and then delete, so that permissions are retained for sequencermaster
-  command("mkdir -p $$settings{REPOSITORY_DIRECTORY}/$$info{machine}");
+  command("mkdir -pv $$settings{REPOSITORY_DIRECTORY}/$$info{machine}");
   command("cp --no-clobber -vr $$info{dir} $destinationDir");
   command("rm -vfr $$info{dir}") if(!$$settings{preserve});
 
@@ -335,6 +340,7 @@ sub moveDir{
   # new location, in the event of an error, it should
   # be moved back to the rejects folder.
   $SIG{__DIE__} = sub{
+    logmsg "SneakerNet died: trying to move the run to the rejected folder";
     my $targetDir="$$settings{inbox}/rejected/".basename($$info{dir});
     my $targetDir2=moveRun($$info{dir},$targetDir,$settings);
     if(!$targetDir2){
@@ -450,7 +456,7 @@ sub moveRun{
   # If the target already exists, then make a new name.
   my $ordinal=1;
   my $newTargetDir=$targetDir."__".$ordinal;
-  while(-e $targetDir){
+  while(-e $newTargetDir){
     $ordinal++;
     $newTargetDir=$targetDir."__".$ordinal;
   }
@@ -463,6 +469,26 @@ sub moveRun{
     logmsg "ERROR moving the run to $newTargetDir";
     return 0;
   }
+
+  # Chmod the directory and everything under it.
+  # 664 for files, 775 for dirs
+  logmsg "Chmodding files to 664 and dirs to 775";
+  chmod(oct("0775"),$newTargetDir); # drwxrwxr-x
+  find(
+    {
+      no_chdir => 1,
+      wanted   => sub{
+        my $file=$File::Find::name;
+        if(-d $file){
+          chmod(oct("0775"), $file);
+        } 
+        elsif(-f $file){
+          chmod(oct("0664"), $file);
+        }
+      }
+    },
+    $newTargetDir
+  );
   
   return $newTargetDir;
 }
