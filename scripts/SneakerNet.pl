@@ -169,7 +169,8 @@ sub findReadsDir{
   my @readsDir; # holds the true reads directories
   for my $d(@dir){
     # Trigger a status report over email
-    my $runType = `$FindBin::RealBin/../SneakerNet.plugins/sn_runType.pl --debug --email -- $d`;
+    # TODO reenable the validation step
+    # my $runType = `$FindBin::RealBin/../SneakerNet.plugins/sn_runType.pl --debug --email -- $d`;
     # TODO remove redundant code that is now in sn_runType.pl.
       
     my $info=parseReadsDir($d,$settings);
