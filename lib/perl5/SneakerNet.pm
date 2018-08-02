@@ -53,8 +53,32 @@ sub readConfig{
   return $settings;
 }
 
+sub samplesheetInfo_tsv{
+  my($samplesheet,$settings)=@_;
+  
+  my %sample;
+  open(my $fh, "<", $samplesheet) or die "ERROR: reading $samplesheet";
+  while(<$fh>){
+    chomp;
+    my @F = split /\t/;
+    my($sampleName,$R1,$R2,$taxon)=@F;
+    $sample{$sampleName}={
+      fastq=>[$R1,$R2],
+      species=>$taxon,
+    };
+  }
+  close $fh;
+
+  return \%sample;
+}
+
 sub samplesheetInfo{
   my($samplesheet,$settings)=@_;
+
+  # If this is a tsv file, it is the simplified kind
+  if($samplesheet=~/\.tsv$/){
+    return samplesheetInfo_tsv(@_);
+  }
 
   my $config=readConfig();
 
