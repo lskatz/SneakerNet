@@ -418,7 +418,7 @@ for f1,f2 in zip(file1,file2):
 	
 	
 	# Result lists
-	if(hwhisker1 == 151 or hwhisker1 == 152 and hwhisker2 == 151 or hwhisker2 == 152):
+	if(hwhisker1 >= 149 and hwhisker1 <= 152 and hwhisker2 >= 149 and hwhisker2 <= 152):
 		files_149.extend((f1,f2))
 		
 		# command line arguments
@@ -628,7 +628,7 @@ for f1,f2 in zip(file1,file2):
 		
 	
 				
-	elif(hwhisker1 == 251 or hwhisker1 == 252 and hwhisker2 == 251 or hwhisker2 == 252 ):
+	elif(hwhisker1 >= 249 and hwhisker1 <= 252 and hwhisker2 >= 249 and hwhisker2 <= 252 ):
 		
 		files_249.extend((f1,f2))
 		
