@@ -40,6 +40,7 @@ sub main{
   if($$dirInfo{runType}){
     print $$dirInfo{runType}."\n";
     $runStatus.="Run type for $$dirInfo{run_name} is $$dirInfo{runType}, and it is ready to run!\n";
+    makeSimpleSampleSheet($dirInfo,$settings);
     
   } else {
     $runStatus.="ERROR: could not determine the run type of $dir. Additional info to complete the run for any particular chemistry:\n$$dirInfo{why_not}\n";
@@ -236,6 +237,29 @@ sub removeRunNumberFromSamples{
   return 1;
 } 
 
+# Translate the sample sheet into something we can understand
+sub makeSimpleSampleSheet{
+  my($dirInfo, $settings)=@_;
+  my $samples = samplesheetInfo("$$dirInfo{dir}/SampleSheet.csv",$settings);
+
+  my $simpleCsv="$$dirInfo{dir}/SampleSheetSimple.csv";
+  logmsg "Writing simple sample sheet to $simpleCsv";
+  open(my $fh, ">", $simpleCsv) or die "ERROR: could not write to $simpleCsv: $!";
+  print $fh join(",", qw(Sample R1 R2 taxon options))."\n";
+  while(my($sample, $sampleHash)=each(%$samples)){
+    next if(ref($sampleHash) ne 'HASH');
+
+    my $sampleOpts=join(";", "route=".$$sampleHash{route}[0], "expectedgenomesize=".$$sampleHash{expectedgenomesize});
+
+    print $fh join(",", 
+      $sample, 
+      $$sampleHash{fastq}[0], $$sampleHash{fastq}[1],
+      $$sampleHash{species},
+      $sampleOpts,
+    )."\n";
+  }
+  close $fh;
+}
 
 sub usage{
   "Print the type of run directory.\nExit code 3 if the run is invalid.
