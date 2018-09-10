@@ -9,13 +9,14 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
 use File::Spec;
+use Text::Fuzzy;
 
 use threads;
 use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig logmsg /;
+use SneakerNet qw/readConfig logmsg samplesheetInfo /;
 use Email::Stuffer;
 
 local $0=fileparse $0;
@@ -78,7 +79,7 @@ sub main{
     $email->send;
     logmsg "Email sent!";
   }
-    logmsg "Exit: $exitStatus";
+  logmsg "Exit status: $exitStatus";
 
   return $exitStatus;
 }
@@ -157,7 +158,40 @@ sub parseReadsDir{
     $dirInfo{runType}="IonTorrent" if($foundAllFiles);
   }
 
+  # Now that we know the run type, see if the sample sheet
+  # makes sense.
+  if($dirInfo{runType} eq "Illumina"){
+    my @fastq = glob("$dir/*.fastq.gz");
+    my $samples = samplesheetInfo("$dir/SampleSheet.csv",$settings);
+    while(my($sample,$sampleHash) = each(%$samples)){
+      next if(ref($sampleHash) ne 'HASH');
+      my $tf = Text::Fuzzy->new($sample);
 
+      # Even if there are fastq files for this sample, double
+      # check that they exist.
+      for my $candidateFastq(@{$$sampleHash{fastq}}){
+
+        if(-e $candidateFastq){
+          next;
+        }
+
+        my $nearest = $tf->nearestv(\@fastq);
+        $dirInfo{why_not}.="For sample $sample, it looks like the fastq file $candidateFastq does not exist.  Did you mean $nearest?\n";
+        $dirInfo{is_good}=0;
+        $dirInfo{runType}="";
+      }
+
+      # If there are zero fastq files for this sample, make
+      # suggestions
+      if(!@{$$sampleHash{fastq}}){
+        my $nearest = $tf->nearestv(\@fastq);
+        $dirInfo{why_not}.="Could not find exact matches for fastq files for sample $sample. For this sample, the closest file match is $nearest\n";
+        $dirInfo{is_good}=0;
+        $dirInfo{runType}="";
+      }
+    }
+        
+  }
 
   return \%dirInfo;
 }

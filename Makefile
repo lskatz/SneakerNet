@@ -20,7 +20,7 @@ install-prerequisites: install-perlModules
 
 install-perlModules:
 	@echo "Installing Perl modules using cpanminus"
-	for package in Config::Simple File::Slurp Email::Stuffer Bio::Kmer; do \
+	for package in Config::Simple File::Slurp Email::Stuffer Bio::Kmer Text::Fuzzy; do \
 	  perl scripts/cpanm --self-contained -L . $$package; \
 		if [ $$? -gt 0 ]; then exit 1; fi; \
 	done;
