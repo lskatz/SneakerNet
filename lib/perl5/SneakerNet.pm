@@ -100,7 +100,13 @@ sub samplesheetInfo{
       my %F;
       @F{@header}=split(/,/,$_);
       $F{route}||=[]; # force route to be an array
-      $F{description}||="";
+      # Force the description to be empty string if:
+      #   not defined
+      #   Excel has '#N/A'
+      if(!$F{description} || $F{description}=~/#N\/?A/i){
+        $F{description}="";
+      }
+
       for my $keyvalue(split(/;/,lc($F{description}))){
         my($key,$value)=split(/=/,$keyvalue);
         $key=~s/^\s+|\s+$//g;      #whitespace trim
