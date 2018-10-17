@@ -110,7 +110,8 @@ sub runKraken{
   my $html="$sampledir/report.html";
   return 1 if(-e $html);
 
-  my $reads=join(" ",@{ $$sample{fastq} });
+  my @twoReads = (@{$$sample{fastq}})[0,1];
+  my $reads="'".join("' '", @twoReads)."'";
   return 0 if(!$reads);
 
   # Skip small file sizes.
@@ -122,7 +123,7 @@ sub runKraken{
     }
   }
   
-  command("$KRAKENDIR/kraken --fastq-input --paired --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out $reads");
+  command("$KRAKENDIR/kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
 
   command("$KRAKENDIR/kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
     s/^ +//;   # remove leading spaces
