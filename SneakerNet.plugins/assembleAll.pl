@@ -65,6 +65,7 @@ sub assembleAll{
 
       # Save the assembly
       mkdir $outdir;
+      mkdir "$outdir/prodigal"; # just make this directory right away
       command("run_assembly_filterContigs.pl -l 500 $assembly > $outassembly");
     }
 
@@ -145,6 +146,12 @@ sub predictionMetricsWorker{
     my %F;
     @F{@predHeader}=split(/\t/,$predLine);
     @F{@assemblyHeader}=split(/\t/,$assemblyLine);
+    # In case there was no assembly or predictions, add in a default value
+    for(@predHeader,@assemblyHeader){
+      $F{$_} //= 'NA';
+    }
+    # Also take care of genomeLength specifically
+    $F{genomeLength} //= "NA";
     $F{File}=basename($F{File},qw(.gbk .fasta));
 
     print $metricsFh $F{File}."\t".$F{genomeLength};
@@ -197,6 +204,7 @@ sub annotateFasta{
 
   my $outdir="$$settings{tempdir}/$sample/prodigal";
   system("rm -rf $outdir");
+  mkdir "$$settings{tempdir}/$sample";
   mkdir $outdir;
   my $outgff="$outdir/prodigal.gff";
   my $outgbk="$outdir/prodigal.gbk";
