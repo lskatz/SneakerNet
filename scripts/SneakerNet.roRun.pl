@@ -47,6 +47,7 @@ sub makeSneakernetDir{
   my @fastq       = glob("$dir/Data/Intensities/BaseCalls/*.fastq.gz");
   my $snok        = "$dir/snok.txt";
   my $sampleSheet = "$dir/Data/Intensities/BaseCalls/SampleSheet.csv";
+  my $sampleSheet2= "$dir/SampleSheet.csv"; # backup in case the first is not found
   my $config      =  "$dir/Data/Intensities/BaseCalls/config.xml";
   my @interop     =  glob("$dir/InterOp/*");
   my @xml         = ("$dir/CompletedJobInfo.xml",
@@ -55,17 +56,16 @@ sub makeSneakernetDir{
                      "$dir/RunInfo.xml",
                     );
   
-  if(!@fastq){
-    logmsg "WARNING: no fastq files were found; attempting bcl2fastq";
-    @fastq=bcl2fastq($dir,$settings);
-    if(!@fastq){
-      die "ERROR: could not find any fastq files in $dir";
+  if(! -e $sampleSheet){
+    if(! -e $sampleSheet2){
+      die "ERROR: could not find the samplesheet in either $sampleSheet or $sampleSheet2";
     }
+    $sampleSheet = $sampleSheet2;
   }
   if(!@interop){
     die "ERROR: no interop files were found in $dir";
   }
-  for(@fastq,$sampleSheet, $config, @interop, @xml){
+  for(@fastq, $config, @interop, @xml){
     if(!-e $_){
       die "ERROR: file does not exist: $_";
     }
@@ -77,6 +77,13 @@ sub makeSneakernetDir{
     # "touch" the snok file
     open(my $fh, ">>", "$outdir/".basename($snok)) or die "ERROR: could not touch $outdir/".basename($snok).": $!";
     close $fh;
+  }
+  if(!@fastq){
+    logmsg "WARNING: no fastq files were found; attempting bcl2fastq";
+    @fastq=bcl2fastq($dir,$settings);
+    if(!@fastq){
+      die "ERROR: could not find any fastq files in $dir";
+    }
   }
 
   for(@fastq, $sampleSheet, $config){
@@ -102,7 +109,8 @@ sub bcl2fastq{
   my $fastqdir="$$settings{tempdir}/bcl2fastq";
   mkdir($fastqdir);
 
-  command("bcl2fastq --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --demultiplexing-threads $$settings{numcpus} --barcode-mismatches 1 >&2");
+  #command("bcl2fastq --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --demultiplexing-threads $$settings{numcpus} --barcode-mismatches 1 >&2");
+  command("bcl2fastq --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --barcode-mismatches 1 --ignore-missing-bcls >&2");
 
   my @fastq=glob("$$settings{tempdir}/bcl2fastq/*.fastq.gz");
   return @fastq;
