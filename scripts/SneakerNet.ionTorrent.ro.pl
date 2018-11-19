@@ -66,6 +66,7 @@ sub makeSneakernetDir{
     }
     my $basename   = basename($bam, qw(.bam));
     my $fastq      = "$outdir/$sampleName.fastq";
+    my $R2         = "."; # no idea how to define R2 in an ion torrent run
 
     # Fastq generation
     logmsg "Creating fastq from $bam";
@@ -77,7 +78,7 @@ sub makeSneakernetDir{
     $fastq="$fastq.gz";
 
     # Samplesheet
-    print $fh join("\t", $sampleName, basename($fastq))."\n";
+    print $fh join("\t", $sampleName, basename($fastq),$R3)."\n";
   }
   close $fh;
 
