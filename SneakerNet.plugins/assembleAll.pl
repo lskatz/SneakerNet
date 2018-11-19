@@ -187,7 +187,7 @@ sub assembleSample{
   my $numcpus=$$settings{numcpus};
 
   mkdir $outdir; # Skesa will need this container
-  command("skesa --cores $numcpus --gz --fastq $R1 $R2 > $$settings{tempdir}/$sample.fasta");
+  command("skesa --cores $numcpus --gz --fastq $R1,$R2 > $$settings{tempdir}/$sample.fasta");
   return "$$settings{tempdir}/$sample.fasta";
 
   #$numcpus=2 if($numcpus < 2); # megahit requires at least two
