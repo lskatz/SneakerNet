@@ -65,11 +65,11 @@ sub makeSneakernetDir{
   if(!@interop){
     die "ERROR: no interop files were found in $dir";
   }
-  for(@fastq, $config, @interop, @xml){
-    if(!-e $_){
-      die "ERROR: file does not exist: $_";
-    }
-  }
+  #for(@fastq, $config, @interop, @xml){
+  #  if(!-e $_){
+  #    die "ERROR: file does not exist: $_";
+  #  }
+  #}
   if(-e $snok){
     cp($snok,"$outdir/".basename($snok));
   } else {
@@ -131,7 +131,9 @@ sub cp{
     return 1;
   }
   logmsg "cp $from to $to";
-  my $return=File::Copy::cp($from,$to) or die "ERROR: could not copy $from to $to: $!";
+  my $return=File::Copy::cp($from,$to) or warn "ERROR: could not copy $from to $to: $!";
+  open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
+  close $fh;
   return $return;
 }
 
