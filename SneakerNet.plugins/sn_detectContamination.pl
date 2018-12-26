@@ -11,7 +11,7 @@ use FindBin;
 use List::Util qw/min max/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
 use Bio::Kmer;
 
 # http://perldoc.perl.org/perlop.html#Symbolic-Unary-Operators
@@ -57,7 +57,7 @@ sub main{
 
 sub kmerContaminationDetection{
   my($dir,$settings)=@_;
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   my $i=0;
 

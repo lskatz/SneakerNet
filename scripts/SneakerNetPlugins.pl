@@ -24,7 +24,7 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(help numcpus=i email! force!)) or die $!;
-  die usage() if($$settings{help});
+  die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
 
@@ -35,6 +35,12 @@ sub main{
     for("$dir/SneakerNet", "$dir/SneakerNet/forEmail"){
       mkdir $_;
     }
+    
+    # ensure that the samplesheet can be parsed. This is
+    # a prerequisite for all plugins.
+    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl $dir");
+
+    # Run all plugins
     my @exe=@{ $$settings{'plugins.default'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){

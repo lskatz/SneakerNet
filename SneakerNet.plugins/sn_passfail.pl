@@ -11,7 +11,7 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -36,7 +36,7 @@ sub passfail{
   my($dir,$settings)=@_;
 
   my $failFile="$dir/SneakerNet/forEmail/passfail.tsv";
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   my $failHash=identifyBadRuns($dir,$sampleInfo,$settings);
   

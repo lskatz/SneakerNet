@@ -12,7 +12,7 @@ use File::Copy qw/cp/;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
 
 my $JELLYFISHDIR="/usr/local/bin";
 my $GENOMESCOPEDIR="/opt/genomescope";
@@ -80,7 +80,7 @@ sub main{
 sub predictGenomeSizesOnDir{
   my($dir,$settings)=@_;
 
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
 

@@ -16,7 +16,7 @@ use threads;
 use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
+use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv command/;
 use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -30,7 +30,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug test numcpus=i)) or die $!;
+  GetOptions($settings,qw(help inbox=s debug test force numcpus=i)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   
@@ -38,7 +38,7 @@ sub main{
 
   my $out=baseBalanceAll($dir,$settings);
   
-  command("cp -v $out $dir/SneakerNet/forEmail/");
+  command("cp -v $out $dir/SneakerNet/forEmail/ >&2");
   
   return 0;
 }
@@ -46,7 +46,7 @@ sub main{
 sub baseBalanceAll{
   my($dir,$settings)=@_;
 
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   my $outdir="$dir/SneakerNet/basebalance";
 

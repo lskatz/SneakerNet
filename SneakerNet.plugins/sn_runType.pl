@@ -9,15 +9,15 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
 use File::Spec;
-use Text::Fuzzy;
 
 use threads;
 use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig logmsg samplesheetInfo /;
+use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv /;
 use Email::Stuffer;
+use Text::Fuzzy;
 
 local $0=fileparse $0;
 exit(main());
@@ -40,6 +40,7 @@ sub main{
   if($$dirInfo{runType}){
     print $$dirInfo{runType}."\n";
     $runStatus.="Run type for $$dirInfo{run_name} is $$dirInfo{runType}, and it is ready to run!\n";
+    ...;
     makeSimpleSampleSheet($dirInfo,$settings);
     
   } else {
@@ -163,7 +164,7 @@ sub parseReadsDir{
   # makes sense.
   if($dirInfo{runType} eq "Illumina"){
     my @fastq = glob("$dir/*.fastq.gz");
-    my $samples = samplesheetInfo("$dir/SampleSheet.csv",$settings);
+    my $samples = samplesheetInfo_tsv("$dir/samples.tsv",$settings);
     while(my($sample,$sampleHash) = each(%$samples)){
       next if(ref($sampleHash) ne 'HASH');
       my $tf = Text::Fuzzy->new($sample);
@@ -240,7 +241,7 @@ sub removeRunNumberFromSamples{
 # Translate the sample sheet into something we can understand
 sub makeSimpleSampleSheet{
   my($dirInfo, $settings)=@_;
-  my $samples = samplesheetInfo("$$dirInfo{dir}/SampleSheet.csv",$settings);
+  my $samples = samplesheetInfo_tsv("$$dirInfo{dir}/samples.tsv",$settings);
 
   my $simpleCsv="$$dirInfo{dir}/SampleSheetSimple.csv";
   logmsg "Writing simple sample sheet to $simpleCsv";
@@ -249,7 +250,8 @@ sub makeSimpleSampleSheet{
   while(my($sample, $sampleHash)=each(%$samples)){
     next if(ref($sampleHash) ne 'HASH');
 
-    my $sampleOpts=join(";", "route=".$$sampleHash{route}[0], "expectedgenomesize=".$$sampleHash{expectedgenomesize});
+    my $route = (ref($$sampleHash{route}) eq 'ARRAY')? $$sampleHash{route}[0]:$$sampleHash{route};
+    my $sampleOpts=join(";", "route=".$route, "expectedgenomesize=".$$sampleHash{expectedgenomesize});
 
     print $fh join(",", 
       $sample, 

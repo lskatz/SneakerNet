@@ -11,7 +11,7 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg passfail/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg passfail/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -62,7 +62,7 @@ sub transferFilesToRemoteComputers{
   my($dir,$settings)=@_;
   
   # Find information about each genome
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   # Which files should be skipped according to Q/C?
   my $passfail=passfail($dir,$settings);
@@ -71,9 +71,10 @@ sub transferFilesToRemoteComputers{
   my %filesToTransfer=(); # hash keys are species names
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
-    my $taxon=$$s{species} || 'NOT LISTED';
+    my $taxon=$$s{species} || $$s{taxon} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
-    if($$settings{'force-transfer'} || grep {/calcengine/i} @{ $$s{route} }){
+    my @route = (ref($$s{route}) eq 'ARRAY')?@{$$s{route}}:($$s{route});
+    if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
       FASTQ: for(@{ $$s{fastq} }){
         # Write out the status
         # The key of each filename is its basename

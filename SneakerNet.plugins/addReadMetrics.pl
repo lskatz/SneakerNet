@@ -16,7 +16,7 @@ use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use List::MoreUtils qw/uniq/;
-use SneakerNet qw/readConfig logmsg samplesheetInfo command/;
+use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -47,7 +47,7 @@ sub addReadMetrics{
   return if(-e "$dir/readMetrics.tsv" && !$$settings{force});
 
   logmsg "Reading sample $dir/SampleSheet.csv";
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   logmsg "Running fast read metrics";
 

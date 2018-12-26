@@ -16,14 +16,14 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg fullPathToExec/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(help tempdir=s debug numcpus=i force)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
@@ -48,7 +48,7 @@ sub assembleAll{
   my($dir,$settings)=@_;
   
   # Find information about each genome
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
 

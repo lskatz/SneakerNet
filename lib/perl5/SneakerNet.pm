@@ -56,6 +56,9 @@ sub readConfig{
 # Read the sneakernet-style spreadsheet
 sub samplesheetInfo_tsv{
   my($samplesheet,$settings)=@_;
+
+  # Get possible taxon rules.
+  my $config = readConfig();
   
   my %sample;
   open(my $fh, "<", $samplesheet) or die "ERROR: reading $samplesheet";
@@ -65,6 +68,7 @@ sub samplesheetInfo_tsv{
     my($sampleName,$rules,$fastq)=@F;
     $sample{$sampleName}={
       fastq => [split(/;/, $fastq)],
+      sample_id => $sampleName,
     };
     for my $rule(split(/;/, $rules)){
       my($key,$value)=split(/=/,$rule);
@@ -73,6 +77,15 @@ sub samplesheetInfo_tsv{
         $sample{$sampleName}{$key} = \@values;
       } else {
         $sample{$sampleName}{$key} = $value;
+      }
+    }
+
+    # Set up the taxon rules if possible
+    $sample{$sampleName}{taxonRules}={};
+    if(defined(my $taxon = $sample{$sampleName}{taxon})){
+      my $possibleRules = $$config{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
+      if(defined($possibleRules)){
+        $sample{$sampleName}{taxonRules}=$possibleRules;
       }
     }
   }

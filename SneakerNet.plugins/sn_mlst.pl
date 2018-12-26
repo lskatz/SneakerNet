@@ -16,7 +16,7 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg fullPathToExec/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 local $0=fileparse $0;
 exit(main());
@@ -71,7 +71,7 @@ sub mlst{
   my @mlstQueueBuffer=();
   
   # Find information about each genome
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
     

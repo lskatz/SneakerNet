@@ -11,7 +11,7 @@ use File::Temp;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg version/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg version/;
 my @fastqExt=qw(.fastq.gz .fq.gz .fastq .fq);
 
 my $snVersion=version();
@@ -21,7 +21,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s)) or die $!;
+  GetOptions($settings,qw(help numcpus=i debug tempdir=s force)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
@@ -40,10 +40,10 @@ sub main{
 sub identifyEach{
   my($dir,$settings)=@_;
 
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo("$dir/samples.tsv",$settings);
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
-    my $taxon=$$s{species} || 'NOT LISTED';
+    my $taxon=$$s{species} || $$s{taxon} || 'NOT LISTED';
 
     my $outdir="$dir/SneakerNet/SalmID/$sampleName";
     next if(-e $outdir);

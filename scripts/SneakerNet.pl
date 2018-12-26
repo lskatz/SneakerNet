@@ -78,6 +78,7 @@ sub main{
 
     # also add in the Sample Sheet for email for later
     link("$$d{dir}/SampleSheet.csv","$sneakernetDir/forEmail/SampleSheet.csv");
+    link("$$d{dir}/samples.tsv","$sneakernetDir/forEmail/samples.tsv");
 
     # Include snok.txt in the report email.
     # Make an empty snok.txt if it doesn't exist
@@ -91,7 +92,9 @@ sub main{
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
-    #my @exe=flatten($$settings{'plugins.conf'});
+    # ensure that the samplesheet can be parsed. This is
+    # a prerequisite for all plugins.
+    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl $$d{dir} 2>&1");
     my @exe=@{ $$settings{'plugins.default'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){

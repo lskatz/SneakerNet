@@ -13,7 +13,7 @@ use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo command logmsg/;
+use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
 
 # Get the executable directories
 my $tmpSettings=readConfig();
@@ -26,7 +26,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help debug tempdir=s numcpus=i)) or die $!;
+  GetOptions($settings,qw(help debug tempdir=s numcpus=i force)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings";
@@ -48,7 +48,7 @@ sub runKrakenOnDir{
   my $outdir="$dir/SneakerNet/kraken";
   system("mkdir -p $outdir");
 
-  my $sampleInfo=samplesheetInfo("$dir/SampleSheet.csv",$settings);
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   my %filesToTransfer=(); # hash keys are species names
   my @report; # reporting contamination in an array, in case I want to sort it later
@@ -73,7 +73,7 @@ sub runKrakenOnDir{
       next;
     }
 
-    my $expectedSpecies=$$s{species} || "UNKNOWN";
+    my $expectedSpecies=$$s{species} || $$s{taxon} || "UNKNOWN";
     #my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
     my($percentTaxon,$html,$bestGuess)=guessTaxon($sampledir,$settings);
     if(!$html){
