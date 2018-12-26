@@ -10,7 +10,7 @@ use Carp qw/croak confess/;
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
-  readConfig samplesheetInfo passfail
+  readConfig samplesheetInfo samplesheetInfo_tsv passfail
   command logmsg fullPathToExec version
 );
 
@@ -53,6 +53,7 @@ sub readConfig{
   return $settings;
 }
 
+# Read the sneakernet-style spreadsheet
 sub samplesheetInfo_tsv{
   my($samplesheet,$settings)=@_;
   
@@ -61,11 +62,19 @@ sub samplesheetInfo_tsv{
   while(<$fh>){
     chomp;
     my @F = split /\t/;
-    my($sampleName,$R1,$R2,$taxon)=@F;
+    my($sampleName,$rules,$fastq)=@F;
     $sample{$sampleName}={
-      fastq=>[$R1,$R2],
-      species=>$taxon,
+      fastq => [split(/;/, $fastq)],
     };
+    for my $rule(split(/;/, $rules)){
+      my($key,$value)=split(/=/,$rule);
+      my @values = split(/,/,$value);
+      if(@values > 1){
+        $sample{$sampleName}{$key} = \@values;
+      } else {
+        $sample{$sampleName}{$key} = $value;
+      }
+    }
   }
   close $fh;
 

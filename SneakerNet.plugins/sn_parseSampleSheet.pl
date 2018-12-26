@@ -13,7 +13,7 @@ use FindBin;
 use Config::Simple;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo passfail command logmsg version/;
+use SneakerNet qw/readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
 
 my $snVersion=version();
 
@@ -56,7 +56,6 @@ sub main{
       logmsg "Wrote samples file to $outfile";
     }
   }
-  
   return 0;
 }
 
@@ -122,13 +121,22 @@ sub sampleHashToTsv{
   my $tsv = "";
   for my $sample(sort{ $a cmp $b } keys(%$sampleHash)){
     next if(ref($$sampleHash{$sample}) ne 'HASH');
-    my $fastq = $$sampleHash{$sample}{fastq};
-    my $taxon = $$sampleHash{$sample}{taxonRules}{taxon};
+
+    # Column 3: fastq files
+    my $fastq = join(";",@{ $$sampleHash{$sample}{fastq} });
+
+    # Column 2: describe what rules to follow for this sample.
+    my $rules="";
+    my $taxon = $$sampleHash{$sample}{taxonRules}{taxon} || "UNKNOWN";
+    $rules.="taxon=$taxon";
+    if($$sampleHash{$sample}{route}){
+      $rules.=";route=".join(",",@{ $$sampleHash{$sample}{route} });
+    }
 
     $tsv .= join("\t", 
       $sample,         # column1: sample name 
-      $taxon,          # 2: describe what rules to follow
-      @$fastq,         # 3-: fastq files in order of R1, R2
+      $rules,          # 2: describe what rules to follow
+      $fastq,          # 3-: fastq files in order of R1, R2
     )."\n";
   }
   
