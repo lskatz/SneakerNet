@@ -129,20 +129,20 @@ sub calculateCoverage{
 
   my $file=basename($$h{File});
   my $samplename=$file || "";
-  $samplename=~s/_S\d+_.*?$//;
+  $samplename=~s/_S\d+_.*?$//;    # _R1_ or _R2_
+  $samplename=~s/_[12]\.fastq.gz$//; # _1 or _2
   # Parse HiSeq names correctly
   if($file=~/(^.+_SAN\d+\w\d+)/){ # e.g., 2015V-1036_SAN5927A15_TCCGGAGA-CAGGACGT_L001_R1_001.fastq.gz
     $samplename=$1;               #       2015V-1036_SAN5927A15
   }
 
   # Find out if this file has an expected genome size from the Sample Sheet.
-  my $expectedGenomeSize=0;
-  my $organism="";
-  if($$sampleInfo{$samplename}{expectedgenomesize}){
-    $expectedGenomeSize=$$sampleInfo{$samplename}{expectedgenomesize} * 10**6;
-  }elsif($$sampleInfo{$samplename}{taxonRules}{genomesize}){
-    $expectedGenomeSize=$$sampleInfo{$samplename}{taxonRules}{genomesize};
+  my $expectedGenomeSize = $$sampleInfo{$samplename}{expectedgenomesize} || $$sampleInfo{$samplename}{taxonRules}{genomesize} || 0;
+  if($expectedGenomeSize < 100){
+    $expectedGenomeSize *= 10**6;
   }
+  my $organism = $$sampleInfo{$samplename}{taxon};
+  #die Dumper $sampleInfo, $organism, $samplename if($samplename =~ /2010.*1786/);
 
   my $coverage=$$h{coverage} || 0; 
 
