@@ -1,9 +1,6 @@
 language: perl
 perl:
   - "5.24-shrplib"
-matrix:
-  include:
-    -env: OS='ubuntu:14.04'
 addons:
   apt:
     sources:
@@ -19,6 +16,8 @@ install:
   - test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
   - test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
   - echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
+  - source ~/.bash_profile
+  - source ~/.profile
   - brew tap brewsci/bio
   - brew install skesa
   - brew install blast
