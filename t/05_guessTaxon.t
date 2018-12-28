@@ -15,6 +15,13 @@ use_ok 'SneakerNet';
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
+if(! system("which kraken") ){
+  diag "Kraken is not installed and so this whole unit test will be skipped";
+  pass("kraken1");
+  pass("kraken2");
+  exit 0;
+}
+
 is system("guessTaxon.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Running guessTaxon.pl";
 
 my $krakenFile = "$run/SneakerNet/forEmail/kraken.tsv";
