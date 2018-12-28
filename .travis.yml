@@ -1,0 +1,28 @@
+language: perl
+perl:
+  - "5.26-shrplib"
+install:
+  # BioPerl
+  - sudo apt-get install bioperl
+  # BLAST
+  - wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
+  - export PATH=$PATH:$(pwd -P)/ncbi-blast-2.8.1+/bin
+  # CGP
+  - wget https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
+  - tar zxvf v0.5.tar.gz
+  - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
+  # Skesa. Requires BOOST.
+  - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
+  - tar zxvf v2.2.1.tar.gz
+  - make -C SKESA-2.2.1 -j 2 -f Makefile.nongs
+  - export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
+  # prodigal
+  - wget https://github.com/hyattpd/Prodigal/archive/v2.6.3.tar.gz
+  - tar zxvf v2.6.3.tar.gz
+  - make -C Prodigal-2.6.3 -j 2
+  - export PATH=$PATH:$(pwd -P)/Prodigal-2.6.3
+  # mlst
+  - wget https://github.com/tseemann/mlst/archive/v2.16.tar.gz
+  - tar zxvf v2.16.tar.gz
+  - export PATH=$PATH:$(pwd -P)/mlst-2.16/bin:mlst-2.16/scripts
+  # TODO install kraken
