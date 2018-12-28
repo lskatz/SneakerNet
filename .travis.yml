@@ -10,15 +10,14 @@ addons:
     - bioperl
     - curl
 install:
+  # Ruby
+  - sudo gem install activesupport plist backports
   # Homebrew stuff
-  - export PATH=$PATH:~/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/bin
-  - yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
-  - test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
-  - test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
-  - test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
-  - echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
-  - source ~/.bash_profile
-  - source ~/.profile
+  - export PATH=$PATH:~/.linuxbrew/bin
+  - git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
+  - mkdir ~/.linuxbrew/bin
+  - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
+  - eval $(~/.linuxbrew/bin/brew shellenv)
   - brew tap brewsci/bio
   - brew install skesa
   - brew install blast
