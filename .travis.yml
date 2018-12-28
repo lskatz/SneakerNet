@@ -1,12 +1,15 @@
 language: perl
 perl:
   - "5.24-shrplib"
+matrix:
+  include:
+    -env: OS='ubuntu:14.04'
 addons:
   apt:
     sources:
     - boost-latest
     packages:
-    - libboost1.65
+    - libboost
     - bioperl
 install:
   #- find /usr /lib -type f -name program_options.hpp
