@@ -10,7 +10,7 @@ install:
   # Skesa. Requires BOOST.
   - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
   - tar zxvf v2.2.1.tar.gz
-  - make -C SKESA-2.2.1 -j 2 -f Makefile.nongs
+  - make -C SKESA-2.2.1 -j 1 -f Makefile.nongs
   - export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
   # BioPerl
   - sudo apt-get install bioperl
