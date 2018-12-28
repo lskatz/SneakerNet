@@ -1,7 +1,9 @@
 language: perl
 perl:
-  - "5.26-shrplib"
+  - "5.24-shrplib"
 install:
+  - locate program_options.hpp
+  - find /usr /lib -type f -name program_options.hpp; exit 1
   # BioPerl
   - sudo apt-get install bioperl
   # BLAST
