@@ -6,9 +6,6 @@ addons:
     sources:
     - boost-latest
     packages:
-    - gcc-4.9
-    - g++-4.9
-    - libboost1.58
     - libboost-dev
     - bioperl
 install:
