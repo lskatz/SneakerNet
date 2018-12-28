@@ -58,6 +58,10 @@ WriteMakefile1(
     'Email::Stuffer' => 0,
     'Bio::SeqIO'     => 0,
     'Bio::FeatureIO' => 0,
+    # MLST module
+    'Moo'            => 0,
+    'List::MoreUtils'=> 0,
+    'JSON'           => 0,
   },
   BUILD_REQUIRES => {
     'Test::More'     => 0.47,

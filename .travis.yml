@@ -9,7 +9,7 @@ addons:
     sources:
     - boost-latest
     packages:
-    - libboost
+    - libboost-dev
     - bioperl
 install:
   #- find /usr /lib -type f -name program_options.hpp
