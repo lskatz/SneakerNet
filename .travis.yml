@@ -3,7 +3,7 @@ perl:
   - "5.24-shrplib"
 install:
   # BOOST needed by at least SKESA
-  - sudo add-apt-repository ppa:sickpig/boost
+  - yes | sudo add-apt-repository ppa:sickpig/boost
   - sudo apt-get update
   - sudo install boost1.58
   - find /usr /lib -type f -name program_options.hpp || true
