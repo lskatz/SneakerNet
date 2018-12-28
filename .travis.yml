@@ -10,24 +10,14 @@ addons:
     - bioperl
 install:
   #- find /usr /lib -type f -name program_options.hpp
-  # BOOST needed by at least SKESA
-  #- yes | sudo add-apt-repository ppa:sickpig/boost
-  #- sudo apt-get update
-  #- sudo apt-get install boost1.58
-  #- export BOOST_PATH=$(find /usr /lib -type f -name program_options.hpp | head -n 1 | xargs dirname)
-  #- echo "BOOST_PATH is set to => $BOOST_PATH <="
   # Skesa. Requires BOOST.
-  #- wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
-  #- tar zxvf v2.2.1.tar.gz
-  #- make -C SKESA-2.2.1 -j 1 -f Makefile.nongs
-  #- export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
-  - wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10
-  - chmod +x skesa.centos6.10
-  - ./skesa.centos6.10
-  # BioPerl
-  #- sudo apt-get install bioperl
+  - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
+  - tar zxvf v2.2.1.tar.gz
+  - make -C SKESA-2.2.1 -j 1 -f Makefile.nongs
+  - export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
   # BLAST
   - wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
+  - tar zxvf ncbi-blast-2.8.1+-x64-linux.tar.gz
   - export PATH=$PATH:$(pwd -P)/ncbi-blast-2.8.1+/bin
   # CGP
   - wget https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
@@ -43,3 +33,6 @@ install:
   - tar zxvf v2.16.tar.gz
   - export PATH=$PATH:$(pwd -P)/mlst-2.16/bin:mlst-2.16/scripts
   # TODO install kraken
+  # Configure SneakerNet
+  - cp -rv config.bak config
+  - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
