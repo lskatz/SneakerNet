@@ -5,7 +5,7 @@ install:
   # BOOST needed by at least SKESA
   - yes | sudo add-apt-repository ppa:sickpig/boost
   - sudo apt-get update
-  - sudo install boost1.58
+  - sudo apt-get install boost1.58
   - find /usr /lib -type f -name program_options.hpp || true
   # Skesa. Requires BOOST.
   - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
