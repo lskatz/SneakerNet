@@ -6,7 +6,8 @@ install:
   - yes | sudo add-apt-repository ppa:sickpig/boost
   - sudo apt-get update
   - sudo apt-get install boost1.58
-  - find /usr /lib -type f -name program_options.hpp || true
+  - export BOOST_PATH=$(find /usr /lib -type f -name program_options.hpp | head -n 1 | xargs dirname)
+  - echo "BOOST_PATH is set to => $BOOST_PATH <="
   # Skesa. Requires BOOST.
   - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
   - tar zxvf v2.2.1.tar.gz
