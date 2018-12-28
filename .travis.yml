@@ -11,24 +11,30 @@ addons:
     packages:
     - libboost-dev
     - bioperl
+    - curl
 install:
   # Homebrew stuff
-  - /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  - yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+  - test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
+  - test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+  - test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
+  - echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
   - brew tap brewsci/bio
   - brew install skesa
+  - brew install blast
   - brew install mlst
   - brew install prokka
   #- find /usr /lib -type f -name program_options.hpp
   # Skesa. Requires BOOST.
-  - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
-  - tar zxvf v2.2.1.tar.gz
+  # - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
+  # - tar zxvf v2.2.1.tar.gz
   # TODO figure out why skesa doesn't work on ubuntu
-  - make -C SKESA-2.2.1 -j 1 -f Makefile.nongs || true
-  - export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
+  #- make -C SKESA-2.2.1 -j 1 -f Makefile.nongs || true
+  #- export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
   # BLAST
-  - wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
-  - tar zxvf ncbi-blast-2.8.1+-x64-linux.tar.gz
-  - export PATH=$PATH:$(pwd -P)/ncbi-blast-2.8.1+/bin
+  # - wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/ncbi-blast-2.8.1+-x64-linux.tar.gz
+  # - tar zxvf ncbi-blast-2.8.1+-x64-linux.tar.gz
+  # - export PATH=$PATH:$(pwd -P)/ncbi-blast-2.8.1+/bin
   # CGP
   - wget https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
