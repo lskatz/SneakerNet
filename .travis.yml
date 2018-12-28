@@ -9,7 +9,7 @@ addons:
     - libboost-dev
     - bioperl
 install:
-  - find /usr /lib -type f -name program_options.hpp
+  #- find /usr /lib -type f -name program_options.hpp
   # BOOST needed by at least SKESA
   #- yes | sudo add-apt-repository ppa:sickpig/boost
   #- sudo apt-get update
@@ -17,10 +17,13 @@ install:
   #- export BOOST_PATH=$(find /usr /lib -type f -name program_options.hpp | head -n 1 | xargs dirname)
   #- echo "BOOST_PATH is set to => $BOOST_PATH <="
   # Skesa. Requires BOOST.
-  - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
-  - tar zxvf v2.2.1.tar.gz
-  - make -C SKESA-2.2.1 -j 1 -f Makefile.nongs
-  - export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
+  #- wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
+  #- tar zxvf v2.2.1.tar.gz
+  #- make -C SKESA-2.2.1 -j 1 -f Makefile.nongs
+  #- export PATH=$PATH:$(pwd -P)/SKESA-2.2.1
+  - wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10
+  - chmod +x skesa.centos6.10
+  - ./skesa.centos6.10
   # BioPerl
   #- sudo apt-get install bioperl
   # BLAST
