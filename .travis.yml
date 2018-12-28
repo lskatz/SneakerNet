@@ -11,13 +11,13 @@ addons:
     packages:
     - libboost-dev
     - bioperl
-  homebrew:
-    taps: brewsci/bio
-    packages:
-      -skesa
-      -mlst
-      -prokka
 install:
+  # Homebrew stuff
+  - /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  - brew tap brewsci/bio
+  - brew install skesa
+  - brew install mlst
+  - brew install prokka
   #- find /usr /lib -type f -name program_options.hpp
   # Skesa. Requires BOOST.
   - wget https://github.com/ncbi/SKESA/archive/v2.2.1.tar.gz
