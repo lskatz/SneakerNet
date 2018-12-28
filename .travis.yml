@@ -11,6 +11,12 @@ addons:
     packages:
     - libboost-dev
     - bioperl
+  homebrew:
+    taps: brewsci/bio
+    packages:
+      -skesa
+      -mlst
+      -prokka
 install:
   #- find /usr /lib -type f -name program_options.hpp
   # Skesa. Requires BOOST.
@@ -28,14 +34,14 @@ install:
   - tar zxvf v0.5.tar.gz
   - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
   # prodigal
-  - wget https://github.com/hyattpd/Prodigal/archive/v2.6.3.tar.gz
-  - tar zxvf v2.6.3.tar.gz
-  - make -C Prodigal-2.6.3 -j 2
-  - export PATH=$PATH:$(pwd -P)/Prodigal-2.6.3
+  #- wget https://github.com/hyattpd/Prodigal/archive/v2.6.3.tar.gz
+  #- tar zxvf v2.6.3.tar.gz
+  #- make -C Prodigal-2.6.3 -j 2
+  #- export PATH=$PATH:$(pwd -P)/Prodigal-2.6.3
   # mlst
-  - wget https://github.com/tseemann/mlst/archive/v2.16.tar.gz
-  - tar zxvf v2.16.tar.gz
-  - export PATH=$PATH:$(pwd -P)/mlst-2.16/bin:mlst-2.16/scripts
+  #- wget https://github.com/tseemann/mlst/archive/v2.16.tar.gz
+  #- tar zxvf v2.16.tar.gz
+  #- export PATH=$PATH:$(pwd -P)/mlst-2.16/bin:mlst-2.16/scripts
   # TODO install kraken
   # Configure SneakerNet
   - cp -rv config.bak config
