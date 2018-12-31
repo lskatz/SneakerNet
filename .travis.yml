@@ -33,7 +33,7 @@ install:
   #- brew update
   #- brew doctor || true
   # Dependencies for ruby on brew: pkg-config, libyaml, openssl, gpatch, ncurses and readline
-  - brew install pkg-config
+  - travis_wait brew install pkg-config # First brew command might take a while and so prefix with travis_wait.
   - brew install libyaml
   - brew install openssl
   - brew install gpatch
@@ -41,7 +41,6 @@ install:
   - brew install readline
   # Ruby through brew
   - travis_wait brew install ruby # takes a while and so spawn a travis_wait process
-  - brew install gem
   - gem --version
   - which gem
   - REALLY_GEM_UPDATE_SYSTEM=1 gem update --system
