@@ -13,12 +13,12 @@ addons:
     - rubygems1.9.1
 install:
   # Ruby
-  - export REALLY_GEM_UPDATE_SYSTEM=1
-  - sudo gem update --system
-  - ruby --version
-  - sudo ruby --version
-  - gem --version
-  - sudo gem --version
+  #- export REALLY_GEM_UPDATE_SYSTEM=1
+  #- sudo gem update --system # rubygems-update requires Ruby version >= 2.3.0
+  #- ruby --version
+  #- sudo ruby --version
+  #- gem --version
+  #- sudo gem --version
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
   - git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
@@ -26,12 +26,12 @@ install:
   - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
   - eval $(~/.linuxbrew/bin/brew shellenv)
   # Ruby through brew
-  #- brew install ruby
-  #- brew install gem
-  #- gem --version
-  #- which gem
-  #- gem update --system
-  - sudo gem install activesupport plist backports
+  - brew install ruby
+  - brew install gem
+  - gem --version
+  - which gem
+  - REALLY_GEM_UPDATE_SYSTEM=1 gem update --system
+  - gem install activesupport plist backports
   - brew tap brewsci/bio
   - brew install skesa
   - brew install blast
