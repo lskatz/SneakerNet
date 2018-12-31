@@ -26,7 +26,7 @@ install:
   - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
   - eval $(~/.linuxbrew/bin/brew shellenv)
   # Ruby through brew
-  - brew install ruby
+  - travis_wait brew install ruby # takes a while and so spawn a travis_wait process
   - brew install gem
   - gem --version
   - which gem
