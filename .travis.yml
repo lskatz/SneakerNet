@@ -12,9 +12,9 @@ addons:
     - ruby2.0-dev
 install:
   # Ruby
+  - sudo gem update --system
   - ruby --version
-  - which ruby
-  - gem update --system
+  - gem --version
   - sudo gem install activesupport plist backports
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
