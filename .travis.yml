@@ -14,8 +14,8 @@ addons:
     #- libboost1.58-dev
     - bioperl
     - curl
-    - ruby2.0-dev
-    - rubygems1.9.1
+    - ruby2.3-dev
+    - rubygems
 install:
   # Ruby
   #- export REALLY_GEM_UPDATE_SYSTEM=1
