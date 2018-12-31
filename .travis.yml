@@ -1,8 +1,6 @@
 language: perl
 perl:
   - "5.24-shrplib"
-rvm:
-  - 2.2
 addons:
   apt:
     sources:
@@ -11,9 +9,11 @@ addons:
     - libboost-dev
     - bioperl
     - curl
+    - ruby2.0-dev
 install:
   # Ruby
   - ruby --version
+  - which ruby
   - sudo gem install activesupport plist backports
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
