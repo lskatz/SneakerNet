@@ -25,6 +25,18 @@ install:
   - mkdir ~/.linuxbrew/bin
   - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
   - eval $(~/.linuxbrew/bin/brew shellenv)
+  # debug brew
+  - brew doctor
+  - brew update
+  - brew update
+  - brew doctor
+  # Dependencies for ruby on brew: pkg-config, libyaml, openssl, gpatch, ncurses and readline
+  - brew install pkg-config
+  - brew install libyaml
+  - brew install openssl
+  - brew install gpatch
+  - brew install ncurses
+  - brew install readline
   # Ruby through brew
   - travis_wait brew install ruby # takes a while and so spawn a travis_wait process
   - brew install gem
