@@ -25,7 +25,6 @@ install:
   #- gem --version
   #- sudo gem --version
   # Homebrew stuff
-  - echo "HOME is $HOME"
   - export PATH=$PATH:$HOME/.linuxbrew/bin
   - git clone https://github.com/Homebrew/brew $HOME/.linuxbrew/Homebrew
   - mkdir $HOME/.linuxbrew/bin
@@ -40,11 +39,11 @@ install:
   #- brew doctor || true
   # Dependencies for ruby on brew: pkg-config, libyaml, openssl, gpatch, ncurses and readline
   - travis_wait brew install pkg-config # First brew command might take a while and so prefix with travis_wait.
-  - brew install libyaml
-  - brew install openssl
-  - brew install gpatch
-  - brew install ncurses
-  - brew install readline
+  - travis_wait brew install libyaml
+  - travis_wait brew install openssl
+  - travis_wait brew install gpatch
+  - travis_wait brew install ncurses
+  - travis_wait brew install readline
   # Ruby through brew
   - travis_wait brew install ruby # takes a while and so spawn a travis_wait process
   - gem --version
