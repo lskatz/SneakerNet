@@ -10,7 +10,7 @@ addons:
     - bioperl
     - curl
     - ruby2.0-dev
-    - rubygems
+    - rubygems1.9.1
 install:
   # Ruby
   - export REALLY_GEM_UPDATE_SYSTEM=1
