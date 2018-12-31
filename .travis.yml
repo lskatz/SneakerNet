@@ -10,25 +10,28 @@ addons:
     - bioperl
     - curl
     - ruby2.0-dev
+    - rubygems
 install:
   # Ruby
-  # - sudo gem update --system
-  # - ruby --version
-  # - sudo ruby --version
-  # - gem --version
-  # - sudo gem --version
-  # - sudo gem install activesupport plist backports
+  - export REALLY_GEM_UPDATE_SYSTEM=1
+  - sudo gem update --system
+  - ruby --version
+  - sudo ruby --version
+  - gem --version
+  - sudo gem --version
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
   - git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
   - mkdir ~/.linuxbrew/bin
   - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
   - eval $(~/.linuxbrew/bin/brew shellenv)
-  - brew install ruby
-  - brew install gem
-  - gem --version
-  - which gem
-  - gem update --system
+  # Ruby through brew
+  #- brew install ruby
+  #- brew install gem
+  #- gem --version
+  #- which gem
+  #- gem update --system
+  - sudo gem install activesupport plist backports
   - brew tap brewsci/bio
   - brew install skesa
   - brew install blast
