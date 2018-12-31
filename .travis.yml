@@ -25,6 +25,8 @@ install:
   - mkdir ~/.linuxbrew/bin
   - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
   - eval $(~/.linuxbrew/bin/brew shellenv)
+  - mkdir -pv /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
+  - chown -Rv $(whoami) /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
   # debug brew
   - brew doctor
   - brew update
