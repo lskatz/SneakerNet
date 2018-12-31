@@ -1,6 +1,8 @@
 language: perl
 perl:
   - "5.24-shrplib"
+rvm:
+  - 2.2
 addons:
   apt:
     sources:
@@ -11,6 +13,7 @@ addons:
     - curl
 install:
   # Ruby
+  - ruby --version
   - sudo gem install activesupport plist backports
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
@@ -51,3 +54,4 @@ install:
   # Configure SneakerNet
   - cp -rv config.bak config
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
+script: cpanm --quiet --installdeps --notest .
