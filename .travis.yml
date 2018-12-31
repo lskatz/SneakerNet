@@ -6,7 +6,11 @@ addons:
     sources:
     - boost-latest
     packages:
+    - build-essential
+    - file
+    - git
     - libboost-dev
+    - libboost1.65-dev
     - bioperl
     - curl
     - ruby2.0-dev
@@ -20,13 +24,14 @@ install:
   #- gem --version
   #- sudo gem --version
   # Homebrew stuff
-  - export PATH=$PATH:~/.linuxbrew/bin
-  - git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
-  - mkdir ~/.linuxbrew/bin
-  - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
-  - eval $(~/.linuxbrew/bin/brew shellenv)
-  - mkdir -pv /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
-  - chown -Rv $(whoami) /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
+  - echo "HOME is $HOME"
+  - export PATH=$PATH:$HOME/.linuxbrew/bin
+  - git clone https://github.com/Homebrew/brew $HOME/.linuxbrew/Homebrew
+  - mkdir $HOME/.linuxbrew/bin
+  - ln -s ../Homebrew/bin/brew $HOME/.linuxbrew/bin
+  - eval $($HOME/.linuxbrew/bin/brew shellenv)
+  #- mkdir -pv /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
+  #- chown -Rv $(whoami) /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
   # debug brew
   - brew doctor || true
   #- brew update
