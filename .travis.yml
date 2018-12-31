@@ -28,10 +28,10 @@ install:
   - mkdir -pv /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
   - chown -Rv $(whoami) /home/travis/.linuxbrew/etc /home/travis/.linuxbrew/include /home/travis/.linuxbrew/lib /home/travis/.linuxbrew/opt /home/travis/.linuxbrew/sbin /home/travis/.linuxbrew/share /home/travis/.linuxbrew/var/homebrew/linked /home/travis/.linuxbrew/Cellar
   # debug brew
-  - brew doctor
+  - brew doctor || true
   - brew update
   - brew update
-  - brew doctor
+  - brew doctor || true
   # Dependencies for ruby on brew: pkg-config, libyaml, openssl, gpatch, ncurses and readline
   - brew install pkg-config
   - brew install libyaml
