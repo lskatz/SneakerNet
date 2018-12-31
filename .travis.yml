@@ -52,7 +52,7 @@ install:
   - gem install activesupport plist backports
   - brew tap brewsci/bio
   - travis_wait brew install skesa
-  - travis_wait brew install blast
+  - travis_wait 45 brew install blast # blast is a beast to install and it can take 30 minutes to finish
   - travis_wait brew install mlst
   - travis_wait brew install prokka
   #- find /usr /lib -type f -name program_options.hpp
