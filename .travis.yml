@@ -1,6 +1,7 @@
 language: perl
 perl:
   - "5.24-shrplib"
+dist: xenial
 addons:
   apt:
     sources:
@@ -10,7 +11,7 @@ addons:
     - file
     - git
     - libboost-dev
-    - libboost1.65-dev
+    #- libboost1.58-dev
     - bioperl
     - curl
     - ruby2.0-dev
