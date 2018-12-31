@@ -12,18 +12,23 @@ addons:
     - ruby2.0-dev
 install:
   # Ruby
-  - sudo gem update --system
-  - ruby --version
-  - sudo ruby --version
-  - gem --version
-  - sudo gem --version
-  - sudo gem install activesupport plist backports
+  # - sudo gem update --system
+  # - ruby --version
+  # - sudo ruby --version
+  # - gem --version
+  # - sudo gem --version
+  # - sudo gem install activesupport plist backports
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
   - git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
   - mkdir ~/.linuxbrew/bin
   - ln -s ../Homebrew/bin/brew ~/.linuxbrew/bin
   - eval $(~/.linuxbrew/bin/brew shellenv)
+  - brew install ruby
+  - brew install gem
+  - gem --version
+  - which gem
+  - gem update --system
   - brew tap brewsci/bio
   - brew install skesa
   - brew install blast
