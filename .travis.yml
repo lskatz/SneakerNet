@@ -14,6 +14,7 @@ install:
   # Ruby
   - ruby --version
   - which ruby
+  - gem update --system
   - sudo gem install activesupport plist backports
   # Homebrew stuff
   - export PATH=$PATH:~/.linuxbrew/bin
