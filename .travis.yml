@@ -54,7 +54,13 @@ install:
   - gem install activesupport plist backports
   - brew tap brewsci/bio
   - travis_wait brew install skesa
-  - travis_wait 45 brew install blast # blast is a beast to install and it can take 30 minutes to finish
+  - skesa # test skesa
+  # BLAST - break into dependencies to see finer output because it takes so long, up to 30 minutes
+  - travis_wait 30 brew install cpio
+  - travis_wait 30 brew install lmdb
+  - travis_wait 30 brew install bzip2
+  - travis_wait 30 brew install zlib
+  - travis_wait 30 brew install blast
   - travis_wait brew install mlst
   - travis_wait brew install prokka
   #- find /usr /lib -type f -name program_options.hpp
