@@ -11,7 +11,10 @@ addons:
     - file
     - git
     - libboost-all-dev
-    #- libboost1.58-dev
+    - libgdbm-dev
+    - expat
+    - libberkeleydb-perl
+    - openssl
     - bioperl
     - curl
     - ruby2.3-dev
@@ -26,7 +29,6 @@ before_install:
   - eval $($HOME/.linuxbrew/bin/brew shellenv)
   - REALLY_GEM_UPDATE_SYSTEM=1 gem update --system
   - gem install activesupport plist backports
-  - brew install gdbm berkeley-db expat openssl --force-bottle # perl prereqs
   # Screw installing perl and python incorrectly and slowly in brew.
   # Force the system perl and python.
   # PERL
