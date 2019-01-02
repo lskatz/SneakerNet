@@ -21,6 +21,7 @@ addons:
     - rubygems
 before_install:
   # CGP
+  - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
   # double check perl modules
