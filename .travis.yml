@@ -20,16 +20,15 @@ addons:
     - ruby2.3-dev
     - rubygems
 before_install:
-  # CGP
+  # Perl modules
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
-  # double check perl modules
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
+  # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
   - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
-  - run_assembly_readMetrics.pl --help
   # Homebrew installation
   - export PATH=$PATH:$HOME/.linuxbrew/bin
   - export HOMEBREW_FORCE_VENDOR_RUBY=1
