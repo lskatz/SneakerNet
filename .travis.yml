@@ -66,7 +66,7 @@ install:
   # Krona
   - wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
   - tar zxvf xl2.5.tar.gz
-  - perl install.pl -prefix $HOME/krona
+  - perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
   # Configure SneakerNet
   - cp -rv config.bak config
   - sed -i '/KRAKEN_DEFAULT_DB/d' config/settings.conf
