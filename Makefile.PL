@@ -50,7 +50,7 @@ WriteMakefile1(
     'threads::shared'=> 0,
     'Thread::Queue'  => 0,
     # Not core (I think?)
-    'Statistics::Descriptive' => 0
+    'Statistics::Descriptive' => 0,
     'Config::Simple' => 0,
     'File::Slurp'    => 0,
     'Bio::Kmer'      => 0,
