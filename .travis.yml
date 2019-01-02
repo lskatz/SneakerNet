@@ -21,6 +21,10 @@ addons:
     - rubygems
 before_install:
   # CGP
+  - cpanm -l ~ Statistics::Descriptive
+  - cpanm -l ~ File::Slurp
+  # double check perl modules
+  - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
   - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
