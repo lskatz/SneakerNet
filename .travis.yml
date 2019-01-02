@@ -16,6 +16,9 @@ addons:
     - curl
     - ruby2.3-dev
     - rubygems
+before_install:
+  - export PATH=$PATH:$HOME/.linuxbrew/bin
+  - export HOMEBREW_FORCE_VENDOR_RUBY=1
 install:
   # Ruby
   #- export REALLY_GEM_UPDATE_SYSTEM=1
@@ -25,7 +28,6 @@ install:
   #- gem --version
   #- sudo gem --version
   # Homebrew stuff
-  - export PATH=$PATH:$HOME/.linuxbrew/bin
   - git clone https://github.com/Homebrew/brew $HOME/.linuxbrew/Homebrew
   - mkdir $HOME/.linuxbrew/bin
   - ln -s ../Homebrew/bin/brew $HOME/.linuxbrew/bin
@@ -38,14 +40,14 @@ install:
   #- brew update
   #- brew doctor || true
   # Dependencies for ruby on brew: pkg-config, libyaml, openssl, gpatch, ncurses and readline
-  - travis_wait brew install pkg-config # First brew command might take a while and so prefix with travis_wait.
-  - travis_wait brew install libyaml
-  - travis_wait brew install openssl
-  - travis_wait brew install gpatch
-  - travis_wait brew install ncurses
-  - travis_wait brew install readline
+  # - travis_wait brew install pkg-config # First brew command might take a while and so prefix with travis_wait.
+  # - travis_wait brew install libyaml
+  # - travis_wait brew install openssl
+  # - travis_wait brew install gpatch
+  # - travis_wait brew install ncurses
+  # - travis_wait brew install readline
   # Ruby through brew
-  - travis_wait brew install ruby # takes a while and so spawn a travis_wait process
+  # - travis_wait brew install ruby # takes a while and so spawn a travis_wait process
   - gem --version
   - which gem
   - REALLY_GEM_UPDATE_SYSTEM=1 gem update --system
