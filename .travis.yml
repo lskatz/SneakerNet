@@ -46,9 +46,13 @@ before_install:
   - ln -sv `which perl` $HOME/.linuxbrew/Cellar/perl/5.28.1/bin
   - brew link perl
   # PYTHON
-  - mkdir -p ~/.linuxbrew/Cellar/python@2/2.7.15_1/bin
-  - ln -sv `which python` ~/.linuxbrew/Cellar/python@2/2.7.15_1/bin/
+  - mkdir -p $HOME/.linuxbrew/Cellar/python@2/2.7.15_1/bin
+  - ln -sv `which python` $HOME/.linuxbrew/Cellar/python@2/2.7.15_1/bin/
   - brew link python@2
+  # WGET
+  - mkdir -p $HOME/.linuxbrew/Cellar/wget/1.20.1/bin
+  - ln -sv `which wget` $HOME/.linuxbrew/Cellar/wget/1.20.1/bin/
+  - brew link wget
 install:
   - brew tap brewsci/bio
   - brew install skesa --force-bottle
@@ -60,13 +64,13 @@ install:
   - brew install --force-bottle bioperl less aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
   - brew install prokka
   # Kraken
-  - brew install --force-bottle kraken
-  - wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-  - tar zxvf minikraken_20171019_4GB.tgz
+  #- brew install --force-bottle kraken
+  #- wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+  #- tar zxvf minikraken_20171019_4GB.tgz
   # Krona
-  - wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
-  - tar zxvf xl2.5.tar.gz
-  - perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
+  #- wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
+  #- tar zxvf xl2.5.tar.gz
+  #- perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
   # Configure SneakerNet
   - cp -rv config.bak config
   - sed -i '/KRAKEN_DEFAULT_DB/d' config/settings.conf

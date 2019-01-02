@@ -57,7 +57,7 @@ subtest "Expected assembly stats" => sub {
   );
   my %CDS = (
     "2010EL-1786.skesa"      => 2714,
-    "Philadelphia_CDC.skesa" => 3223,
+    "Philadelphia_CDC.skesa" => 3096,
     "FA1090.skesa"           => 2017,
   );
   diag `echo;column -t $run/SneakerNet/forEmail/assemblyMetrics.tsv`;
