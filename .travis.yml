@@ -43,7 +43,11 @@ install:
   - brew tap brewsci/bio
   - brew install skesa --force-bottle
   - brew install blast --force-bottle
+  # mlst prereqs
+  - brew install --force-bottle gzip gdbm openssl berkeley-db libbsd expat pkg-config gpatch ncurses gettext libunistring libidn2 readline sqlite util-linux wget
   - brew install mlst
+  # prokka prereqs
+  - brew install --force-bottle aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
   - brew install prokka
   # CGP
   - wget https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
