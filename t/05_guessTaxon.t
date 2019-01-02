@@ -23,6 +23,7 @@ if(! $kraken){
   exit 0;
 }
 
+=cut
 my $progressThread = threads->new(sub{
   for(my $i=1;$i<=60;$i++){
     sleep 60;
@@ -38,8 +39,9 @@ my $progressThread = threads->new(sub{
   sleep 1;
 });
 $progressThread->detach();
+=cut
 
-is system("guessTaxon.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Running guessTaxon.pl";
+is system("guessTaxon.pl --numcpus 1 --force $run"), 0, "Running guessTaxon.pl";
 
 my $krakenFile = "$run/SneakerNet/forEmail/kraken.tsv";
 

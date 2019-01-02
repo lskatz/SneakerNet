@@ -25,6 +25,7 @@ if(! $skesa){
   exit 0;
 }
 
+=cut
 my $progressThread = threads->new(sub{
   for(my $i=1;$i<=60;$i++){
     sleep 60;
@@ -40,8 +41,9 @@ my $progressThread = threads->new(sub{
   sleep 1;
 });
 $progressThread->detach();
+=cut
 
-is system("assembleAll.pl --numcpus 2 --force $run >/dev/null 2>&1"), 0, "Assembling all";
+is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
 # Let the checks be loose though because of different
@@ -58,6 +60,7 @@ subtest "Expected assembly stats" => sub {
     "Philadelphia_CDC.skesa" => 3223,
     "FA1090.skesa"           => 2017,
   );
+  diag `echo;column -t $run/SneakerNet/forEmail/assemblyMetrics.tsv`;
   open(my $fh, "$run/SneakerNet/forEmail/assemblyMetrics.tsv") or die "ERROR reading $run/SneakerNet/forEmail/assemblyMetrics.tsv: $!";
   while(<$fh>){
     chomp;

@@ -15,7 +15,7 @@ use_ok 'SneakerNet';
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-system("sn_mlst.pl --numcpus 1 --force $run >/dev/null 2>&1");
+system("sn_mlst.pl --numcpus 1 --force $run");
 
 my $mlstFile = "$run/SneakerNet/forEmail/mlst.tsv";
 
