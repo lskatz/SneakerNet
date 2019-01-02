@@ -20,6 +20,11 @@ addons:
     - ruby2.3-dev
     - rubygems
 before_install:
+  # CGP
+  - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
+  - tar zxvf v0.5.tar.gz
+  - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
+  - run_assembly_readMetrics.pl --help
   # Homebrew installation
   - export PATH=$PATH:$HOME/.linuxbrew/bin
   - export HOMEBREW_FORCE_VENDOR_RUBY=1
@@ -47,12 +52,8 @@ install:
   - brew install --force-bottle gzip gdbm openssl berkeley-db libbsd expat pkg-config gpatch ncurses gettext libunistring libidn2 readline sqlite util-linux wget
   - brew install mlst
   # prokka prereqs
-  - brew install --force-bottle aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
+  - brew install --force-bottle bioperl less aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
   - brew install prokka
-  # CGP
-  - wget https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
-  - tar zxvf v0.5.tar.gz
-  - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
   # Configure SneakerNet
   - cp -rv config.bak config
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
