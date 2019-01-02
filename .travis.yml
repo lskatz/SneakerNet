@@ -56,4 +56,7 @@ install:
   # Configure SneakerNet
   - cp -rv config.bak config
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
-script: cpanm --quiet --installdeps --notest .
+script: 
+  - cpanm --quiet --installdeps --notest .
+  - perl Makefile.PL
+  - make test
