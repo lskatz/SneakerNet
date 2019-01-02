@@ -15,7 +15,8 @@ use_ok 'SneakerNet';
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-if(! system("which skesa") ){
+my $skesa = `which skesa 2>/dev/null`; chomp($skesa);
+if(! $skesa){
   diag "Skesa is not installed and so this whole unit test will be skipped";
   pass("assembly1");
   pass("assembly2");
