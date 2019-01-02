@@ -41,7 +41,7 @@ before_install:
   - brew link python@2
 install:
   - brew tap brewsci/bio
-  - travis_wait brew install skesa
+  - brew install skesa --force-bottle
   - brew install blast --force-bottle
   - brew install mlst
   - brew install prokka
