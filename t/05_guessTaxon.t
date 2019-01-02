@@ -15,7 +15,7 @@ use_ok 'SneakerNet';
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-my $kraken = `which kraken`; chomp($kraken);
+my $kraken = `which kraken 2>/dev/null`; chomp($kraken);
 if(! $kraken){
   diag "Kraken is not installed and so this whole unit test will be skipped";
   pass("kraken1");
