@@ -27,7 +27,8 @@ before_install:
   - REALLY_GEM_UPDATE_SYSTEM=1 gem update --system
   - gem install activesupport plist backports
   - brew install gdbm berkeley-db expat openssl --force-bottle # perl prereqs
-  - brew install perl --force-bottle || true # get the perl dependency out of the way
+  - brew install perl --force-bottle --ignore-dependencies || true # get the perl dependency out of the way
+  - brew install python@2 --force-bottle --ignore-dependencies || true # get the python dependency out of the way
 install:
   - brew tap brewsci/bio
   - travis_wait brew install skesa
