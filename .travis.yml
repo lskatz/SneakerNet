@@ -59,8 +59,22 @@ install:
   # prokka prereqs
   - brew install --force-bottle bioperl less aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
   - brew install prokka
+  # Kraken
+  - brew install --force-bottle kraken
+  - wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+  - tar zxvf minikraken_20171019_4GB.tgz
+  # Krona
+  - wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
+  - tar zxvf xl2.5.tar.gz
+  - perl install.pl -prefix $HOME/krona
   # Configure SneakerNet
   - cp -rv config.bak config
+  - sed -i '/KRAKEN_DEFAULT_DB/d' config/settings.conf
+  - sed -i '/KRAKENDIR/d' config/settings.conf
+  - echo -e "KRAKEN_DEFAULT_DB\t$(pwd -P)/minikraken_20171013_4GB" >> config/settings.conf
+  - echo -e "KRAKENDIR\t$HOME/.linuxbrew/bin" >> config/settings.conf
+  - sed -i '/KRONADIR/d' config/settings.conf
+  - echo -e "KRONADIR\t$HOME/krona/bin" >> config/settings.conf
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
 script: 
   - cpanm --quiet --installdeps --notest .
