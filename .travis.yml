@@ -2,6 +2,7 @@ language: perl
 perl:
   - "5.24-shrplib"
 dist: xenial
+sudo: false # faster builds as long as you don't need sudo access
 addons:
   apt:
     sources:
