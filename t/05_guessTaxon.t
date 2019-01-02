@@ -23,6 +23,22 @@ if(! $kraken){
   exit 0;
 }
 
+my $progressThread = threads->new(sub{
+  for(my $i=1;$i<=60;$i++){
+    sleep 60;
+    my @finishedFiles = glob("t/M00123-18-001-test/SneakerNet/kraken/*/report.html");
+    my $numFinished = scalar(@finishedFiles);
+    chomp($numFinished);
+    note "$i minutes for assembly, finished with $numFinished...";
+
+    if($numFinished == 3){
+      last;
+    }
+  }
+  sleep 1;
+});
+$progressThread->detach();
+
 is system("guessTaxon.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Running guessTaxon.pl";
 
 my $krakenFile = "$run/SneakerNet/forEmail/kraken.tsv";

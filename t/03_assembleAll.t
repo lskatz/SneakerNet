@@ -28,7 +28,8 @@ if(! $skesa){
 my $progressThread = threads->new(sub{
   for(my $i=1;$i<=60;$i++){
     sleep 60;
-    my $numFinished = `ls t/M00123-18-001-test/SneakerNet/assemblies/*/*.gbk | wc -l`;
+    my @finishedFiles = glob("t/M00123-18-001-test/SneakerNet/assemblies/*/*.gbk");
+    my $numFinished = @finishedFiles;
     chomp($numFinished);
     note "$i minutes for assembly, finished with $numFinished...";
 
@@ -49,13 +50,13 @@ subtest "Expected assembly stats" => sub {
   plan tests => 6;
   my %genomeLength = (
     "2010EL-1786.skesa"      => 2955394,
-    "Philadelphia_CDC.skesa" => 3287023,
-    "FA1090.skesa"           => 1802838,
+    "Philadelphia_CDC.skesa" => 3328163,
+    "FA1090.skesa"           => 1918813,
   );
   my %CDS = (
     "2010EL-1786.skesa"      => 2714,
     "Philadelphia_CDC.skesa" => 3223,
-    "FA1090.skesa"           => 2122,
+    "FA1090.skesa"           => 2017,
   );
   open(my $fh, "$run/SneakerNet/forEmail/assemblyMetrics.tsv") or die "ERROR reading $run/SneakerNet/forEmail/assemblyMetrics.tsv: $!";
   while(<$fh>){
