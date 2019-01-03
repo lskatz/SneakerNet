@@ -28,3 +28,6 @@ lib/perl5/Throwable.pm
 lib/perl5/Try
 lib/perl5/x86_64-linux-thread-multi
 
+t/M00123-18-001-test/SneakerNet/
+t/M00123-18-001-test/readMetrics.tsv
+t/M00123-18-001-test/samples.tsv

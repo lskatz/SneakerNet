@@ -62,6 +62,11 @@ sub main{
 sub findSampleSheet{
   my($dir, $settings)=@_;
 
+  # TODO parse samples.tsv too if it's here
+  #if(-e "$dir/samples.tsv"){
+  #  return "$dir/samples.tsv";
+  #}
+
   if(-e "$dir/SampleSheet.csv"){
     return "$dir/SampleSheet.csv";
   }
