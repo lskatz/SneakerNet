@@ -113,7 +113,7 @@ sub transferFilesToRemoteComputers{
     next if($$settings{debug});
     eval{
       #print "rsync -q --no-motd --update -av --no-g $fileString $$settings{transfer_destination_string}/$subfolder/\n";
-      command("rsync -av -q --no-motd --update -av --no-g --copy-links $fileString $$settings{transfer_destination_string}/$subfolder/");
+      command("rsync -av -q --no-motd --update -av --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/");
     };
     if($@){
       logmsg "ERROR: I could not transfer these files. If it is a permissions issue, one cause is if the destination file already exists but under a different username.";
