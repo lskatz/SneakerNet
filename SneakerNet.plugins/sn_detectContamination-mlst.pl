@@ -23,8 +23,22 @@ sub main{
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
-  $$settings{mlstfasta}||=die "ERROR: need --mlstfasta";
   $$settings{k}||=39;
+
+  # If the mlstfasta is not given, try to find it
+  if(! $$settings{mlstfasta} ){
+    my $mlstExec = `which mlst 2>/dev/null`;
+    if($?){
+      die "ERROR: need --mlstfasta or mlst the executable in your path";
+    }
+    my $mlstBaseDir = dirname($mlstExec)."/..";
+    $$settings{mlstfasta} = "$mlstBaseDir/db/blast/mlst.fa";
+
+    logmsg "--mlstfasta was not given, but I set it anyway to $$settings{mlstfasta}";
+  }
+  if(! -s $$settings{mlstfasta}){
+    die "ERROR: could not find $$settings{mlstfasta}";
+  }
 
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
@@ -35,8 +49,10 @@ sub main{
     die "ERROR: could not find colorid in your PATH";
   }
 
+  logmsg "Filtering $$settings{mlstfasta}";
   my $mlstFasta = readMlstFasta($$settings{mlstfasta}, $settings);
   
+  logmsg "Running colorid workflow";
   my $report = mlstColorId($dir, $mlstFasta, $settings);
 
   my $finalReport = "$dir/SneakerNet/forEmail/mlst-contamination-detection.tsv";
@@ -76,6 +92,13 @@ sub mlstColorId{
   while(my($sample,$info)=each(%$sampleInfo)){
     # for f in *.fastq.gz; do echo ${f%.fastq.gz}$'\t'$f >> PE.txt; done
     print $fh join("\t", $sample, @{ $$info{fastq} })."\n";
+
+    # double check that the file exists even though it is supposed to via the sample sheet
+    for my $f(@{ $$info{fastq} }){
+      if( ! -e $f){
+        die "ERROR: while creating $peTxt: this file does not exist: $f";
+      }
+    }
   }
   close $fh;
   
@@ -167,6 +190,8 @@ sub usage{
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --mlstfasta mlst.fa  The mlst.fa file in Torsten's mlst package
+                       If not given, I will try to find it relative
+                       to where the mlst executable is.
   --k   kmer length
   "
 }
