@@ -19,7 +19,7 @@ Two major steps are described below for making a plugin.
 3. Add any desired soft-coded variables such as the location of a blast database
      into `config.bak/settings` and `config/settings`
 4. If the plugin generates any files, please organize them into 
-     `runDirectory/SneakerNet/customdirectory`, and add any results for the
+     `runDirectory/SneakerNet/customdirectory` (where `customdirectory` is a name of your choice), and add any results for the
      resulting email to `runDirectory/SneakerNet/forEmail`. Any files under
      this directory will be emailed with the SneakerNet email.
      
