@@ -33,5 +33,5 @@ Also, please look at the `example` folder for another readme file and example da
 If you don't want to move the directory but just want to analyze it.  Let us say that
 the test directory name is M1234-18-001-test.
 
-    $ SneakerNet.pl --numcpus 4 M1234-18-001-test
+    $ SneakerNetPlugins.pl --numcpus 4 M1234-18-001-test
 
