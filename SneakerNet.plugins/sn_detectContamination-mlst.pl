@@ -84,14 +84,22 @@ sub readMlstFasta{
 sub mlstColorId{
   my($dir, $mlstFasta, $settings)=@_;
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
+  my $numSamples = scalar(keys(%$sampleInfo));
 
   my $coloridDir = "$dir/SneakerNet/colorid";
 
   my $peTxt = "$coloridDir/PE.tsv";
+  my $sampleCounter=0;
   open(my $fh, ">", $peTxt) or die "ERROR writing to $peTxt: $!";
   while(my($sample,$info)=each(%$sampleInfo)){
+    $sampleCounter++;
     # for f in *.fastq.gz; do echo ${f%.fastq.gz}$'\t'$f >> PE.txt; done
-    print $fh join("\t", $sample, @{ $$info{fastq} })."\n";
+    print $fh join("\t", $sample, @{ $$info{fastq} });
+    # Only print a newline if there is another record coming up,
+    # to help avoid a colorid nuance.
+    if($sampleCounter < $numSamples){
+      print $fh "\n";
+    }
 
     # double check that the file exists even though it is supposed to via the sample sheet
     for my $f(@{ $$info{fastq} }){
@@ -105,6 +113,7 @@ sub mlstColorId{
   my $indexPrefix = "$coloridDir/colorid";
   if(! -e "$indexPrefix.bxi"){
     # ./colorid_Centos64  build -b ST8 -s 30000000 -n 2 -k <preferred k-mer size> -t 10 -r PE.txt  
+    $ENV{RUST_BACKTRACE}=1;
     logmsg "colorid build => $indexPrefix.bxi";
     system("colorid build -b $coloridDir/tmp -s 30000000 -n 2 -k $$settings{k} -t $$settings{numcpus} -r $peTxt 2> $coloridDir/build.log 1>&2");
     die "ERROR with colorid build. Here is the log:\n".`cat $coloridDir/build.log` if $?;
