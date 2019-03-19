@@ -71,6 +71,7 @@ sub mlst{
   my @mlstQueueBuffer=();
   
   # Find information about each genome
+  logmsg "Reading sample tsv at $dir/samples.tsv";
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
