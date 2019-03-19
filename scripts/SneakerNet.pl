@@ -94,7 +94,7 @@ sub main{
 
     # ensure that the samplesheet can be parsed. This is
     # a prerequisite for all plugins.
-    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl $$d{dir} 2>&1");
+    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl --force $$d{dir} 2>&1");
     my @exe=@{ $$settings{'plugins.default'} };
     for my $exe(@exe){
       if(!$$settings{email} && $exe=~/emailWhoever.pl/){
