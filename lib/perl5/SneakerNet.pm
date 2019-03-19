@@ -66,8 +66,10 @@ sub samplesheetInfo_tsv{
     chomp;
     my @F = split /\t/;
     my($sampleName,$rules,$fastq)=@F;
+    $fastq ||= "";
+    my @fastq = split(/;/, $fastq) || ();
     $sample{$sampleName}={
-      fastq => [split(/;/, $fastq)],
+      fastq => \@fastq,
       sample_id => $sampleName,
     };
     for my $rule(split(/;/, $rules)){
@@ -131,6 +133,7 @@ sub samplesheetInfo{
 
       for my $keyvalue(split(/;/,lc($F{description}))){
         my($key,$value)=split(/=/,$keyvalue);
+        $value||="";
         $key=~s/^\s+|\s+$//g;      #whitespace trim
         $value=~s/^\s+|\s+$//g;    #whitespace trim
         #$F{$key}={} if(!$F{$key});
