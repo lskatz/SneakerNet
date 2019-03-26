@@ -75,10 +75,10 @@ sub transferFilesToRemoteComputers{
     logmsg "The taxon of $sampleName is $taxon";
     my @route = (ref($$s{route}) eq 'ARRAY')?@{$$s{route}}:($$s{route});
     if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
-      FASTQ: for(@{ $$s{fastq} }){
+      FASTQ: for my $fastq(@{ $$s{fastq} }){
         # Write out the status
         # The key of each filename is its basename
-        my $f=basename($_);
+        my $f=basename($fastq);
 
         for my $reason(keys(%{ $$passfail{$f} })){
           if($$passfail{$f}{$reason} == 1){
@@ -95,7 +95,7 @@ sub transferFilesToRemoteComputers{
             $subfolder="SneakerNet";
           }
         }
-        $filesToTransfer{$subfolder}.=$_." ";
+        $filesToTransfer{$subfolder}.=$fastq." ";
       }
       logmsg "One route for sample $sampleName is the Calculation Engine";
     } else {

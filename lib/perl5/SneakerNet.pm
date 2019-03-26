@@ -67,7 +67,7 @@ sub samplesheetInfo_tsv{
     my @F = split /\t/;
     my($sampleName,$rules,$fastq)=@F;
     $fastq ||= "";
-    my @fastq = split(/;/, $fastq) || ();
+    my @fastq = split(/;/, $fastq);
     $sample{$sampleName}={
       fastq => \@fastq,
       sample_id => $sampleName,
