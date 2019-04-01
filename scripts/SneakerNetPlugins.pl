@@ -38,7 +38,7 @@ sub main{
     
     # ensure that the samplesheet can be parsed. This is
     # a prerequisite for all plugins.
-    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl $dir");
+    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl --force $dir");
 
     # Run all plugins
     my @exe=@{ $$settings{'plugins.default'} };

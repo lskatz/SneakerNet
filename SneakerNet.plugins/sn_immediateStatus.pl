@@ -121,15 +121,15 @@ sub doubleCheckRun{
 
   # now see if there are fastq files that are not mentioned
   for my $filename(@fastq){
-    my $basename = $filename;
+    next if($filename=~/Undetermined/i);
+    my $basename = basename($filename);
     $basename =~ s/_.*//;
     if(!$$sampleInfo{$basename}){
       my $tf = Text::Fuzzy->new($filename);
       my $nearest = $tf->nearestv(\@sample);
-      $errHash{fastq}{$filename}{sampleNotFound} = "Found fastq $filename but no entry in the sample sheet.  Did you mean $nearest?";
+      $errHash{fastq}{$filename}{sampleNotFound} = "Found fastq $filename but no entry in the sample sheet matching $basename.  Did you mean $nearest?";
     }
   }
-  
   return \%errHash;
 }
 
