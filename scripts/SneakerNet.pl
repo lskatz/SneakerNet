@@ -92,6 +92,10 @@ sub main{
     # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
     # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
 
+    command("$FindBin::RealBin/SneakerNetPlugins.pl --numcpus $$settings{numcpus} $$d{dir} 2>&1");
+
+    next;
+
     # ensure that the samplesheet can be parsed. This is
     # a prerequisite for all plugins.
     command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl --force $$d{dir} 2>&1");

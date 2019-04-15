@@ -66,6 +66,7 @@ sub runKrakenOnDir{
     my $sampledir="$outdir/$sampleName";
     system("mkdir -p $sampledir");
     logmsg "Running Kraken on $sampleName";
+    logmsg "  Database: $$settings{KRAKEN_DEFAULT_DB}";
     my $krakenWorked=runKraken($s,$sampledir,$settings);
 
     if(!$krakenWorked){
@@ -110,10 +111,11 @@ sub runKraken{
   my $html="$sampledir/report.html";
   return 1 if(-e $html);
 
-  my @twoReads = (@{$$sample{fastq}})[0,1];
-  my $reads="'".join("' '", @twoReads)."'";
-  return 0 if(!$reads);
-
+  if(!defined($$sample{fastq})){
+    logmsg "ERROR: no reads found for $sampledir";
+    return 0;
+  }
+  
   # Skip small file sizes.
   # TODO: use something better like readMetrics.pl 
   for(@{ $$sample{fastq} }){
@@ -122,6 +124,74 @@ sub runKraken{
       return 0;
     }
   }
+  
+  # Force an array
+  if(ref($$sample{fastq}) ne 'ARRAY'){
+    $$sample{fastq} = [$$sample{fastq}];
+  }
+  my @fastq = @{$$sample{fastq}};
+
+  if(@fastq == 1){
+    return runKrakenSE(@_);
+  }
+  elsif(@fastq == 2){
+    return runKrakenPE(@_);
+  }
+
+  logmsg "INTERNAL ERROR";
+  return 0;
+}
+sub runKrakenSE{
+  my($sample,$sampledir,$settings)=@_;
+  my $html="$sampledir/report.html";
+
+  my $reads = $$sample{fastq}[0];
+
+  return 0 if(!$reads);
+
+  command("$KRAKENDIR/kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
+
+  command("$KRAKENDIR/kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
+    s/^ +//;   # remove leading spaces
+    s/ +/\t/;  # change first set of spaces from uniq -c to a tab
+    s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
+    print;
+    ' | sort -k1,1nr > $sampledir/kraken.taxonomy
+  ");
+
+  command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+
+  # To capture unclassified reads, we can get the third
+  # column of the first row of the report file. This
+  # information can be appended to the taxonomy file
+  # on the last line.
+  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not read $sampledir/kraken.report: $!";
+  my $firstLine=<$reportFh>;
+  close $reportFh;
+  my $unclassifiedReadsCount=(split(/\t/, $firstLine))[2];
+  open(my $taxFh, ">>", "$sampledir/kraken.taxonomy") or die "ERROR: could not append to $sampledir/kraken.taxonomy: $!";
+  print $taxFh $unclassifiedReadsCount."\n";
+  close $taxFh;
+
+  command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
+
+  # Go ahead and remove kraken.out which is a huge file
+  unlink("$sampledir/kraken.out");
+
+  if(! -e "$sampledir/kraken.taxonomy"){
+    return 0;
+  }
+
+  return 1;
+}
+
+sub runKrakenPE{
+  my($sample,$sampledir,$settings)=@_;
+  my $html="$sampledir/report.html";
+
+  my @twoReads = (@{$$sample{fastq}})[0,1];
+  my $reads="'".join("' '", @twoReads)."'";
+  return 0 if(!$reads);
   
   command("$KRAKENDIR/kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
 

@@ -19,11 +19,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  GetOptions($settings,qw(help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{k}||=39;
+  $$settings{quality}||=15;
 
   # If the mlstfasta is not given, try to find it
   if(! $$settings{mlstfasta} ){
@@ -202,6 +203,7 @@ sub usage{
                        If not given, I will try to find it relative
                        to where the mlst executable is.
   --k   kmer length
+  --quality            Minimum quality for bp
   "
 }
 
