@@ -186,15 +186,16 @@ sub assembleSample{
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
   my $numcpus=$$settings{numcpus};
 
-  command("spades.py -s $fastq --iontorrent --careful --sc --threads $numcpus -o $outdir");
+  # Trim with moving average cutoff of 23
+  # Filter for reads >= 100bp
+  # -p 1 = single end (poly = 1)
+  # --bases_to_trim 400 = trim up to 400 reads on either side
+  my $cleanedReads = "$$settings{tempdir}/cleaned.fastq.gz";
+  command("run_assembly_trimClean.pl --numcpus $numcpus --min_quality 23 --bases_to_trim 400 --min_length 100 -p 1 --nosingletons -i $fastq -o $cleanedReads");
+
+  command("spades.py -s $cleanedReads --iontorrent --careful --sc --threads $numcpus -o $outdir");
 
   return "$outdir/scaffolds.fasta";
-
-  #$numcpus=2 if($numcpus < 2); # megahit requires at least two
-  #command("megahit -1 $R1 -2 $R2 --out-dir '$outdir' -t $numcpus 1>&2");
-  #die "ERROR with running megahit on $sample: $!" if $?;
-
-  #return "$outdir/final.contigs.fa";
 }
 
 # I _would_ use prokka, except it depends on having an up to date tbl2asn
