@@ -8,7 +8,7 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use Cwd qw/realpath/;
 use File::Temp;
-use File::Copy qw/cp/;
+use File::Copy qw/cp mv/;
 use File::Find;
 use FindBin;
 use Config::Simple;
@@ -66,7 +66,7 @@ sub prepareIonTorrentRun{
 
   for my $zip(@zip){
     my $basename = basename($zip);
-    command("cd '$dir' && unzip '$basename'");
+    command("cd '$dir' && unzip -o '$basename'");
   }
 
   # Find fastq files, gzip them, collect them
@@ -74,24 +74,30 @@ sub prepareIonTorrentRun{
   find({no_chdir=>1, wanted=>sub{
     my $path = $File::Find::name;
     return if(!-f $path);
+    my $filename = basename($path);
 
     my $barcode = -1;
     if($path=~/_0*(\d+)\.f/){
       $barcode = $1;
     }
 
+    my $newpath = "";
+
     if($path =~ /\.fastq$|\.fq$/){
       command("gzip -v '$path'");
-      $fastq{$barcode} = "$path.gz";
+      $newpath = "$dir/$filename.gz";
+      mv("$path.gz", $newpath);
     }
     elsif($path =~ /\.fastq.gz$|\.fq.gz$/){
-      $fastq{$barcode} = $path;
+      $newpath = "$dir/$filename";
+      mv($path, $newpath);
     }
+    $fastq{$barcode} = $newpath;
   }}, $dir);
 
-  for my $zip(@zip){
-    unlink($zip);
-  }
+  #for my $zip(@zip){
+    #unlink($zip);
+  #}
 
   return \%fastq;
 }
