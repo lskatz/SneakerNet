@@ -106,17 +106,19 @@ PATH=${PATH}:/mlst-2.16.2/bin:\
     ./mlst-2.16.2/bin/mlst --check
     ./mlst-2.16.2/bin/mlst --list
 
-    # get SneakerNet files
-
+    # get SneakerNet files, put in /data/bin
+    mkdir /data
+    mkdir /data/bin
+    cd /data/bin
+    wget https://github.com/lskatz/SneakerNet/archive/v0.3.tar.gz
+    tar -xzf v0.3.tar.gz
+    rm v0.3.tar.gz
 
     # install perl modules
     #cpanm Test::Most Bio::FeatureIO String::Escape File::Slurp URI::Escape
 
     # install SneakerNet
 
-
-    # make /data directory for mounting volume
-    mkdir /data
 
 %runscript
     echo "This runscript shows SneakerNet help options"
