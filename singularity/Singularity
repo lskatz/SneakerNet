@@ -28,10 +28,16 @@ PATH=${PATH}:/mlst-2.16.2/bin:\
 /kraken-1.1:\
 /kraken-1.1/kraken-scripts:\
 /kraken-1.1/scripts:\
-/CG-Pipeline-0.5/scripts
+/CG-Pipeline-0.5/scripts:\
+/data/bin/SneakerNet-0.3/scripts:\
+/data/bin/SneakerNet-0.3/SneakerNet.plugins
 
     export PATH
     export LC_ALL=C
+    export PERL5LIB=/data/lib/perl5
+
+%files
+    /home/curtis/github-repos/SneakerNet/singularity/config/* /
 
 %post
     apt-get update
@@ -48,7 +54,9 @@ PATH=${PATH}:/mlst-2.16.2/bin:\
                        zlib1g-dev \
                        g++ \
                        cpanminus \
-                       sendmail-base
+                       sendmail-base \
+                       glibc-source \
+                       prodigal
 
     # install CG-pipeline
     wget https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
@@ -85,9 +93,10 @@ PATH=${PATH}:/mlst-2.16.2/bin:\
     # DL minikraken DB
     mkdir /kraken-database
     cd /kraken-database
-    wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-    tar -xzf minikraken_20171019_4GB.tgz
-    rm minikraken_20171019_4GB.tgz
+    ##temorary commenting out to speed up build process
+#    wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+ #   tar -xzf minikraken_20171019_4GB.tgz
+  #  rm minikraken_20171019_4GB.tgz
 
     # install skesa (pre-compiled binary)
     mkdir /skesa
@@ -115,10 +124,29 @@ PATH=${PATH}:/mlst-2.16.2/bin:\
     rm v0.3.tar.gz
 
     # install perl modules
-    #cpanm Test::Most Bio::FeatureIO String::Escape File::Slurp URI::Escape
+    cpanm --local-lib=/data/lib/perl5 local::lib && eval $(perl -I /data/perl5/lib/perl5/ -Mlocal::lib)
+    cpanm -l /data --force Test::Most \
+                  Bio::FeatureIO \
+                  String::Escape \
+                  File::Slurp \
+                  URI::Escape \
+                  Bio::Kmer \
+                  Config::Simple \
+                  Email::Stuffer \
+                  Text::Fuzzy
+    export PERL5LIB=/data/lib/perl5
 
     # install SneakerNet
+    cd /data/bin/SneakerNet-0.3
+    perl Makefile.PL
+    make
 
+    # set up inbox and repository directory; move config files
+    mkdir /data/sn-inbox
+    mkdir /data/sn-repository-dir
+    mkdir /data/bin/SneakerNet-0.3/config
+    mv /*.conf /data/bin/SneakerNet-0.3/config
+    chmod -R a+rw /data
 
 %runscript
     echo "This runscript shows SneakerNet help options"
