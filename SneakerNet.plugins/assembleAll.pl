@@ -38,6 +38,7 @@ sub main{
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
+  mkdir "$dir/SneakerNet/forEmail";
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
 

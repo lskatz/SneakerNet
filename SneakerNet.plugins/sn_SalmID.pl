@@ -29,6 +29,7 @@ sub main{
   my $dir=$ARGV[0];
 
   mkdir("$dir/SneakerNet/SalmID");
+  mkdir "$dir/SneakerNet/forEmail";
   
   identifyEach($dir,$settings);
 

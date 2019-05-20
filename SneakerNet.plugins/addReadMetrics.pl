@@ -36,6 +36,7 @@ sub main{
   addReadMetrics($dir,$settings);
 
   # Mark this file as something to attach for an email later
+  mkdir "$dir/forEmail" if(!-d "$dir/forEmail");
   link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv");
 
   return 0;

@@ -32,6 +32,7 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/kmerHistogram";
+  mkdir "$dir/forEmail";
   
   my $numFastq=kmerContaminationDetection($dir,$settings);
   

@@ -28,11 +28,11 @@ sub main{
   logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet";
+  mkdir "$dir/SneakerNet/forEmail";
 
   my $errHash = doubleCheckRun($dir,$settings);
 
-  mkdir "$dir/SneakerNet";
-  mkdir "$dir/SneakerNet/forEmail";
   my $outfile = "$dir/SneakerNet/forEmail/immediateReaction.tsv";
   open(my $fh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
   print $fh join("\t", qw(ErrType Sample ErrKeyword Error))."\n";

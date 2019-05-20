@@ -38,6 +38,7 @@ sub main{
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/mlst";
+  mkdir "$dir/SneakerNet/forEmail";
   my $reportArr=mlst($dir,$settings);
 
   # Make a report for email

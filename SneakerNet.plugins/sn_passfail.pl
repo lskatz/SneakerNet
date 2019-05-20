@@ -25,6 +25,7 @@ sub main{
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
 
   my $outfile=passfail($dir,$settings);
   logmsg "The pass/fail file is under $outfile";

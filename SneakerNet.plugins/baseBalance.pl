@@ -35,6 +35,7 @@ sub main{
   $$settings{numcpus}||=1;
   
   my $dir=$ARGV[0];
+  mkdir "$dir/forEmail";
 
   my $out=baseBalanceAll($dir,$settings);
   

@@ -33,6 +33,7 @@ sub main{
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
 
   my $dir=$ARGV[0];
+  mkdir "$dir/forEmail";
   
   my $outdir=runKrakenOnDir($dir,$settings);
 

@@ -30,6 +30,7 @@ sub main{
   logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
 
   # Check for required executables
   for (qw(spades.py prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){

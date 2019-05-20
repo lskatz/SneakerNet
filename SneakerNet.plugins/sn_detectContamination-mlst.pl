@@ -44,6 +44,7 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/colorid";
+  mkdir "$dir/forEmail";
 
   system("which colorid >& /dev/null");
   if($?){
