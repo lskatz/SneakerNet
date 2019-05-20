@@ -18,7 +18,7 @@ my $preop =
 
 WriteMakefile1(
   NAME         => 'SneakerNet',
-  VERSION      => $VERSION,
+  VERSION_FROM => 'lib/perl5/SneakerNet.pm',
   ABSTRACT_FROM => 'README.md',
   AUTHOR => q{Lee S. Katz <gzu2@cdc.gov>},
   EXE_FILES    => [

@@ -15,6 +15,8 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
 
+our $VERSION = "1.0";
+
 # Get the executable directories
 my $tmpSettings=readConfig();
 my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
@@ -26,7 +28,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help debug tempdir=s numcpus=i force)) or die $!;
+  GetOptions($settings,qw(version help debug tempdir=s numcpus=i force)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings";
@@ -276,6 +283,7 @@ sub usage{
   "Finds contamination in a miseq run
   Usage: $0 MiSeq_run_dir
   --numcpus 1
+  --version
   "
 }
 

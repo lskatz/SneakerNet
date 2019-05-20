@@ -30,6 +30,7 @@ Two major steps are described below for making a plugin.
 |`--debug`|        |generate more messages or any other debugging|
 |`--tempdir`|automatically generated, e.g., with `File::Temp` or `mktemp`|Where temporary files are located|
 |`--force`|        |This is loosely defined but can be used for many things like overwriting output files|
+|`--version`|      |Print a version in the format of X.Y or X.Y.Z|
 
 ### Activate the script as a plugin
 

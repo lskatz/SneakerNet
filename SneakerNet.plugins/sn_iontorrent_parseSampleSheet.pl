@@ -16,12 +16,19 @@ use Config::Simple;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
 
+our $VERSION = "1.0";
+
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s force)) or die $!;
+  GetOptions($settings,qw(version help numcpus=i debug tempdir=s force)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 

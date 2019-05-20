@@ -19,6 +19,8 @@ use SneakerNet qw/readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
+our $VERSION = "1.0";
+
 my $snVersion=version();
 
 local $0=fileparse $0;
@@ -26,7 +28,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s email-only=s)) or die $!;
+  GetOptions($settings,qw(version help numcpus=i debug tempdir=s email-only=s)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -153,5 +160,6 @@ sub usage{
   --numcpus     1  Number of CPUs (has no effect on this script)
   --email-only  '' Choose the email to send the report to instead
                    of what is supplied.
+  --version
   "
 }

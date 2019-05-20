@@ -16,12 +16,19 @@ use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 use Text::Fuzzy;
 use Email::Stuffer;
 
+our $VERSION = "1.0";
+
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version help force tempdir=s debug numcpus=i)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
@@ -138,6 +145,7 @@ sub usage{
   "Double check a run and its completeness. Email a report.
   Usage: $0 MiSeq_run_dir
   --emails  ''   email1,[email2...]
+  --version
   "
 }
 

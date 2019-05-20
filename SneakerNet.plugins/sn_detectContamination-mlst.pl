@@ -14,12 +14,19 @@ use Bio::SeqIO;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
 
+our $VERSION = "1.0";
+
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  GetOptions($settings,qw(version help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
@@ -205,6 +212,7 @@ sub usage{
                        to where the mlst executable is.
   --k   kmer length
   --quality            Minimum quality for bp
+  --version
   "
 }
 
