@@ -41,9 +41,16 @@ sub main{
 
   $html .= htmlHeaders();
   $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
+  $html .= "<H2>Table of Contents</H2>\n";
+  $html .= "<ul>\n";
+  for my $plugin(sort keys(%$properties)){
+    $html .= "<li><a href='#plugin-$plugin'>$plugin</a></li>\n";
+  }
+  $html .= "</ul>\n";
+
   for my $plugin(sort keys(%$properties)){
     $html .= "<div class='pluginSplash'>\n";
-    $html .= "<H2>$plugin</H2>\n";
+    $html .= "<H2 id='plugin-$plugin'>$plugin</H2>\n";
     $html .= report($plugin, $properties, $settings);
     $html .= "</div>\n";
   }
@@ -155,7 +162,7 @@ sub genericHtml{
   if($key =~ /version/i){
     $class.=" version";
   }
-  $html .= "<p class='$class'>$plugin $key: $value</p>\n";
+  $html .= "<p class='$class'>$key: $value</p>\n";
   return $html;
 }
 
@@ -168,16 +175,16 @@ sub htmlHeaders{
   $html .= "<style>\n";
   $html .= "h1    {font-weight:bold; font-size:24px; margin:3px 0px;}\n";
   $html .= "h2    {font-weight:bold; font-size:16px; margin:3px 0px;}\n";
-  $html .= "body  {font-size:12px; font-family:sans-serif;}\n";
+  $html .= "body  {font-size:12px; font-family:-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;}\n";
   $html .= "table {border:1px solid black;}\n";
   $html .= "td    {border:1px solid #999999; margin:0px;}\n";
   $html .= "th    {border:1px solid #009900; margin:0px;}\n";
-  $html .= "thead {font-weight:bold; color:#33AA33;}\n";
+  $html .= "thead {font-weight:bold;}\n";
   $html .= "tbody {color:black;} \n";
   $html .= "tfoot {font-size:75%; color:#DD3333;}\n";
   $html .= ".genericInfo {background-color:#EEEEEE; border: 1px solid #666666; margin:2px 0px; padding:1px;}\n";
   $html .= ".version {font-size:75%; padding:1px;font-family:monospace; font-size:10px;}\n";
-  $html .= ".pluginSplash{margin:6px 0px;}\n";
+  $html .= ".pluginSplash{background-color:#FAFFFF;border:1px solid black; margin:6px 0px; padding:1px;}\n";
   $html .= "</style>\n";
 
   $html .= "</head>\n";
