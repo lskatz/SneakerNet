@@ -16,7 +16,7 @@ use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use List::MoreUtils qw/uniq/;
-use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 our $VERSION = "1.0";
@@ -44,6 +44,8 @@ sub main{
   # Mark this file as something to attach for an email later
   mkdir "$dir/forEmail" if(!-d "$dir/forEmail");
   link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv");
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv"});
 
   return 0;
 }

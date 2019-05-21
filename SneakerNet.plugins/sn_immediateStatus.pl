@@ -11,7 +11,7 @@ use File::Spec;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 use Text::Fuzzy;
 use Email::Stuffer;
@@ -86,6 +86,8 @@ sub main{
   if(!$email->send){
     die "ERROR: email was not sent to $to!";
   }
+
+  recordProperties($dir,{version=>$VERSION, reportTo=>$to});
 
   return 0;
 }

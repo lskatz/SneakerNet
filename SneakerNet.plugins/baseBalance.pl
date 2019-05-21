@@ -16,7 +16,7 @@ use threads;
 use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -47,6 +47,8 @@ sub main{
   my $out=baseBalanceAll($dir,$settings);
   
   command("cp -v $out $dir/SneakerNet/forEmail/ >&2");
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/".basename($out)});
   
   return 0;
 }

@@ -12,7 +12,7 @@ use FindBin;
 use Bio::SeqIO;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
 our $VERSION = "1.0";
 
@@ -67,6 +67,8 @@ sub main{
   my $finalReport = "$dir/SneakerNet/forEmail/mlst-contamination-detection.tsv";
   cp($report, $finalReport);
   logmsg "Report can be found in $finalReport";
+
+  recordProperties($dir,{version=>$VERSION, table=>$finalReport});
 
   return 0;
 }

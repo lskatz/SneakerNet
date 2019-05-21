@@ -11,7 +11,7 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo samplesheetInfo_tsv passfail
-  command logmsg fullPathToExec version
+  command logmsg fullPathToExec version recordProperties readProperties
 );
 
 our $VERSION = 0.5;
@@ -266,6 +266,49 @@ sub passfail{
 sub version{
   return $VERSION;
 }
+
+# Record the plugin version and any other misc things
+# into a run directory.
+# Returns length of string that was written.
+sub recordProperties{
+  my($runDir,$writeHash, $settings)=@_;
+
+  my $propertiesFile = "$runDir/SneakerNet/properties.txt";
+  my $writeString="";
+  if(!-e $propertiesFile || (stat($propertiesFile))[7] == 0){
+    $writeString.=join("\t", qw(plugin key value))."\n";
+  }
+  for my $key(keys(%$writeHash)){
+    $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";
+  }
+
+  open(my $fh, ">>", $propertiesFile) or die "ERROR writing to $propertiesFile: $!";
+  print $fh $writeString;
+  close $fh;
+  
+  return length($writeString);
+}
+
+# Read properties, the opposite of recordProperties().
+# Returns a properties hash of hash, where the primary
+# key is the plugin, and each plugin has a hash.
+# Each plugin should have a "version" key/value.
+# E.g., $property{"guessTaxon.pl"}{version} = 1.0
+sub readProperties{
+  my($runDir, $settings) = @_;
+  my %prop = ();
+  my $propertiesFile = "$runDir/SneakerNet/properties.txt";
+  open(my $fh, '<', $propertiesFile) or die "ERROR reading $propertiesFile: $!";
+  my $header = <$fh>;
+  while(my $line = <$fh>){
+    chomp($line);
+    my($plugin, $key, $value) = split(/\t/, $line);
+    $prop{$plugin}{$key} = $value;
+  }
+
+  return \%prop;
+}
+
 
 1;
 

@@ -11,7 +11,7 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg passfail/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
 our $VERSION = "1.0";
 
@@ -61,6 +61,8 @@ sub main{
 
   # Remove the remote pid file
   command("ssh -q $username\@$url rm $remotePid");
+
+  recordProperties($dir,{version=>$VERSION});
 
   return 0;
 }

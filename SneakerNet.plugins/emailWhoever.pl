@@ -15,7 +15,7 @@ use Config::Simple;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig passfail command logmsg version/;
+use SneakerNet qw/recordProperties readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
@@ -39,7 +39,9 @@ sub main{
 
   my $dir=$ARGV[0];
 
-  emailWhoever($dir,$settings);
+  my $to = emailWhoever($dir,$settings);
+
+  recordProperties($dir,{version=>$VERSION, reportSentTo=>join(", ", @$to)});
 
   return 0;
 }
@@ -106,7 +108,8 @@ sub emailWhoever{
   logmsg "To: $to";
   my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
   my $subject="$runName QC";
-  my $body ="Please open the following attachments for QC information on $runName.\n";
+  my $body ="Please see the report.html file for QC information on $runName.\n\n";
+     $body.="For more details, please see the other attachments.\n";
      $body.=" - TSV files can be opened in Excel\n";
      $body.=" - LOG files can be opened in Wordpad\n";
      $body.=" - HTML files can be opened in Internet Explorer\n";

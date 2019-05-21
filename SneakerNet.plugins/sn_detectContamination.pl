@@ -11,7 +11,7 @@ use FindBin;
 use List::Util qw/min max/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 use Bio::Kmer;
 
 our $VERSION = "1.0";
@@ -59,6 +59,8 @@ sub main{
   close $outFh;
 
   logmsg "Kmer histograms were saved to $outfile";
+
+  recordProperties($dir,{version=>$VERSION, table=>$outfile});
 
   return 0;
 }

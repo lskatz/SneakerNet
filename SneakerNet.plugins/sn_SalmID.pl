@@ -11,7 +11,7 @@ use File::Temp;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg version/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg version/;
 
 our $VERSION = "1.0";
 
@@ -42,6 +42,8 @@ sub main{
   identifyEach($dir,$settings);
 
   command("cat $dir/SneakerNet/SalmID/*/*.tsv > $dir/SneakerNet/forEmail/SalmID.tsv");
+
+  recordProperties($dir,{version=>$VERSION,table=>"$dir/SneakerNet/forEmail/SalmID.tsv"});
 
   return 0;
 }

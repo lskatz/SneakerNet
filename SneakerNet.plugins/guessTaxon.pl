@@ -13,7 +13,7 @@ use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
 our $VERSION = "1.0";
 
@@ -47,6 +47,8 @@ sub main{
   # make the report emailable 
   cp("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
   command("cd $dir/SneakerNet/forEmail && zip -v kraken.zip *.kraken.html && rm -v *.kraken.html");
+
+  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},table=>"$dir/SneakerNet/forEmail/kraken.tsv"});
 
   return 0;
 }

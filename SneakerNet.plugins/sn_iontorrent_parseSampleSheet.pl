@@ -14,7 +14,7 @@ use FindBin;
 use Config::Simple;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig command logmsg/;
+use SneakerNet qw/recordProperties readConfig command logmsg/;
 
 our $VERSION = "1.0";
 
@@ -52,6 +52,8 @@ sub main{
   my $sampleHash = parseIonTorrentSampleSheet($samplesheet, $fastqs, $settings);
 
   writeSamplesTsv($sampleHash, $outfile, $settings);
+
+  recordProperties($ARGV[0],{version=>$VERSION, samples=>$outfile});
 
   return 0;
 }

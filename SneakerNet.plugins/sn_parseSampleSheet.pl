@@ -13,7 +13,7 @@ use FindBin;
 use Config::Simple;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
 
 our $VERSION = "1.0";
 
@@ -63,6 +63,9 @@ sub main{
       logmsg "Wrote samples file to $outfile";
     }
   }
+
+  recordProperties($ARGV[0],{version=>$VERSION,samples=>$outfile});
+
   return 0;
 }
 

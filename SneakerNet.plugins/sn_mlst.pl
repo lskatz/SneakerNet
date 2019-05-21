@@ -16,7 +16,7 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 our $VERSION = "1.0";
 
@@ -69,6 +69,8 @@ sub main{
   print $fh "# - indicates that an allele is missing\n";
   print $fh "# For more details: https://github.com/tseemann/mlst\n";
   close $fh;
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv"});
 
   return 0;
 }
