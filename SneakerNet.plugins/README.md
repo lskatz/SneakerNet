@@ -24,7 +24,7 @@ Two major steps are described below for making a plugin.
      this directory will be emailed with the SneakerNet email.
      To add your results to the report.html file, list your results in
      `runDirectory/SneakerNet/properties.tsv`.
-5. Script versions can be recorded in `runDirectory/SneakerNet/properties.tsv`.
+5. The script can/should add its version by recording it to `runDirectory/SneakerNet/properties.tsv`.
      
 |Flag|Default value|description|
 |:---|:------------|:-----------|
