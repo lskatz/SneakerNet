@@ -11,7 +11,9 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg passfail/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
+
+our $VERSION = "1.0";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -20,7 +22,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  GetOptions($settings,qw(version help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -54,6 +61,8 @@ sub main{
 
   # Remove the remote pid file
   command("ssh -q $username\@$url rm $remotePid");
+
+  recordProperties($dir,{version=>$VERSION});
 
   return 0;
 }
@@ -128,6 +137,7 @@ sub usage{
   --force            Ignore some warnings
   --force-transfer   Transfer the reads despite the routing
                      entry in the spreadsheet.
+  --version
   "
 }
 

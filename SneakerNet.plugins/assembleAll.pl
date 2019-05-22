@@ -16,14 +16,21 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+
+our $VERSION = "1.0";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help tempdir=s debug numcpus=i force)) or die $!;
+  GetOptions($settings,qw(version help tempdir=s debug numcpus=i force)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
@@ -38,8 +45,11 @@ sub main{
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
+  mkdir "$dir/SneakerNet/forEmail";
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
+
+  recordProperties($dir,{version=>$VERSION, table=>$metricsOut});
 
   return 0;
 }
@@ -191,7 +201,7 @@ sub assembleSample{
   #command("skesa --cores $numcpus --gz --fastq $R1,$R2 > $$settings{tempdir}/$sample.fasta");
   # faster skesa command taken from 
   #  https://github.com/ncbi/SKESA/issues/11#issuecomment-429007711
-  system("skesa --fastq $R1,$R2 --steps 1 --kmer 51 --cores $numcpus > $$settings{tempdir}/$sample.fasta");
+  system("skesa --fastq $R1,$R2 --steps 1 --kmer 51 --cores $numcpus --vector_percent 1 > $$settings{tempdir}/$sample.fasta");
   if($?){
     command("skesa --fastq $R1,$R2 --cores $numcpus > $$settings{tempdir}/$sample.fasta");
   }
@@ -258,6 +268,7 @@ sub usage{
   "Assemble all genomes
   Usage: $0 MiSeq_run_dir
   --numcpus 1
+  --version
   "
 }
 

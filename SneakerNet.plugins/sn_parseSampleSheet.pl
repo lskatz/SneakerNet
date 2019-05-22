@@ -13,7 +13,9 @@ use FindBin;
 use Config::Simple;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
+
+our $VERSION = "1.0";
 
 my $snVersion=version();
 
@@ -22,7 +24,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s force extra-force)) or die $!;
+  GetOptions($settings,qw(version help numcpus=i debug tempdir=s force extra-force)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -61,6 +68,9 @@ sub main{
       logmsg "Wrote samples file to $outfile";
     }
   }
+
+  recordProperties($ARGV[0],{version=>$VERSION,samples=>$outfile});
+
   return 0;
 }
 

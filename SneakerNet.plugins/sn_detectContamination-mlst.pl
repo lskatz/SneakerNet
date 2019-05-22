@@ -12,18 +12,26 @@ use FindBin;
 use Bio::SeqIO;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+
+our $VERSION = "1.0";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  GetOptions($settings,qw(version help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{k}||=39;
+  $$settings{quality}||=15;
 
   # If the mlstfasta is not given, try to find it
   if(! $$settings{mlstfasta} ){
@@ -43,6 +51,7 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/colorid";
+  mkdir "$dir/forEmail";
 
   system("which colorid >& /dev/null");
   if($?){
@@ -58,6 +67,8 @@ sub main{
   my $finalReport = "$dir/SneakerNet/forEmail/mlst-contamination-detection.tsv";
   cp($report, $finalReport);
   logmsg "Report can be found in $finalReport";
+
+  recordProperties($dir,{version=>$VERSION, table=>$finalReport});
 
   return 0;
 }
@@ -202,6 +213,8 @@ sub usage{
                        If not given, I will try to find it relative
                        to where the mlst executable is.
   --k   kmer length
+  --quality            Minimum quality for bp
+  --version
   "
 }
 

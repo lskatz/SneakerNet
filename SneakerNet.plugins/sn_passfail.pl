@@ -11,7 +11,9 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+
+our $VERSION = "1.0";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -20,15 +22,23 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help debug force numcpus=i)) or die $!;
+  GetOptions($settings,qw(version help debug force numcpus=i)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
 
   my $outfile=passfail($dir,$settings);
   logmsg "The pass/fail file is under $outfile";
   
+  recordProperties($dir,{version=>$VERSION,table=>$outfile});
+
   return 0;
 }
 
@@ -120,6 +130,7 @@ sub identifyBadRuns{
 sub usage{
   "Passes or fails a run based on available information
   Usage: $0 MiSeq_run_dir
+  --version
   "
 }
 

@@ -16,10 +16,12 @@ use threads;
 use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
+
+our $VERSION = "1.0";
 
 # Global
 my @nt=qw(A T C G N);
@@ -30,15 +32,23 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug test force numcpus=i)) or die $!;
+  GetOptions($settings,qw(version help inbox=s debug test force numcpus=i)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   
   my $dir=$ARGV[0];
+  mkdir "$dir/forEmail";
 
   my $out=baseBalanceAll($dir,$settings);
   
   command("cp -v $out $dir/SneakerNet/forEmail/ >&2");
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/".basename($out)});
   
   return 0;
 }
@@ -136,6 +146,7 @@ sub usage{
   "Runs the base-balance metric
   Usage: $0 runDir
   --numcpus 1
+  --version
   "
 }
 

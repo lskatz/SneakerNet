@@ -16,14 +16,21 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+
+our $VERSION = "1.0";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version help force tempdir=s debug numcpus=i)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
@@ -38,6 +45,7 @@ sub main{
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/mlst";
+  mkdir "$dir/SneakerNet/forEmail";
   my $reportArr=mlst($dir,$settings);
 
   # Make a report for email
@@ -61,6 +69,8 @@ sub main{
   print $fh "# - indicates that an allele is missing\n";
   print $fh "# For more details: https://github.com/tseemann/mlst\n";
   close $fh;
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv"});
 
   return 0;
 }
@@ -143,6 +153,7 @@ sub usage{
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --force        To overwrite previous results
+  --version
   "
 }
 

@@ -11,8 +11,10 @@ use FindBin;
 use List::Util qw/min max/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 use Bio::Kmer;
+
+our $VERSION = "1.0";
 
 # http://perldoc.perl.org/perlop.html#Symbolic-Unary-Operators
 # # +Inf and -Inf will be a binary complement of all zeros
@@ -24,7 +26,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force debug tempdir=s numcpus=i)) or die $!;
+  GetOptions($settings,qw(version help force debug tempdir=s numcpus=i)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
@@ -32,6 +39,7 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/kmerHistogram";
+  mkdir "$dir/forEmail";
   
   my $numFastq=kmerContaminationDetection($dir,$settings);
   
@@ -51,6 +59,8 @@ sub main{
   close $outFh;
 
   logmsg "Kmer histograms were saved to $outfile";
+
+  recordProperties($dir,{version=>$VERSION, table=>$outfile});
 
   return 0;
 }
@@ -217,6 +227,7 @@ sub usage{
   --numcpus 1
   --debug       Just run three random samples
   --force       Overwrite all results
+  --version
   "
 }
 

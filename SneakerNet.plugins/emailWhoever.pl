@@ -15,9 +15,11 @@ use Config::Simple;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig passfail command logmsg version/;
+use SneakerNet qw/recordProperties readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
+
+our $VERSION = "1.0";
 
 my $snVersion=version();
 
@@ -26,13 +28,20 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s email-only=s)) or die $!;
+  GetOptions($settings,qw(version help numcpus=i debug tempdir=s email-only=s)) or die $!;
+  if($$settings{version}){
+    print $VERSION."\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
 
-  emailWhoever($dir,$settings);
+  my $to = emailWhoever($dir,$settings);
+
+  recordProperties($dir,{version=>$VERSION, reportSentTo=>join(", ", @$to)});
 
   return 0;
 }
@@ -99,7 +108,8 @@ sub emailWhoever{
   logmsg "To: $to";
   my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
   my $subject="$runName QC";
-  my $body ="Please open the following attachments for QC information on $runName.\n";
+  my $body ="Please see the report.html file for QC information on $runName.\n\n";
+     $body.="For more details, please see the other attachments.\n";
      $body.=" - TSV files can be opened in Excel\n";
      $body.=" - LOG files can be opened in Wordpad\n";
      $body.=" - HTML files can be opened in Internet Explorer\n";
@@ -153,5 +163,6 @@ sub usage{
   --numcpus     1  Number of CPUs (has no effect on this script)
   --email-only  '' Choose the email to send the report to instead
                    of what is supplied.
+  --version
   "
 }
