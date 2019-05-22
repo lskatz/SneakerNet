@@ -22,6 +22,9 @@ Two major steps are described below for making a plugin.
      `runDirectory/SneakerNet/customdirectory` (where `customdirectory` is a name of your choice), and add any results for the
      resulting email to `runDirectory/SneakerNet/forEmail`. Any files under
      this directory will be emailed with the SneakerNet email.
+     To add your results to the report.html file, list your results in
+     `runDirectory/SneakerNet/properties.tsv`.
+5. Script versions can be recorded in `runDirectory/SneakerNet/properties.tsv`.
      
 |Flag|Default value|description|
 |:---|:------------|:-----------|
