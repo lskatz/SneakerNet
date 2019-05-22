@@ -127,7 +127,13 @@ sub mlstColorId{
     $ENV{RUST_BACKTRACE}=1;
     logmsg "colorid build => $indexPrefix.bxi";
     system("colorid build -b $coloridDir/tmp -s 30000000 -n 2 -k $$settings{k} -t $$settings{numcpus} -r $peTxt 2> $coloridDir/build.log 1>&2");
-    die "ERROR with colorid build. Here is the log:\n".`cat $coloridDir/build.log` if $?;
+    if($?){
+      warn "ERROR with colorid build. Here is the log:\n".`cat $coloridDir/build.log`;
+      # For right now while this script is buggy, don't die on error so
+      # that the rest of sneakernet can continue.
+      warn "This script is exiting with 0 so that it does not hold up SneakerNet\n";
+      exit 0;
+    }
     mv("$coloridDir/tmp.bxi","$indexPrefix.bxi") or die "ERROR moving $coloridDir/tmp.bxi => $indexPrefix.bxi: $!";
   }
 
