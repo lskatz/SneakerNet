@@ -22,7 +22,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s force)) or die $!;
+  GetOptions($settings,qw(help numcpus=i debug tempdir=s force extra-force)) or die $!;
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
@@ -36,6 +36,11 @@ sub main{
   my $samplesheet = "";
   if(-d $ARGV[0]){
     $outfile = "$ARGV[0]/samples.tsv";
+    if(-e $outfile && !$$settings{'extra-force'}){
+      logmsg "Found $outfile.  Not reparsing without --extra-force.";
+      return 0;
+    }
+
     $samplesheet = findSampleSheet($ARGV[0], $settings);
   } else {
     $samplesheet = $ARGV[0];
