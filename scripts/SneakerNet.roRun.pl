@@ -63,7 +63,10 @@ sub makeSneakernetDir{
     $sampleSheet = $sampleSheet2;
   }
   if(!@interop){
-    die "ERROR: no interop files were found in $dir";
+    @interop  = glob("$dir/QC/InterOp/*");
+    if(!@interop){
+      die "ERROR: no interop files were found in $dir";
+    }
   }
   #for(@fastq, $config, @interop, @xml){
   #  if(!-e $_){
@@ -79,10 +82,14 @@ sub makeSneakernetDir{
     close $fh;
   }
   if(!@fastq){
-    logmsg "WARNING: no fastq files were found; attempting bcl2fastq";
-    @fastq=bcl2fastq($dir,$settings);
+    # If there aren't any fastq files, try to see if they're in the main dir
+    @fastq = glob("$dir/*.fastq.gz");
     if(!@fastq){
-      die "ERROR: could not find any fastq files in $dir";
+      logmsg "WARNING: no fastq files were found; attempting bcl2fastq";
+      @fastq=bcl2fastq($dir,$settings);
+      if(!@fastq){
+        die "ERROR: could not find any fastq files in $dir";
+      }
     }
   }
 
