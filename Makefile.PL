@@ -57,7 +57,6 @@ WriteMakefile1(
     'Bio::SeqIO'     => 0,
     'Text::Fuzzy'    => 0,
     'Email::Stuffer' => 0,
-    'Bio::SeqIO'     => 0,
     'Bio::FeatureIO' => 0,
     # MLST module
     'Moo'            => 0,

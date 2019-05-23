@@ -25,6 +25,7 @@ before_install:
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
+  - cpanm -l ~ Bio::Perl
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
