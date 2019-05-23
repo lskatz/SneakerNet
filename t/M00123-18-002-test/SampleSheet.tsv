@@ -1,0 +1,46 @@
+	S5 Library Prep Worksheet			Instructions															
+	Run Name	S500578-19-002		Starting with this sheet, and moving from top to bottom, fill in all tan shaded cells.															
+	Sample Plate Name	S500578-19-002																	
+	Sample Sheet Name	S500578-19-002																	
+	Date	3/27/2019																	
+	Technician	YJ (YLM3)																	
+								Dilution for fragmentase normalization		Qubit post-Fragmentase Clean-up DNA  (ng/ul)	Post End Repair Clean-up (ng/ul)	Post Adaptor Ligation Clean-up (ng/ul)	Post Size Selection  (ng/ul)	Post Size Selection (ng in 20ul)	Post-PCR (ng/ul)	Post-PCR Clean-up (ng/ul)	Post-PCR Clean-up (ng in 30ul)	Post-PCR Clean-up (ng/ml)	Post E-Gel (ng/ml)
+					Nanodrop		Qubit	3.3 ng/ul (50 ul total volume)											
+Well position	Sample Name	Sample ID	Organism	P2 Barcode	Purity (260/280 ratio)	Genome Size Estimate	Input DNA Stock Concentration (ng/ul)	DNA	Water										
+A02	2015K-0887	2015K-0887-S500578-19-002	Salmonella enterica var. I 4,5,12:i:-	25	1.94	5	29.1	5.7	44.3	4.920	3.21	2.02	4.880	97.6	14.6	17.90			641.0
+A03	2015K-1041	2015K-1041-S500578-19-002	Salmonella enterica var. Poona	14		5	21.3	7.7	42.3	2.890	1.71	1.46	2.1	41.8	8.1	8.30			348.0
+B03		-S500578-19-002																	
+F01		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+G01		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+H01		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+A02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+B02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+C02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+D02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+E02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+F02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+G02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+H02		-S500578-19-002						#DIV/0!	#DIV/0!					0					
+																			
+NOTE:  All sample names will end with run name (eg. 2014K-0179-M347-14-001)																			
+							Pulled libraries from S500578-17-001												
+Notes:																			
+																			
+E-gel run time: 22:30				Frag./PCR reagents			Lot no.	Exp. Date				Chef/S5 Reagents			Lot no.	Exp. Date			
+*see bioanalyzer traces for 				KAPA Frag Enzyme								Ion S5 Sequencing Reagents							
+				KAPA Frag Buffer								Ion Sphere Quality Control Kit							
+				KAPA Frag Stop Solution								Ion Torrent 520/530 Chef Reagents							
+Qubit of pooled library (ng/ml)				Beads								Ion Torrent 520/530 Chef Solutions							
+Chef:				KAPA End Repair Buffer								Ion 510 Chip			DADE00390				
+				KAPA End Repair Enzyme								Ion S5 Wash Solution							
+				KAPA LNR Buffer								Ion Chef Supplies							
+Qubit QC value: 				KAPA LNR Enzyme								E-gel							
+Chef:				Ion Xpress Barcode Adaptors 1-16															
+				BIOO Scientific NEXTflex DNA Barcodes for Ion Torrent - 16															
+				KAPA HiFi HotStark ReadyMix															
+				KAPA Library Amp Primer Mix															
+				BIOO Primer Mix (in barcodes kit)															
+				E-gel															
+				E-gel Ladder															
+																			
+																			
