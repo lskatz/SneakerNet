@@ -88,28 +88,7 @@ sub main{
     }
     link("$$d{dir}/snok.txt", "$sneakernetDir/forEmail/snok.txt");
 
-    # Give the rest to sequencermaster, now that it has all been moved over
-    # Deprecated: All sequences are now copied over by sequencermaster and are owned by sequencermaster.
-    # system("chown -R sequencermaster.sequencermaster $$d{dir}/SneakerNet");
-
     command("$FindBin::RealBin/SneakerNetPlugins.pl --numcpus $$settings{numcpus} $$d{dir} 2>&1");
-
-    next;
-
-    # ensure that the samplesheet can be parsed. This is
-    # a prerequisite for all plugins.
-    command("$FindBin::RealBin/../SneakerNet.plugins/sn_parseSampleSheet.pl --force $$d{dir} 2>&1");
-    my @exe=@{ $$settings{'plugins.default'} };
-    for my $exe(@exe){
-      if(!$$settings{email} && $exe=~/emailWhoever.pl/){
-        next;
-      }
-
-      command("$FindBin::RealBin/../SneakerNet.plugins/$exe $$d{dir} --numcpus $$settings{numcpus} 2>&1");
-    }
-    
-    # Add permissions for the sequencermaster group
-    command("chmod -R g+wr $$d{dir}");
   }
   
 
