@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
+#use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
 use Carp qw/croak confess/;
@@ -206,6 +207,9 @@ sub samplesheetInfo{
     if(!@possibleFastq){
       logmsg "WARNING: there is a sample $samplename but no files $samplename*.fastq.gz";
     }
+    #for (@possibleFastq){
+    #  $_ = File::Spec->abs2rel($_, dirname($samplesheet));
+    #}
     $sample{$samplename}{fastq}=\@possibleFastq;
     
     # Make some links from file to sample

@@ -25,6 +25,7 @@ before_install:
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
+  - cpanm -l ~ Bio::Perl
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
@@ -58,7 +59,7 @@ install:
   - brew install skesa --force-bottle
   - brew install blast --force-bottle
   # mlst prereqs
-  - brew install --force-bottle gzip gdbm openssl berkeley-db libbsd expat pkg-config gpatch ncurses gettext libunistring libidn2 readline sqlite util-linux wget
+  - brew install --force-bottle gzip gdbm openssl berkeley-db libbsd expat pkg-config gpatch ncurses gettext libunistring libidn2 readline sqlite util-linux
   - brew install mlst
   # prokka prereqs
   - brew install --force-bottle bioperl less aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
