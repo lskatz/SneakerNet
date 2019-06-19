@@ -146,6 +146,10 @@ sub runKraken{
   }
   elsif(@fastq == 2){
     return runKrakenPE(@_);
+  } else {
+    my %sampleCopy = %$sample;
+    splice(@{ $sampleCopy{fastq} }, 2);
+    return runKrakenPE(\%sampleCopy, $sampledir, $settings);
   }
 
   logmsg "INTERNAL ERROR";
