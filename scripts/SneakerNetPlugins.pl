@@ -7,6 +7,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
+use Cwd qw/getcwd/;
 
 use FindBin qw/$RealBin/;
 use lib "$RealBin/../lib/perl5";
@@ -16,6 +17,7 @@ use Config::Simple;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 local $0=fileparse $0;
+my $cwd = getcwd();
 
 # All logging will go to a file, which will end up as $run/SneakerNet.txt.
 # The link to the log will be emailed in the email plugin.
@@ -38,16 +40,13 @@ sub main{
     }
 
     # Determine the workflow
-    my $workflow = "default";
     my $cfg = new Config::Simple();
+    my %vars;
     if($cfg->read("$dir/snok.txt")){
-      my %vars = $cfg->vars();
-      $workflow = $vars{'default.workflow'};
+      %vars = $cfg->vars();
     }
-    # But if the user specified the workflow, overwrite it
-    if($$settings{workflow}){
-      $workflow = $$settings{workflow};
-    }
+    # Workflow is either defined in CLI settings, snok.txt, or is set to default.
+    my $workflow = $$settings{workflow} || $vars{'default.workflow'} || "default";
 
     my $exe = $$settings{"plugins.$workflow"};
     if(!defined($exe) || ref($exe) ne 'ARRAY'){
@@ -59,12 +58,14 @@ sub main{
     }
     
     # Run all plugins
+    chdir($dir) or die "ERROR: could not change to directory $dir: $!";
     for my $e(@$exe){
       my $command="$RealBin/../SneakerNet.plugins/$e $dir --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
       #print "$command\n\n";next;
       command($command);
     }
+    chdir($cwd); # go back to original directory
   }
   
   return 0;
