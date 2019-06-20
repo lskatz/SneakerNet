@@ -9,12 +9,13 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Spec;
 use Cwd qw/realpath/;
+use POSIX qw/strftime/;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.2";
 
 local $0=fileparse $0;
 exit(main());
@@ -34,6 +35,14 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/forEmail";
+
+  # Special to this plugin: record any properties before
+  # reading the properties.
+  recordProperties($dir,{
+    version=>$VERSION,
+    date=>strftime("%Y-%m-%d", localtime()),
+    time=>strftime("%H:%M:%S", localtime()),
+  });
 
   my $properties = readProperties($dir);
 
