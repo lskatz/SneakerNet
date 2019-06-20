@@ -9,11 +9,12 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
 use List::Util qw/sum/;
+use POSIX qw/strftime/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.2";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -62,7 +63,11 @@ sub main{
   # Remove the remote pid file
   command("ssh -q $username\@$url rm $remotePid");
 
-  recordProperties($dir,{version=>$VERSION});
+  recordProperties($dir,{
+    version=>$VERSION,
+    dateSent=>strftime("%Y-%m-%d", localtime()),
+    timeSent=>strftime("%H:%M:%S", localtime()),
+  });
 
   return 0;
 }

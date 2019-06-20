@@ -11,6 +11,7 @@ use Cwd qw/realpath/;
 use File::Temp;
 use FindBin;
 use Config::Simple;
+use POSIX qw/strftime/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -19,7 +20,7 @@ use SneakerNet qw/recordProperties readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 
 my $snVersion=version();
 
@@ -41,7 +42,12 @@ sub main{
 
   my $to = emailWhoever($dir,$settings);
 
-  recordProperties($dir,{version=>$VERSION, reportSentTo=>join(", ", @$to)});
+  recordProperties($dir,{
+    version=>$VERSION, 
+    reportSentTo=>join(", ", @$to),
+    dateSent=>strftime("%Y-%m-%d", localtime()),
+    timeSent=>strftime("%H:%M:%S", localtime()),
+  });
 
   return 0;
 }
