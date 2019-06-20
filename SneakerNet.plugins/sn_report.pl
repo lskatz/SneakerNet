@@ -53,7 +53,7 @@ sub main{
   $html .= "<H2>Table of Contents</H2>\n";
   $html .= "<ul>\n";
   for my $plugin(sort keys(%$properties)){
-    $html .= "<li><a href='#plugin-$plugin'>$plugin</a></li>\n";
+    $html .= "<li><a href='#plugin-$plugin'>$plugin</a> v$$properties{$plugin}{version}</li>\n"; # TODO add version here too
   }
   $html .= "</ul>\n";
 
