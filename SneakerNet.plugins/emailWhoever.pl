@@ -151,6 +151,8 @@ sub emailWhoever{
     $body =~ s/(\n)/<br \/>$1/g;      # newlines to line breaks
     $body = "<div>\n$body\n</div>\n"; # wrap it in a div
 
+    $body.= "<div>Please open report.html if there are any issues with the body of this email.</div>\n";
+
     # Read the html body as a scalar string
     my $htmlbody = `cat $dir/SneakerNet/forEmail/report.html`;
     # Add in the text body
