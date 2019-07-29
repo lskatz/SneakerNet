@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 
 local $0=fileparse $0;
 exit(main());
@@ -46,10 +46,14 @@ sub main{
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
   mkdir "$dir/SneakerNet/forEmail";
-  my $metricsOut=assembleAll($dir,$settings);
-  logmsg "Metrics can be found in $metricsOut";
 
-  recordProperties($dir,{version=>$VERSION, table=>$metricsOut});
+  my $metricsOut = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+  if(!-e $metricsOut){
+    assembleAll($dir,$settings);
+    recordProperties($dir,{version=>$VERSION, table=>$metricsOut});
+  }
+
+  logmsg "Metrics can be found in $metricsOut";
 
   return 0;
 }
@@ -65,8 +69,6 @@ sub assembleAll{
     my $outdir="$dir/SneakerNet/assemblies/$sample";
     my $outassembly="$outdir/$sample.skesa.fasta";
     my $outgbk="$outdir/$sample.skesa.gbk";
-    #my $outassembly="$outdir/$sample.megahit.fasta";
-    #my $outgbk="$outdir/$sample.megahit.gbk";
 
     # Run the assembly
     if(!-e $outassembly){
@@ -89,6 +91,7 @@ sub assembleAll{
   
   # run assembly metrics with min contig size=0.5kb
   my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+
   logmsg "Running metrics on the genbank files at $metricsOut";
 
   my @thr;
@@ -101,8 +104,9 @@ sub assembleAll{
     $_->join;
   }
   
-  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
-  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
+  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut.tmp"); # header
+  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut.tmp"); # content
+  mv("$metricsOut.tmp", $metricsOut);
   
   return $metricsOut;
 }
