@@ -14,7 +14,7 @@ use Bio::SeqIO;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 
 local $0=fileparse $0;
 exit(main());
@@ -53,22 +53,30 @@ sub main{
   mkdir "$dir/SneakerNet/colorid";
   mkdir "$dir/forEmail";
 
-  system("which colorid >& /dev/null");
-  if($?){
-    die "ERROR: could not find colorid in your PATH";
-  }
-
-  logmsg "Filtering $$settings{mlstfasta}";
-  my $mlstFasta = readMlstFasta($$settings{mlstfasta}, $settings);
-  
-  logmsg "Running colorid workflow";
-  my $report = mlstColorId($dir, $mlstFasta, $settings);
-
   my $finalReport = "$dir/SneakerNet/forEmail/mlst-contamination-detection.tsv";
-  cp($report, $finalReport);
-  logmsg "Report can be found in $finalReport";
 
-  recordProperties($dir,{version=>$VERSION, table=>$finalReport});
+  # If the report doesn't exist, then run the workflow
+  if( (!-e $finalReport || !-s $finalReport) || $$settings{force} ){
+    system("which colorid >& /dev/null");
+    if($?){
+      die "ERROR: could not find colorid in your PATH";
+    }
+
+    logmsg "Filtering $$settings{mlstfasta}";
+    my $mlstFasta = readMlstFasta($$settings{mlstfasta}, $settings);
+    
+    logmsg "Running colorid workflow";
+    my $report = mlstColorId($dir, $mlstFasta, $settings);
+
+    cp($report, $finalReport);
+    logmsg "Report can be found in $finalReport";
+
+    recordProperties($dir,{version=>$VERSION, table=>$finalReport});
+  } 
+  # If the report does exist, then just say so
+  else {
+    logmsg "Found the report at $finalReport. Skipping analysis.";
+  }
 
   return 0;
 }
