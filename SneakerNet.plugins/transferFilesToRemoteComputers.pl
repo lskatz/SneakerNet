@@ -14,7 +14,7 @@ use POSIX qw/strftime/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -51,17 +51,27 @@ sub main{
   $pid||=0;
   $pid+=0;
   
-  if($pid > 0 && !$$settings{force}){
-    die "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
+  my $numTries=0;
+  while($pid > 0 && !$$settings{force}){
+    logmsg "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
+    logmsg "I will sleep 2 minutes to try again.  Delete $remotePid on remote computer to avoid this warning.";
+    sleep 120;
+    $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
+
+    $numTries++;
+    if($numTries > 10){
+      logmsg "Gave up after $numTries tries. I'll continue the transfer anyway, and I'll remove $url:$remotePid.";
+      command("ssh -q $username\@$url rm -vf $remotePid");
+    }
   }
 
   # Make the pid file
-  command("ssh -q $username\@$url 'mkdir $remotePath/.SneakerNet; echo $$ > $remotePid'");
+  command("ssh -q $username\@$url 'mkdir -pv $remotePath/.SneakerNet; echo $$ > $remotePid'");
 
   transferFilesToRemoteComputers($dir,$settings);
 
   # Remove the remote pid file
-  command("ssh -q $username\@$url rm $remotePid");
+  command("ssh -q $username\@$url rm -vf $remotePid");
 
   recordProperties($dir,{
     version=>$VERSION,
