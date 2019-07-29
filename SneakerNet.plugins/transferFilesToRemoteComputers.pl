@@ -54,8 +54,8 @@ sub main{
   my $numTries=0;
   while($pid > 0 && !$$settings{force}){
     logmsg "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
-    logmsg "I will sleep 2 minutes to try again.  Delete $remotePid on remote computer to avoid this warning.";
-    sleep 120;
+    logmsg "I will sleep 1 minute to try again.  Delete $remotePid on remote computer to avoid this warning.";
+    sleep 60;
     $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
 
     $numTries++;
