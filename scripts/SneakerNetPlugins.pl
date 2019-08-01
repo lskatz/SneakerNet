@@ -60,7 +60,7 @@ sub main{
     # Run all plugins
     chdir($dir) or die "ERROR: could not change to directory $dir: $!";
     for my $e(@$exe){
-      my $command="$RealBin/../SneakerNet.plugins/$e $dir --numcpus $$settings{numcpus}";
+      my $command="$RealBin/../SneakerNet.plugins/$e . --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
       #print "$command\n\n";next;
       command($command);
