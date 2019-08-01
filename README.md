@@ -13,25 +13,28 @@ there is a plugins directory such that each installation is expandable.
 
 See INSTALL.md
 
-## Running it
+## Workflow
 
-A given run directory must have machine name, two-digit year, increment, and optionally a remark
-in the name. These fields are delimited by a dash. For example, M1234-18-001-test.
+### Creating a SneakerNet project directory
 
-Each run directory must also have a SampleSheet.csv file, fastq.gz files, and the InterOp directory.
+SneakerNet requires a project directory that is in a certain format already.
+To create the project, you can use `SneakerNet.ro.pl`.  For example,
 
-### Testing for the impatient
+    SneakerNet.ro.pl --createsamplesheet -o M1234-18-001-test miseq/working/directory
 
-If you have altered the configuration properly, then go ahead and test the software!
+M01234-19-01-test is a project folder name, where it is dash-delimited and contains
+machine name, year, ordinal, and optionally a name.
 
-    $ SneakerNet.pl --test --now --numcpus 4
+### Running SneakerNet
 
-Also, please look at the `example` folder for another readme file and example dataset.
+Because SneakerNet takes a long time to run through all plugins, it is
+a good idea to pipe the output to a file and then follow it with `tail -f`.
 
-### Running it on an existing run directory in place
+    SneakerNetPlugins.pl --numcpus 8 M1234-18-001-test > M1234-18-001-test/SneakerNet.log 2>&1 &
+    tail -f M1234-18-001-test/SneakerNet.log
 
-If you don't want to move the directory but just want to analyze it.  Let us say that
-the test directory name is M1234-18-001-test.
+## Output
 
-    $ SneakerNetPlugins.pl --numcpus 4 M1234-18-001-test
-
+SneakerNet produces a subfolder `SneakerNet` in your run directory.
+It also emails a report. To view a sample report, please go to example/M00123-18-001-test/SneakerNet/forEmail/report.html 
+in this repository.
