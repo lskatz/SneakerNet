@@ -157,6 +157,7 @@ sub cp{
 sub createSampleSheet{
   my($dir, $outdir, $settings) = @_;
 
+  my $numSamples=0;
   my $samplesheet = "$outdir/SampleSheet.csv";
   if(-e $samplesheet){
     die "ERROR: was going to create a samplesheet but it already exists at $samplesheet";
@@ -180,14 +181,58 @@ sub createSampleSheet{
         next;
       }
       print $fh $_;
+      $numSamples++;
     }
     close $demuxFh;
   }
   close $fh;
 
+  # If no samples were printed, then just try to make a
+  # sample sheet using fastq file information.
+  if($numSamples == 0){
+    $samplesheet = "$outdir/samples.tsv";
+    logmsg "demultiplex sample sheets were not found. Creating one directly from fastq filenames into $outdir/samples.tsv";
+    createSampleSheetOutOfThinAir($samplesheet, $dir, $settings);
+  }
+
   return $samplesheet;
 }
 
+# Using lots of help from Taylor Griswold for creating the sample sheet
+# out of thin air.
+sub createSampleSheetOutOfThinAir{
+  my($outSamplesheet, $indir, $settings) =@_;
+
+  # get a list of fastq files for the next couple of steps
+  # Do not include the full path; just the basename.
+  my @fastq = map{basename($_)} glob("$indir/*.fastq.gz");
+  
+  #awk -F'_' '{print $1}' <(ls *.fastq.gz) | sed 's/-*$//g' | uniq > wgs-ids_detailed.txt 
+  my %sample;
+  for my $fastq(@fastq){
+    my($sample) = split(/_/, $fastq);
+    $sample =~ s/\-*$//; # remove trailing dashes
+    $sample{$sample}=1;
+  }
+  my @sample = sort {$a cmp $b} keys(%sample);  # sample list is unique and sorted
+
+  # for i in $(cat wgs-ids_detailed.txt); do R1=`realpath $(ls *$i*_R1*.fastq.gz)`; R2=`realpath $(ls *$i*_R2*.fastq.gz)`; wgsid=`basename $R1 ".fastq.gz" | cut -d '_' -f 1`; echo -e $wgsid"\ttaxon=Salmonella;route=calcengine\t"$R1";"$R2; done > M1234-19-004.tsv 
+  open(my $outFh, ">", $outSamplesheet) or die "ERROR: could not write to $outSamplesheet: $!";
+  for my $name(@sample){
+    my $R1 = (grep { $_=~/$name.*_R1/; } @fastq)[0];
+    my $R2 = $R1;
+    $R2 =~ s/_R1/_R2/;
+
+    if(!-e "$indir/$R1" || !-e "$indir/$R2"){
+      die "ERROR: could not find both $R1 and $R2 in $indir!";
+    }
+
+    print $outFh join("\t", $name, ".", "$R1;$R2")."\n";
+  }
+  close $outFh;
+
+  return 1;
+}
 
 
 sub usage{
