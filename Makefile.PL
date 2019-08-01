@@ -1,20 +1,28 @@
+#!/usr/bin/env perl
+
 use strict;
 use warnings;
+use File::Copy qw/cp mv/;
+use File::Basename qw/basename/;
  
 use 5.010;
  
 use ExtUtils::MakeMaker;
 
-my $VERSION = `grep -i version config.bak/settings.conf  | cut -f 2`;
-chomp $VERSION;
+# Copy the config.bak directory
+mkdir "config";
+for my $file(glob("config.bak/*")){
+  cp($file, "config/".basename($file)) or die $!;
+}
 
 # Some help from
 # http://blogs.perl.org/users/michal_wojciechowski/2011/11/github-friendly-readme-files-with-extutils-makemaker-and-module-build.html
 my $preop =
-  #'sed -i.bak "s/.5f/.10f/g" bin/quicktree-2.3/src/tree.c bin/quicktree-2.3/src/distancemat.c;' .
-  #'make -C bin/quicktree-2.3;' .
   'perldoc -uT $(VERSION_FROM) | tee $(DISTVNAME)/README.pod > README.pod;' .
-  'pod2text README.pod | tee $(DISTVNAME)/README > README';
+  'pod2text README.pod | tee $(DISTVNAME)/README > README;' .
+  #'mkdir -pv config' .
+  #'cp -v config.bak/ config/' .
+  '';
 
 WriteMakefile1(
   NAME         => 'SneakerNet',
@@ -112,3 +120,4 @@ sub WriteMakefile1 {  #Compatibility code for old versions of EU::MM. Written by
 
   WriteMakefile(%params);
 }
+

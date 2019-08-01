@@ -1,0 +1,348 @@
+<html><head><title>SneakerNet report</title>
+<style>
+h1    {font-weight:bold; font-size:24px; margin:3px 0px;}
+h2    {font-weight:bold; font-size:16px; margin:3px 0px;}
+body  {font-size:12px; font-family:-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;}
+table {border:1px solid black;}
+td    {border:1px solid #999999; margin:0px;}
+th    {border:1px solid #009900; margin:0px;}
+thead {font-weight:bold;}
+tbody {color:black;} 
+tfoot {font-size:75%; color:#DD3333;}
+.genericInfo {background-color:#EEEEEE; border: 1px solid #666666; margin:2px 0px; padding:1px;}
+.version {font-size:75%; padding:1px;font-family:monospace; font-size:10px;}
+.pluginSplash{background-color:#FAFFFF;border:1px solid black; margin:6px 0px; padding:1px;}
+</style>
+</head>
+<H1>QC report for M00123-18-001-test</H1>
+<p class='genericInfo' style='margin-bottom:1em'>SneakerNet reporting plugin version 1.3</p>
+<H2>Table of Contents</H2>
+<ul>
+<li><a href='#plugin-addReadMetrics.pl'>addReadMetrics.pl</a> v1.0</li>
+<li><a href='#plugin-assembleAll.pl'>assembleAll.pl</a> v1.1</li>
+<li><a href='#plugin-baseBalance.pl'>baseBalance.pl</a> v1.0</li>
+<li><a href='#plugin-guessTaxon.pl'>guessTaxon.pl</a> v1.0</li>
+<li><a href='#plugin-sn_detectContamination-mlst.pl'>sn_detectContamination-mlst.pl</a> v1.1</li>
+<li><a href='#plugin-sn_detectContamination.pl'>sn_detectContamination.pl</a> v1.0</li>
+<li><a href='#plugin-sn_mlst.pl'>sn_mlst.pl</a> v1.0</li>
+<li><a href='#plugin-sn_parseSampleSheet.pl'>sn_parseSampleSheet.pl</a> v1.0</li>
+<li><a href='#plugin-sn_passfail.pl'>sn_passfail.pl</a> v1.0</li>
+<li><a href='#plugin-sn_report.pl'>sn_report.pl</a> v1.3</li>
+</ul>
+<div class='pluginSplash'>
+<H2 id='plugin-addReadMetrics.pl'>addReadMetrics.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>File</td><td colspan='1' seen_footer='0'>avgReadLength</td><td colspan='1' seen_footer='0'>totalBases</td><td colspan='1' seen_footer='0'>minReadLength</td><td colspan='1' seen_footer='0'>maxReadLength</td><td colspan='1' seen_footer='0'>avgQuality</td><td colspan='1' seen_footer='0'>numReads</td><td colspan='1' seen_footer='0'>PE?</td><td colspan='1' seen_footer='0'>coverage</td><td colspan='1' seen_footer='0'>readScore</td><td colspan='1' seen_footer='0'>medianFragmentLength</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_1.fastq.gz</td><td colspan='1' seen_footer='0'>250.00</td><td colspan='1' seen_footer='0'>10769500</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>40.00</td><td colspan='1' seen_footer='0'>43078</td><td colspan='1' seen_footer='0'>no</td><td colspan='1' seen_footer='0'>4.90</td><td colspan='1' seen_footer='0'>.</td><td colspan='1' seen_footer='0'>.</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_2.fastq.gz</td><td colspan='1' seen_footer='0'>250.00</td><td colspan='1' seen_footer='0'>10769500</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>40.00</td><td colspan='1' seen_footer='0'>43078</td><td colspan='1' seen_footer='0'>no</td><td colspan='1' seen_footer='0'>4.90</td><td colspan='1' seen_footer='0'>.</td><td colspan='1' seen_footer='0'>.</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_1.fastq.gz</td><td colspan='1' seen_footer='0'>250.00</td><td colspan='1' seen_footer='0'>15156749</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>40.00</td><td colspan='1' seen_footer='0'>60627</td><td colspan='1' seen_footer='0'>no</td><td colspan='1' seen_footer='0'>3.79</td><td colspan='1' seen_footer='0'>.</td><td colspan='1' seen_footer='0'>.</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_2.fastq.gz</td><td colspan='1' seen_footer='0'>250.00</td><td colspan='1' seen_footer='0'>15156750</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>40.00</td><td colspan='1' seen_footer='0'>60627</td><td colspan='1' seen_footer='0'>no</td><td colspan='1' seen_footer='0'>3.79</td><td colspan='1' seen_footer='0'>.</td><td colspan='1' seen_footer='0'>.</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_1.fastq.gz</td><td colspan='1' seen_footer='0'>250.00</td><td colspan='1' seen_footer='0'>17042750</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>40.00</td><td colspan='1' seen_footer='0'>68171</td><td colspan='1' seen_footer='0'>no</td><td colspan='1' seen_footer='0'>5.01</td><td colspan='1' seen_footer='0'>.</td><td colspan='1' seen_footer='0'>.</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_2.fastq.gz</td><td colspan='1' seen_footer='0'>250.00</td><td colspan='1' seen_footer='0'>17042750</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>250</td><td colspan='1' seen_footer='0'>40.00</td><td colspan='1' seen_footer='0'>68171</td><td colspan='1' seen_footer='0'>no</td><td colspan='1' seen_footer='0'>5.01</td><td colspan='1' seen_footer='0'>.</td><td colspan='1' seen_footer='0'>.</td>
+</tr>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-assembleAll.pl'>assembleAll.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>File</td><td colspan='1' seen_footer='0'>genomeLength</td><td colspan='1' seen_footer='0'>CDS</td><td colspan='1' seen_footer='0'>N50</td><td colspan='1' seen_footer='0'>longestContig</td><td colspan='1' seen_footer='0'>numContigs</td><td colspan='1' seen_footer='0'>avgContigLength</td><td colspan='1' seen_footer='0'>assemblyScore</td><td colspan='1' seen_footer='0'>minContigLength</td><td colspan='1' seen_footer='0'>expectedGenomeLength</td><td colspan='1' seen_footer='0'>kmer21</td><td colspan='1' seen_footer='0'>GC</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786.skesa</td><td colspan='1' seen_footer='0'>2943980</td><td colspan='1' seen_footer='0'>2788</td><td colspan='1' seen_footer='0'>16887</td><td colspan='1' seen_footer='0'>106009</td><td colspan='1' seen_footer='0'>277</td><td colspan='1' seen_footer='0'>10628</td><td colspan='1' seen_footer='0'>4.110</td><td colspan='1' seen_footer='0'>500</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0.0006</td><td colspan='1' seen_footer='0'>47.6%</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090.skesa</td><td colspan='1' seen_footer='0'>1957023</td><td colspan='1' seen_footer='0'>2068</td><td colspan='1' seen_footer='0'>9146</td><td colspan='1' seen_footer='0'>31557</td><td colspan='1' seen_footer='0'>347</td><td colspan='1' seen_footer='0'>5639</td><td colspan='1' seen_footer='0'>3.272</td><td colspan='1' seen_footer='0'>500</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0.0021</td><td colspan='1' seen_footer='0'>52.8%</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC.skesa</td><td colspan='1' seen_footer='0'>3320432</td><td colspan='1' seen_footer='0'>3185</td><td colspan='1' seen_footer='0'>17862</td><td colspan='1' seen_footer='0'>57165</td><td colspan='1' seen_footer='0'>301</td><td colspan='1' seen_footer='0'>11031</td><td colspan='1' seen_footer='0'>4.083</td><td colspan='1' seen_footer='0'>500</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0.0008</td><td colspan='1' seen_footer='0'>38.2%</td>
+</tr>
+</table>
+<p class='genericInfo version'>version: 1.1</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-baseBalance.pl'>baseBalance.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>File</td><td colspan='1' seen_footer='0'>A</td><td colspan='1' seen_footer='0'>T</td><td colspan='1' seen_footer='0'>C</td><td colspan='1' seen_footer='0'>G</td><td colspan='1' seen_footer='0'>N</td><td colspan='1' seen_footer='0'>A/T</td><td colspan='1' seen_footer='0'>C/G</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_1.fastq.gz</td><td colspan='1' seen_footer='0'>7222</td><td colspan='1' seen_footer='0'>7963</td><td colspan='1' seen_footer='0'>7591</td><td colspan='1' seen_footer='0'>7185</td><td colspan='1' seen_footer='0'>7800</td><td colspan='1' seen_footer='0'>0.91</td><td colspan='1' seen_footer='0'>1.06</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_2.fastq.gz</td><td colspan='1' seen_footer='0'>7167</td><td colspan='1' seen_footer='0'>7863</td><td colspan='1' seen_footer='0'>7525</td><td colspan='1' seen_footer='0'>7104</td><td colspan='1' seen_footer='0'>7488</td><td colspan='1' seen_footer='0'>0.91</td><td colspan='1' seen_footer='0'>1.06</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_1.fastq.gz</td><td colspan='1' seen_footer='0'>12076</td><td colspan='1' seen_footer='0'>11649</td><td colspan='1' seen_footer='0'>11067</td><td colspan='1' seen_footer='0'>11229</td><td colspan='1' seen_footer='0'>13537</td><td colspan='1' seen_footer='0'>1.04</td><td colspan='1' seen_footer='0'>0.99</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_2.fastq.gz</td><td colspan='1' seen_footer='0'>11697</td><td colspan='1' seen_footer='0'>11565</td><td colspan='1' seen_footer='0'>10573</td><td colspan='1' seen_footer='0'>10866</td><td colspan='1' seen_footer='0'>13413</td><td colspan='1' seen_footer='0'>1.01</td><td colspan='1' seen_footer='0'>0.97</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_1.fastq.gz</td><td colspan='1' seen_footer='0'>11884</td><td colspan='1' seen_footer='0'>12631</td><td colspan='1' seen_footer='0'>13158</td><td colspan='1' seen_footer='0'>11717</td><td colspan='1' seen_footer='0'>13352</td><td colspan='1' seen_footer='0'>0.94</td><td colspan='1' seen_footer='0'>1.12</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_2.fastq.gz</td><td colspan='1' seen_footer='0'>12041</td><td colspan='1' seen_footer='0'>12750</td><td colspan='1' seen_footer='0'>13115</td><td colspan='1' seen_footer='0'>11972</td><td colspan='1' seen_footer='0'>13533</td><td colspan='1' seen_footer='0'>0.94</td><td colspan='1' seen_footer='0'>1.10</td>
+</tr>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-guessTaxon.pl'>guessTaxon.pl</H2>
+<p class='genericInfo'>krakenDatabase: /scicomp/reference/kraken/1.0.0/kraken_db</p>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>NAME</td><td colspan='1' seen_footer='0'>LABELED_TAXON</td><td colspan='1' seen_footer='0'>BEST_GUESS</td><td colspan='1' seen_footer='0'>PERCENTAGE_OF_GENOME_IS_BEST_GUESS</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090</td><td colspan='1' seen_footer='0'>Neisseria</td><td colspan='1' seen_footer='0'>Neisseria</td><td colspan='1' seen_footer='0'>52.77%</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC</td><td colspan='1' seen_footer='0'>Legionella</td><td colspan='1' seen_footer='0'>Legionella pneumophila</td><td colspan='1' seen_footer='0'>97.22%</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786</td><td colspan='1' seen_footer='0'>Vibrio</td><td colspan='1' seen_footer='0'>Vibrio cholerae</td><td colspan='1' seen_footer='0'>54.73%</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='4' seen_footer='1'>NOTE: A genome with >90% reads in agreement with its species has not been shown to indicate contamination</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='4' seen_footer='1'>NOTE: More testing needs to be performed before any conclusion can be made from this spreadsheet, and it is given for general information only. For more information, please see your local bioinformatician and/or open the relevant Kraken report.</td>
+</tr>
+<tfoot>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-sn_detectContamination-mlst.pl'>sn_detectContamination-mlst.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>Sample</td><td colspan='1' seen_footer='0'>Scheme</td><td colspan='1' seen_footer='0'>NumLociFound</td><td colspan='1' seen_footer='0'>questionableLoci</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'></td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090</td><td colspan='1' seen_footer='0'>neisseria</td><td colspan='1' seen_footer='0'>6</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='4' seen_footer='1'> This analysis searches for conserved MLST loci in an attempt to find multiple alleles.</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='4' seen_footer='1'> In preliminary testing, this tool was able to detect as low as 6% contamination.</td>
+</tr>
+<tfoot>
+</table>
+<p class='genericInfo version'>version: 1.1</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-sn_detectContamination.pl'>sn_detectContamination.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>File</td><td colspan='1' seen_footer='0'>numPeaks</td><td colspan='1' seen_footer='0'>finalDelta</td><td colspan='1' seen_footer='0'>hist</td><td colspan='1' seen_footer='0'>firstPeak</td><td colspan='1' seen_footer='0'>firstValley</td><td colspan='1' seen_footer='0'>secondPeak</td><td colspan='1' seen_footer='0'>secondValley...</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_1.fastq.gz</td><td colspan='1' seen_footer='0'>4</td><td colspan='1' seen_footer='0'>25</td><td colspan='1' seen_footer='0'>▆▆▆▇▇▆▇▆▆▅▃▂▁▁▁▁▁</td><td colspan='1' seen_footer='0'>2</td><td colspan='1' seen_footer='0'>11</td><td colspan='1' seen_footer='0'>14</td><td colspan='1' seen_footer='0'>16</td><td colspan='1' seen_footer='0'>17</td><td colspan='1' seen_footer='0'>27</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_2.fastq.gz</td><td colspan='1' seen_footer='0'>3</td><td colspan='1' seen_footer='0'>50</td><td colspan='1' seen_footer='0'>▄▄▄▇█▆▅▅▄▃▃▂▂▁▁▁</td><td colspan='1' seen_footer='0'>2</td><td colspan='1' seen_footer='0'>11</td><td colspan='1' seen_footer='0'>15</td><td colspan='1' seen_footer='0'>26</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_1.fastq.gz</td><td colspan='1' seen_footer='0'>5</td><td colspan='1' seen_footer='0'>25</td><td colspan='1' seen_footer='0'>▆▆▇█▄▅▃▃▅▃▂▂▁</td><td colspan='1' seen_footer='0'>2</td><td colspan='1' seen_footer='0'>26</td><td colspan='1' seen_footer='0'>29</td><td colspan='1' seen_footer='0'>30</td><td colspan='1' seen_footer='0'>31</td><td colspan='1' seen_footer='0'>32</td><td colspan='1' seen_footer='0'>34</td><td colspan='1' seen_footer='0'>38</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_2.fastq.gz</td><td colspan='1' seen_footer='0'>3</td><td colspan='1' seen_footer='0'>25</td><td colspan='1' seen_footer='0'>▄▇▆█▅▆▅▂▁▁▁</td><td colspan='1' seen_footer='0'>2</td><td colspan='1' seen_footer='0'>29</td><td colspan='1' seen_footer='0'>32</td><td colspan='1' seen_footer='0'>39</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_1.fastq.gz</td><td colspan='1' seen_footer='0'>3</td><td colspan='1' seen_footer='0'>25</td><td colspan='1' seen_footer='0'>▁▃▃▂▄▄█▇▃▁</td><td colspan='1' seen_footer='0'>2</td><td colspan='1' seen_footer='0'>32</td><td colspan='1' seen_footer='0'>38</td><td colspan='1' seen_footer='0'>41</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_2.fastq.gz</td><td colspan='1' seen_footer='0'>5</td><td colspan='1' seen_footer='0'>25</td><td colspan='1' seen_footer='0'>▆█▇▄▃▂▃▂▂▂▂▁▂▂▁▁▁▂▁▁▁▁▂▂▄▂▁▁▂▁▁▂▄▄▃▄▃▄▂▂</td><td colspan='1' seen_footer='0'>2</td><td colspan='1' seen_footer='0'>16</td><td colspan='1' seen_footer='0'>17</td><td colspan='1' seen_footer='0'>32</td><td colspan='1' seen_footer='0'>40</td><td colspan='1' seen_footer='0'>45</td><td colspan='1' seen_footer='0'>53</td><td colspan='1' seen_footer='0'>55</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='12' seen_footer='1'> The histogram ranges from the first valley to the last valley</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='12' seen_footer='1'> Some files have no discernable peaks and valleys and therefore might not have data listed</td>
+</tr>
+<tfoot>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-sn_mlst.pl'>sn_mlst.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>File</td><td colspan='1' seen_footer='0'>mlst_scheme</td><td colspan='1' seen_footer='0'>7-gene_ST</td><td colspan='1' seen_footer='0'>locus1</td><td colspan='1' seen_footer='0'>locus2</td><td colspan='1' seen_footer='0'>locus3</td><td colspan='1' seen_footer='0'>locus4</td><td colspan='1' seen_footer='0'>locus5</td><td colspan='1' seen_footer='0'>locus6</td><td colspan='1' seen_footer='0'>locus7</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090.skesa.fasta</td><td colspan='1' seen_footer='0'>neisseria</td><td colspan='1' seen_footer='0'>-</td><td colspan='1' seen_footer='0'>abcZ(109)</td><td colspan='1' seen_footer='0'>adk(39)</td><td colspan='1' seen_footer='0'>aroE(806?)</td><td colspan='1' seen_footer='0'>fumC(190)</td><td colspan='1' seen_footer='0'>gdh(147)</td><td colspan='1' seen_footer='0'>pdhC(71)</td><td colspan='1' seen_footer='0'>pgm(65)</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC.skesa.fasta</td><td colspan='1' seen_footer='0'>-</td><td colspan='1' seen_footer='0'>-</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786.skesa.fasta</td><td colspan='1' seen_footer='0'>vcholerae</td><td colspan='1' seen_footer='0'>-</td><td colspan='1' seen_footer='0'>adk(7)</td><td colspan='1' seen_footer='0'>gyrB(-)</td><td colspan='1' seen_footer='0'>mdh(4)</td><td colspan='1' seen_footer='0'>metE(37)</td><td colspan='1' seen_footer='0'>pntA(-)</td><td colspan='1' seen_footer='0'>purM(1)</td><td colspan='1' seen_footer='0'>pyrC(-)</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='10' seen_footer='1'> n indicates an exact allele</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='10' seen_footer='1'> ~n indicates a novel allele similar to n</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='10' seen_footer='1'> n? indicates a partial match to known allele n</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='10' seen_footer='1'> n,m indicates multiple alleles</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='10' seen_footer='1'> - indicates that an allele is missing</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='10' seen_footer='1'> For more details: https://github.com/tseemann/mlst</td>
+</tr>
+<tfoot>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-sn_parseSampleSheet.pl'>sn_parseSampleSheet.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786</td><td colspan='1' seen_footer='0'>taxon=Vibrio;route=calcengine</td><td colspan='1' seen_footer='0'>./2010EL-1786_1.fastq.gz;./2010EL-1786_2.fastq.gz</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090</td><td colspan='1' seen_footer='0'>taxon=Neisseria;route=calcengine</td><td colspan='1' seen_footer='0'>./FA1090_1.fastq.gz;./FA1090_2.fastq.gz</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC</td><td colspan='1' seen_footer='0'>taxon=Legionella;route=calcengine</td><td colspan='1' seen_footer='0'>./Philadelphia_CDC_1.fastq.gz;./Philadelphia_CDC_2.fastq.gz</td>
+</tr>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-sn_passfail.pl'>sn_passfail.pl</H2>
+<table cellspacing=0>
+<tbody>
+<thead>
+<tr>
+<td colspan='1' seen_footer='0'>Sample</td><td colspan='1' seen_footer='0'>coverage</td><td colspan='1' seen_footer='0'>quality</td>
+</tr>
+</thead>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_1.fastq.gz</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_1.fastq.gz</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>Philadelphia_CDC_2.fastq.gz</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_2.fastq.gz</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>2010EL-1786_2.fastq.gz</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+<tr>
+<td colspan='1' seen_footer='0'>FA1090_1.fastq.gz</td><td colspan='1' seen_footer='0'>0</td><td colspan='1' seen_footer='0'>0</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='3' seen_footer='1'>1: fail</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='3' seen_footer='1'>0: pass</td>
+</tr>
+<tfoot>
+</tbody>
+<tfoot>
+<tr>
+<td colspan='3' seen_footer='1'>-1: unknown</td>
+</tr>
+<tfoot>
+</table>
+<p class='genericInfo version'>version: 1.0</p>
+</div>
+<div class='pluginSplash'>
+<H2 id='plugin-sn_report.pl'>sn_report.pl</H2>
+<p class='genericInfo'>date: 2019-08-01</p>
+<p class='genericInfo'>time: 15:27:39</p>
+<p class='genericInfo version'>version: 1.3</p>
+</div>
+</html>
