@@ -4,6 +4,14 @@ perl:
 dist: xenial
 sudo: false # faster builds as long as you don't need sudo access
 addons:
+  homebrew:
+    taps: brewsci/bio
+    packages:
+      - skesa
+      - blast
+      - mlst
+      - prokka
+      - kraken
   apt:
     sources:
     - boost-latest
@@ -31,39 +39,7 @@ before_install:
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
   - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
-  # Homebrew installation
-  - export PATH=$PATH:$HOME/.linuxbrew/bin
-  - export HOMEBREW_FORCE_VENDOR_RUBY=1
-  - git clone https://github.com/Homebrew/brew $HOME/.linuxbrew/Homebrew
-  - mkdir $HOME/.linuxbrew/bin
-  - ln -s ../Homebrew/bin/brew $HOME/.linuxbrew/bin
-  - eval $($HOME/.linuxbrew/bin/brew shellenv)
-  - REALLY_GEM_UPDATE_SYSTEM=1 gem update --system
-  - gem install activesupport plist backports
-  # Screw installing perl and python incorrectly and slowly in brew.
-  # Force the system perl and python.
-  # PERL
-  - mkdir -pv $HOME/.linuxbrew/Cellar/perl/5.28.1/bin
-  - ln -sv `which perl` $HOME/.linuxbrew/Cellar/perl/5.28.1/bin
-  - brew link perl
-  # PYTHON
-  - mkdir -p $HOME/.linuxbrew/Cellar/python@2/2.7.15_1/bin
-  - ln -sv `which python` $HOME/.linuxbrew/Cellar/python@2/2.7.15_1/bin/
-  - brew link python@2
-  # WGET
-  - mkdir -p $HOME/.linuxbrew/Cellar/wget/1.20.1/bin
-  - ln -sv `which wget` $HOME/.linuxbrew/Cellar/wget/1.20.1/bin/
-  - brew link wget
 install:
-  - brew tap brewsci/bio
-  - brew install skesa --force-bottle
-  - brew install blast --force-bottle
-  # mlst prereqs
-  - brew install --force-bottle gzip gdbm openssl berkeley-db libbsd expat pkg-config gpatch ncurses gettext libunistring libidn2 readline sqlite util-linux
-  - brew install mlst
-  # prokka prereqs
-  - brew install --force-bottle bioperl less aragorn barrnap blast hmmer infernal minced parallel prodigal tbl2asn
-  - brew install prokka
   # Kraken
   #- brew install --force-bottle kraken
   #- wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
