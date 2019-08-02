@@ -6,28 +6,28 @@ sudo: false # faster builds as long as you don't need sudo access
 addons:
   homebrew:
     taps: brewsci/bio
-    packages:
+    casks:
       - skesa
       - blast
       - mlst
       - prokka
       - kraken
   apt:
-    sources:
-    - boost-latest
+    #sources:
+    #- boost-latest
     packages:
     - build-essential
-    - file
-    - git
-    - libboost-all-dev
-    - libgdbm-dev
-    - expat
+    #- file
+    #- git
+    #- libboost-all-dev
+    #- libgdbm-dev
+    #- expat
     - libberkeleydb-perl
-    - openssl
+    #- openssl
     - bioperl
-    - curl
-    - ruby2.3-dev
-    - rubygems
+    #- curl
+    #- ruby2.3-dev
+    #- rubygems
 before_install:
   # Perl modules
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
@@ -40,10 +40,8 @@ before_install:
   - tar zxvf v0.5.tar.gz
   - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
 install:
-  # Kraken
-  #- brew install --force-bottle kraken
-  #- wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-  #- tar zxvf minikraken_20171019_4GB.tgz
+  - wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+  - tar zxvf minikraken_20171019_4GB.tgz
   # Krona
   #- wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
   #- tar zxvf xl2.5.tar.gz
@@ -56,6 +54,7 @@ install:
   - echo -e "KRAKENDIR\t$HOME/.linuxbrew/bin" >> config/settings.conf
   - sed -i '/KRONADIR/d' config/settings.conf
   - echo -e "KRONADIR\t$HOME/krona/bin" >> config/settings.conf
+  - head -n 50 config/*.conf # display configuration file
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
 script: 
   - cpanm --quiet --installdeps --notest .
