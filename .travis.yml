@@ -57,6 +57,6 @@ install:
   - head -n 50 config/*.conf # display configuration file
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
 script: 
-  - cpanm --quiet --installdeps --notest .
+  - cpanm --installdeps --notest .
   - perl Makefile.PL
   - make test
