@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.3";
+our $VERSION = "1.4";
 
 local $0=fileparse $0;
 exit(main());
@@ -50,18 +50,24 @@ sub main{
 
   $html .= htmlHeaders();
   $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
-  $html .= "<p class='genericInfo' style='margin-bottom:1em'>SneakerNet reporting plugin version $VERSION</p>\n";
-  $html .= "<H2>Table of Contents</H2>\n";
-  $html .= "<ul>\n";
-  for my $plugin(sort keys(%$properties)){
-    $html .= "<li><a href='#plugin-$plugin'>$plugin</a> v$$properties{$plugin}{version}</li>\n"; # TODO add version here too
-  }
-  $html .= "</ul>\n";
+  $html .= "<p class='genericInfo'>SneakerNet version $SneakerNet::VERSION</p>\n";
+  #$html .= "<H2>Table of Contents</H2>\n";
+  #$html .= "<ul>\n";
+  #for my $plugin(sort keys(%$properties)){
+  #  $html .= "<li><a href='#plugin-$plugin'>$plugin</a> v$$properties{$plugin}{version}</li>\n"; # TODO add version here too
+  #}
+  #$html .= "</ul>\n";
 
   for my $plugin(sort keys(%$properties)){
+    my $inputID = "menu-$plugin";
+       $inputID =~s/\.+/-/g;
     $html .= "<div class='pluginSplash'>\n";
-    $html .= "<H2 id='plugin-$plugin'>$plugin</H2>\n";
+    $html .= "<input type='checkbox' class='collapsible' id='$inputID' />\n";
+    $html .= "<label class='collapsible' for='$inputID'>$plugin v$$properties{$plugin}{version}</label>\n";
+    $html .= "<div class='pluginContent'>\n";
+    #$html .= "<H2 id='plugin-$plugin'>$plugin</H2>\n";
     $html .= report($plugin, $properties, $settings);
+    $html .= "</div>\n";
     $html .= "</div>\n";
   }
   $html .= htmlFooters();
@@ -179,6 +185,12 @@ sub genericHtml{
 sub htmlHeaders{
   my($settings)=@_;
   my $html = "";
+  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">';
+  #$html .= "<!DOCTYPE PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN' >\n";
+
+  # Images encoded from https://www.iconfinder.com
+  my $menuBase64 = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjwhRE9DVFlQRSBzdmcgIFBVQkxJQyAnLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4nICAnaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkJz48c3ZnIGhlaWdodD0iMzJweCIgaWQ9IkxheWVyXzEiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMyIDMyOyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIzMnB4IiB4bWw6c3BhY2U9InByZXNlcnZlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48cGF0aCBkPSJNNCwxMGgyNGMxLjEwNCwwLDItMC44OTYsMi0ycy0wLjg5Ni0yLTItMkg0QzIuODk2LDYsMiw2Ljg5NiwyLDhTMi44OTYsMTAsNCwxMHogTTI4LDE0SDRjLTEuMTA0LDAtMiwwLjg5Ni0yLDIgIHMwLjg5NiwyLDIsMmgyNGMxLjEwNCwwLDItMC44OTYsMi0yUzI5LjEwNCwxNCwyOCwxNHogTTI4LDIySDRjLTEuMTA0LDAtMiwwLjg5Ni0yLDJzMC44OTYsMiwyLDJoMjRjMS4xMDQsMCwyLTAuODk2LDItMiAgUzI5LjEwNCwyMiwyOCwyMnoiLz48L3N2Zz4=';
+  my $closedMenuBase64 = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgZmlsbD0ibm9uZSIgaGVpZ2h0PSIyNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjE4IiB4Mj0iNiIgeTE9IjYiIHkyPSIxOCIvPjxsaW5lIHgxPSI2IiB4Mj0iMTgiIHkxPSI2IiB5Mj0iMTgiLz48L3N2Zz4=';
 
   $html .= "<html><head><title>SneakerNet report</title>\n";
 
@@ -187,14 +199,35 @@ sub htmlHeaders{
   $html .= "h2    {font-weight:bold; font-size:16px; margin:3px 0px;}\n";
   $html .= "body  {font-size:12px; font-family:-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;}\n";
   $html .= "table {border:1px solid black;}\n";
-  $html .= "td    {border:1px solid #999999; margin:0px;}\n";
-  $html .= "th    {border:1px solid #009900; margin:0px;}\n";
-  $html .= "thead {font-weight:bold;}\n";
+  $html .= "td    {border:1px solid #999999; margin:0px; word-wrap: break-all;}\n";
+  $html .= "th    {border:1px solid #009900; margin:0px; word-wrap: break-all;}\n";
+  $html .= "thead {font-weight:bold; background-color:#BBE;}\n";
   $html .= "tbody {color:black;} \n";
   $html .= "tfoot {font-size:75%; color:#DD3333;}\n";
   $html .= ".genericInfo {background-color:#EEEEEE; border: 1px solid #666666; margin:2px 0px; padding:1px;}\n";
-  $html .= ".version {font-size:75%; padding:1px;font-family:monospace; font-size:10px;}\n";
+  $html .= ".genericInfo p {margin-bottom:1em;}\n";
+  $html .= ".version {font-size:75%; padding:1px; margin-top:10px; font-family:monospace; font-size:10px;}\n";
   $html .= ".pluginSplash{background-color:#FAFFFF;border:1px solid black; margin:6px 0px; padding:1px;}\n";
+  # https://codeburst.io/how-to-make-a-collapsible-menu-using-only-css-a1cd805b1390
+  $html .= ".pluginContent{max-height:0px; overflow:hidden; }\n";
+  $html .= "label.collapsible {
+    display: block; 
+    font-size:16px;
+    color:black;
+    font-weight:bold;
+    cursor: pointer; 
+    padding: 10px 0 10px 50px; 
+    background-image: url(\"$menuBase64\");
+    background-repeat: no-repeat;
+    background-position-y: center;
+    background-position-x: left;
+  }\n";
+  $html .= "input.collapsible {display:none;}\n";
+  $html .= "input:checked ~ .pluginContent{max-height:100%; transition: all ease 1s;}\n";
+  $html .= "input:checked ~ label {
+    background-image: url(\"$closedMenuBase64\");
+    transition: all ease 0.1s;
+  }\n";
   $html .= "</style>\n";
 
   $html .= "</head>\n";
