@@ -26,7 +26,13 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i email! force! workflow=s)) or die $!;
+  GetOptions($settings,qw(help version numcpus=i email! force! workflow=s)) or die $!;
+
+  if($$settings{version}){
+    print "SneakerNet $SneakerNet::VERSION\n";
+    return 0;
+  }
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
@@ -77,6 +83,7 @@ sub usage{
   --noemail     # Do not send an email at the end.
   --numcpus 1
   --force
+  --version     # Print SneakerNet version and exit
   --workflow    Which workflow under plugins.conf should we follow?
                 If not specified, will look at snok.txt.
                 If not snok.txt, will use 'default'
