@@ -228,7 +228,7 @@ sub command{
   my $stdout=`$command`;
   if($?){
     my $msg="ERROR running command\n  $command";
-    carp $msg;
+    croak $msg;
   }
 
   return $stdout;
