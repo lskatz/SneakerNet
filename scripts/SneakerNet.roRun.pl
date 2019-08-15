@@ -48,6 +48,7 @@ sub makeSneakernetDir{
   my $snok        = "$dir/snok.txt";
   my $sampleSheet = "$dir/Data/Intensities/BaseCalls/SampleSheet.csv";
   my $sampleSheet2= "$dir/SampleSheet.csv"; # backup in case the first is not found
+  my $sampleSheet3= (glob("$dir/*.csv"))[0]; # backup in case the first is not found
   my $config      =  "$dir/Data/Intensities/BaseCalls/config.xml";
   my @interop     =  glob("$dir/InterOp/*");
   my @xml         = ("$dir/CompletedJobInfo.xml",
@@ -60,6 +61,11 @@ sub makeSneakernetDir{
     if(! -e $sampleSheet2){
       if($$settings{createsamplesheet}){
         # do nothing
+      }
+      # If no samplesheet2, is there _any_ csv file?
+      elsif(-e $sampleSheet3){
+        logmsg "Found $sampleSheet3 and so I will use it.";
+        $sampleSheet2 = $sampleSheet3;
       } else {
         die "ERROR: could not find the samplesheet in either $sampleSheet or $sampleSheet2";
       }
