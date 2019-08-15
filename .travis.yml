@@ -13,28 +13,12 @@ addons:
       - prokka
       - kraken
   apt:
-    #sources:
-    #- boost-latest
     packages:
     - build-essential
-    #- file
-    #- git
-    #- libboost-all-dev
-    #- libgdbm-dev
-    #- expat
     - libberkeleydb-perl
-    #- openssl
     - bioperl
-    #- curl
-    #- ruby2.3-dev
-    #- rubygems
 before_install:
-  # Perl modules
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
-  #- cpanm -l ~ Statistics::Descriptive
-  #- cpanm -l ~ File::Slurp
-  #- cpanm -l ~ Bio::Perl
-  #- perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
