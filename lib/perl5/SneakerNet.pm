@@ -6,7 +6,7 @@ use File::Basename qw/fileparse basename dirname/;
 #use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
-use Carp qw/croak confess/;
+use Carp qw/croak confess carp/;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
@@ -33,7 +33,7 @@ sub fullPathToExec($;$) {
 	}
   if(! -x $fullpath){
 	  my $errStr="Error finding full path to executable ($executable)";
-    die $errStr;
+    croak $errStr;
   }
 	return $fullpath;
 }
@@ -63,7 +63,7 @@ sub samplesheetInfo_tsv{
   my $config = readConfig();
   
   my %sample;
-  open(my $fh, "<", $samplesheet) or die "ERROR: reading $samplesheet";
+  open(my $fh, "<", $samplesheet) or croak "ERROR: reading $samplesheet";
   while(<$fh>){
     chomp;
     my @F = split /\t/;
@@ -111,7 +111,7 @@ sub samplesheetInfo{
   my $section="";
   my @header=();
   my %sample;
-  open(SAMPLE,$samplesheet) or die "ERROR: could not open sample spreadsheet $samplesheet: $!";
+  open(SAMPLE,$samplesheet) or croak "ERROR: could not open sample spreadsheet $samplesheet: $!";
   while(<SAMPLE>){
     s/^\s+|\s+$//g; # trim whitespace
 
@@ -155,7 +155,7 @@ sub samplesheetInfo{
       if(!$F{sample_id}){
         $F{sample_id}=$F{sampleid};
       }
-      die "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
+      croak "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
@@ -228,7 +228,7 @@ sub command{
   my $stdout=`$command`;
   if($?){
     my $msg="ERROR running command\n  $command";
-    confess $msg;
+    carp $msg;
   }
 
   return $stdout;
@@ -244,7 +244,7 @@ sub passfail{
   # or fail values.
   my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
   my %failure;
-  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!\n  Please make sure that sn_passfail.pl is run before this script, but after the read metrics script.";
+  open(my $passfailFh, $passfail) or croak "ERROR: could not read $passfail: $!\n  Please make sure that sn_passfail.pl is run before this script, but after the read metrics script.";
   my $header=<$passfailFh>;
   chomp($header);
   my @header=split(/\t/,$header);
@@ -286,7 +286,7 @@ sub recordProperties{
     $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";
   }
 
-  open(my $fh, ">>", $propertiesFile) or die "ERROR writing to $propertiesFile: $!";
+  open(my $fh, ">>", $propertiesFile) or croak "ERROR writing to $propertiesFile: $!";
   print $fh $writeString;
   close $fh;
   
@@ -302,7 +302,7 @@ sub readProperties{
   my($runDir, $settings) = @_;
   my %prop = ();
   my $propertiesFile = "$runDir/SneakerNet/properties.txt";
-  open(my $fh, '<', $propertiesFile) or die "ERROR reading $propertiesFile: $!";
+  open(my $fh, '<', $propertiesFile) or croak "ERROR reading $propertiesFile: $!";
   my $header = <$fh>;
   while(my $line = <$fh>){
     chomp($line);
