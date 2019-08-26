@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run staphb/prokka:1.14.0 prokka $@
