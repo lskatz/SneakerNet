@@ -26,7 +26,7 @@ before_install:
   - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
-  - cpanm -l ~ Bio::FeatureIO --notest # b/c it wasn't getting installed properly somehow with cpanm --installdeps
+  - cpanm -l ~ Bio::FeatureIO --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
   # perl debugging statement
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   # CGP
