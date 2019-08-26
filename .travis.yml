@@ -13,6 +13,7 @@ addons:
     - libberkeleydb-perl
     - bioperl
     - ncbi-blast+
+    - prodigal
 before_install:
   # Docker
   - docker pull staphb/skesa:2.3.0
