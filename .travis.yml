@@ -3,22 +3,32 @@ perl:
   - "5.24-shrplib"
 dist: xenial
 sudo: false # faster builds as long as you don't need sudo access
+services:
+  - docker
 addons:
-  homebrew:
-    taps: brewsci/bio
-    casks:
-      - skesa
-      - blast
-      - mlst
-      - prokka
-      - kraken
   apt:
+    #sources:
     packages:
     - build-essential
     - libberkeleydb-perl
     - bioperl
+    - ncbi-blast+
+    - prodigal
 before_install:
+  # Docker
+  - docker pull staphb/skesa:2.3.0
+  - docker pull staphb/mlst:2.16.2
+  - docker pull staphb/prokka:1.14.0
+  - docker pull staphb/kraken:1.1.1
+  - export PATH=$PATH:$(pwd)/scripts/dockerAliases
+  # Perl modules
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
+  - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+  - cpanm -l ~ Statistics::Descriptive
+  - cpanm -l ~ File::Slurp
+  - cpanm -l ~ Bio::FeatureIO --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
+  # perl debugging statement
+  - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
@@ -27,9 +37,9 @@ install:
   - wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
   - tar zxvf minikraken_20171019_4GB.tgz
   # Krona
-  #- wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
-  #- tar zxvf xl2.5.tar.gz
-  #- perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
+  - wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
+  - tar zxvf xl2.5.tar.gz
+  - perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
   # Configure SneakerNet
   - cp -rv config.bak config
   - sed -i '/KRAKEN_DEFAULT_DB/d' config/settings.conf

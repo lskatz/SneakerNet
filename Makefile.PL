@@ -27,7 +27,7 @@ my $preop =
 WriteMakefile1(
   NAME         => 'SneakerNet',
   VERSION_FROM => 'lib/perl5/SneakerNet.pm',
-  ABSTRACT_FROM => 'lib/perl5/SneakerNet.pm',
+  #ABSTRACT_FROM => 'lib/perl5/SneakerNet.pm',
   AUTHOR => q{Lee S. Katz <gzu2@cdc.gov>},
   EXE_FILES    => [
     "scripts/SneakerNet.ionTorrent.ro.pl",

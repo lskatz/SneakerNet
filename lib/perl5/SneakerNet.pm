@@ -162,7 +162,7 @@ sub samplesheetInfo{
       my $alignedWith="";
       my %taxonProperties=%{ $$settings{obj}{"taxonProperties.conf"}->vars };
       my @taxa=$$settings{obj}{"taxonProperties.conf"}->get_block;
-      #die Dumper $$settings{obj}{"taxonProperties.conf"}->param(-block=>'Salmonella');
+      #croak Dumper $$settings{obj}{"taxonProperties.conf"}->param(-block=>'Salmonella');
       for my $taxon(@taxa){
         my $taxonRegex=$$settings{obj}{"taxonProperties.conf"}->param("$taxon.regex");
         
