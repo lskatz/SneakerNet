@@ -13,6 +13,7 @@ use FindBin qw/$RealBin/;
 use lib "$RealBin/../lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
 use Config::Simple;
+use Email::Stuffer;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -68,8 +69,30 @@ sub main{
     for my $e(@$exe){
       my $command="$RealBin/../SneakerNet.plugins/$e . --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
-      #print "$command\n\n";next;
-      command($command);
+      #print "$command\n\n"; next;
+      #command($command); next;
+      eval{
+        command($command);
+      };
+      if($@){
+        my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
+        my $subject="Run failed for $dir";
+        my @to;
+        if(ref($$settings{'default.emails'}) eq "ARRAY"){
+          push(@to, @{$$settings{'default.emails'}});
+        } else {
+          push(@to, $$settings{'default.emails'});
+        }
+        my $to = join(",",@to);
+        my $email=Email::Stuffer->from($from)
+                                ->subject($subject)
+                                ->to($to);
+
+        logmsg "Email sent to $to";
+        return $@;
+      }
+
+        
     }
     chdir($cwd); # go back to original directory
   }
