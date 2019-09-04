@@ -16,6 +16,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
 our $VERSION = "1.0";
+our $CITATION= "Guess Taxon by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
 my $tmpSettings=readConfig();
@@ -28,13 +29,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help debug tempdir=s numcpus=i force)) or die $!;
+  GetOptions($settings,qw(version citation help debug tempdir=s numcpus=i force)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{version}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings";
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
@@ -286,10 +291,11 @@ sub guessTaxon{
 }
 
 sub usage{
-  "Finds contamination in a miseq run
+  print "Finds contamination in a miseq run
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --version
-  "
+";
+  exit(0);
 }
 

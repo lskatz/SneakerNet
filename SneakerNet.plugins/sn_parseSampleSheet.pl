@@ -16,6 +16,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
 
 our $VERSION = "1.0";
+our $CITATION= "Sample sheet parsing by Lee Katz";
 
 my $snVersion=version();
 
@@ -24,13 +25,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help numcpus=i debug tempdir=s force)) or die $!;
+  GetOptions($settings,qw(citation version help numcpus=i debug tempdir=s force)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   # We have to know if the argument is a directory or file, and so
@@ -164,7 +169,7 @@ sub sampleHashToTsv{
 }
 
 sub usage{
-  "Reformat a SampleSheet.csv file in a SneakerNet run
+  print "Reformat a SampleSheet.csv file in a SneakerNet run
   Usage: $0 run-dir|SampleSheet.csv
   
   Because this is a SneakerNet plugin, the first positional
@@ -175,5 +180,6 @@ sub usage{
   OUTPUT: this script will print the new samplesheet to 
   stdout but if the first argument is a directory, it
   will place the file into the directory.
-  "
+"; 
+  exit(0);
 }

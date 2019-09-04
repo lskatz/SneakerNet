@@ -16,20 +16,25 @@ use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg
 use Text::Fuzzy;
 use Email::Stuffer;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
+our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation help force tempdir=s debug numcpus=i)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
@@ -144,10 +149,11 @@ sub doubleCheckRun{
 
 
 sub usage{
-  "Double check a run and its completeness. Email a report.
+  print "Double check a run and its completeness. Email a report.
   Usage: $0 MiSeq_run_dir
   --emails  ''   email1,[email2...]
   --version
-  "
+";
+  exit(0);
 }
 

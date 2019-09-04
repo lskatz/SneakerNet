@@ -15,6 +15,7 @@ use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg
 use Bio::Kmer;
 
 our $VERSION = "1.0";
+our $CITATION= "Detect contamination by Lee Katz. Uses Bio::Kmer module for kmer counting.";
 
 # http://perldoc.perl.org/perlop.html#Symbolic-Unary-Operators
 # # +Inf and -Inf will be a binary complement of all zeros
@@ -26,13 +27,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help force debug tempdir=s numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation help force debug tempdir=s numcpus=i)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
 
@@ -222,12 +227,13 @@ sub sparkString{
 
 
 sub usage{
-  "Guesses if there is contamination in a miseq run using kmer magic
+  print "Guesses if there is contamination in a miseq run using kmer magic
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --debug       Just run three random samples
   --force       Overwrite all results
   --version
-  "
+";
+  exit(0);
 }
 

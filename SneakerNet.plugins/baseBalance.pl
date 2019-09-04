@@ -21,7 +21,8 @@ use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
+our $CITATION = "Base Balance by Lee Katz";
 
 # Global
 my @nt=qw(A T C G N);
@@ -32,13 +33,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help inbox=s debug test force numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation tempdir=s help inbox=s debug test force numcpus=i)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   
   my $dir=$ARGV[0];
@@ -143,10 +148,11 @@ sub baseBalance{
 
 
 sub usage{
-  "Runs the base-balance metric
+  print "Runs the base-balance metric
   Usage: $0 runDir
   --numcpus 1
   --version
-  "
+  ";
+  exit(0);
 }
 

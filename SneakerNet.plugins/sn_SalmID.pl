@@ -14,6 +14,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg version/;
 
 our $VERSION = "1.0";
+our $CITATION= "SalmID plugin by Lee Katz. Uses SalmID by Henk den Bakker.";
 
 my @fastqExt=qw(.fastq.gz .fq.gz .fastq .fq);
 
@@ -24,13 +25,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help numcpus=i debug tempdir=s force)) or die $!;
+  GetOptions($settings,qw(version citation help numcpus=i debug tempdir=s force)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
 
@@ -69,10 +74,11 @@ sub identifyEach{
 }
 
 sub usage{
-  "Run SalmID on each fastq file to identify the species/subspecies
+  print "Run SalmID on each fastq file to identify the species/subspecies
   Usage: $0 run-dir
   --debug          Show debugging information
   --numcpus     1  Number of CPUs (has no effect on this script)
   --version
-  "
+";
+  exit(0);
 }

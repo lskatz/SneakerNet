@@ -15,20 +15,25 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
+our $CITATION= "Hello World in perl by Lee Katz";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation help force tempdir=s debug numcpus=i)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
 
@@ -59,7 +64,7 @@ sub makeTable{
     
 
 sub usage{
-  "Run Hello World as a plugin for SneakerNet.
+  print "Run Hello World as a plugin for SneakerNet.
   Creates a table in the 'forEmail' folder with which
   options have been specified.
 
@@ -70,6 +75,7 @@ sub usage{
   --version     Print the version and exit
   --help        This usage menu
   --tempdir  '' Specify the temporary directory
-  "
+";
+  exit(0);
 }
 

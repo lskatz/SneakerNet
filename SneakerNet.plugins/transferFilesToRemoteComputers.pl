@@ -15,6 +15,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
 our $VERSION = "1.3";
+our $CITATION= "Transfer files to remote computer plugin by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -23,13 +24,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
@@ -146,13 +151,14 @@ sub transferFilesToRemoteComputers{
 }
 
 sub usage{
-  "Find all reads directories under the inbox
+  print "Find all reads directories under the inbox
   Usage: $0 MiSeq_run_dir
   --debug            No files will actually be transferred
   --force            Ignore some warnings
   --force-transfer   Transfer the reads despite the routing
                      entry in the spreadsheet.
   --version
-  "
+";
+  exit(0);
 }
 

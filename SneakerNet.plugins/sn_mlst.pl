@@ -19,19 +19,24 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 our $VERSION = "1.0";
+our $CITATION= "MLST plugin by Lee Katz. Uses mlst by Torsten Seemann.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation help force tempdir=s debug numcpus=i)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
@@ -149,11 +154,12 @@ sub mlstSample{
   return $mlst;
 }
 sub usage{
-  "Run MLST on all genomes
+  print "Run MLST on all genomes
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --force        To overwrite previous results
   --version
-  "
+";
+  exit(0);
 }
 

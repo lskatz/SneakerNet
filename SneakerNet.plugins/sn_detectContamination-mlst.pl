@@ -15,19 +15,24 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
 our $VERSION = "1.1";
+our $CITATION= "Contamination detection by Eshaw Vidyaprakash and Lee Katz.  Uses ColorID by Henk den Bakker.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  GetOptions($settings,qw(version citation help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
     return 0;
   }
+  if($$settings{citation}){
+    print $CITATION."\n";
+    return 0;
+  }
 
-  die usage() if($$settings{help} || !@ARGV);
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{k}||=39;
@@ -220,7 +225,7 @@ sub mlstColorId{
 }
 
 sub usage{
-  "Guesses if there is contamination in a miseq run by detecting how many alleles of 7-gene MLST genes there are
+  print "Guesses if there is contamination in a miseq run by detecting how many alleles of 7-gene MLST genes there are
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --mlstfasta mlst.fa  The mlst.fa file in Torsten's mlst package
@@ -229,6 +234,7 @@ sub usage{
   --k   kmer length
   --quality            Minimum quality for bp
   --version
-  "
+";
+  exit(0);
 }
 

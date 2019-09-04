@@ -18,16 +18,21 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
+our $CITATION= "Ion torrent assembly plugin by Lee Katz. Uses SPAdes and Prodigal.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version help tempdir=s debug numcpus=i force)) or die $!;
+  GetOptions($settings,qw(version citation help tempdir=s debug numcpus=i force)) or die $!;
   if($$settings{version}){
     print $VERSION."\n";
+    return 0;
+  }
+  if($$settings{citation}){
+    print $CITATION."\n";
     return 0;
   }
 
@@ -259,10 +264,11 @@ sub annotateFasta{
 }
 
 sub usage{
-  "Assemble all genomes
+  print "Assemble all genomes
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --version
-  "
+";
+  exit(0);
 }
 
