@@ -28,24 +28,26 @@ Except for the legacy plugins, all plugins are prefixed with `sn_`.
 The plugins are not specific to any one language, although the majority
 are in Perl.
 
-sn_SalmID.pl
-sn_passfail.pl
-sn_iontorrent_assembleAll.pl
-addReadMetrics.pl
-sn_helloWorld.py
-baseBalance.pl
-sn_mlst.pl
-transferFilesToRemoteComputers.pl
-sn_detectContamination.pl
-emailWhoever.pl
-sn_helloWorld.pl
-sn_detectContamination-mlst.pl
-sn_iontorrent_parseSampleSheet.pl
-sn_immediateStatus.pl
-guessTaxon.pl
-assembleAll.pl
-sn_parseSampleSheet.pl
-sn_report.pl
+| Plugin                         | description |
+|:-------------------------------|:------------|
+|sn_SalmID.pl                    | Salmonella subspecies identification |
+|sn_passfail.pl                  | Table of pass/fail for each sample   |
+|sn_iontorrent_assembleAll.pl    | Assembly for ion torrent data        |
+|addReadMetrics.pl               | Raw read metrics                     |
+|sn_helloWorld.py                | Example plugin in Python             |
+|baseBalance.pl                  | Dividing all As by Ts and all Cs by Gs to see if we get a ratio of 1 for each|
+|sn_mlst.pl                      | Runs 7-gene MLST on assemblies       |
+|transferFilesToRemoteComputers.pl|Transfers files to a remote computer |
+|sn_detectContamination.pl       | Detects potential contamination by kmer counting|
+|emailWhoever.pl                 | Emails all results                   |
+|sn_helloWorld.pl                | Example plugin in Perl               |
+|sn_detectContamination-mlst.pl  | Runs 7-gene MLST on raw reads, checking for abnormal number of alleles |
+|sn_iontorrent_parseSampleSheet.pl|Turns the sample sheet for ion torrent into SneakerNet format |
+|sn_immediateStatus.pl           | Emails an immediate report           |
+|guessTaxon.pl                   | Runs metagenomics classifier to guess the taxon for a sample |
+|assembleAll.pl                  | Assembles Illumina data              |
+|sn_parseSampleSheet.pl          | Turns the sample sheet for Illumina into SneakerNet format |
+|sn_report.pl                    | Creates an HTML report from all other plugins |
 
 ## Workflows
 
