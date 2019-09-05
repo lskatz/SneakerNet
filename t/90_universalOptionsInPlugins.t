@@ -31,6 +31,7 @@ while(my $file = readdir($dh)){
 }
 closedir($dh);
 
+# Do we have all plugins here?  At least one!
 cmp_ok(scalar(@plugin), '>', 1, "Gathering all plugins. ".scalar(@plugin)." found.");
 
 # Test whether --flagopt works for each script/flag combination

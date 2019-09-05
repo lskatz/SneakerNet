@@ -38,3 +38,14 @@ a good idea to pipe the output to a file and then follow it with `tail -f`.
 SneakerNet produces a subfolder `SneakerNet` in your run directory.
 It also emails a report. To view a sample report, please go to example/M00123-18-001-test/SneakerNet/forEmail/report.html 
 in this repository.
+
+## Plugins
+
+SneakerNet is based on plugins.  In this context, a plugin is an independent script
+that can run an analysis on a run directory, accept standard inputs (e.g., `--help`),
+and create standard output files.
+
+### Plugins for developers
+
+Please look at the (readme for plugins)[SneakerNet.plugins/README.md].
+
