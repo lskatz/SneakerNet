@@ -6,7 +6,27 @@ Therefore, any given plugin can run independently of the others (aside
 from any prerequisite files, e.g., genome assemblies from a previous
 plugin).
 
-## Command line
+# Workflows
+
+SneakerNet workflows define a particular order for the plugins to run.
+They help resolve dependencies like ensuring that genome assemblies
+are present before analyzed or enforcing that a report is generated only
+after all plugins have created their outputs.
+
+## Default
+
+This workflow runs most plugins and assumes that you have some flavor
+of Illumina (MiSeq, HiSeq, MiniSeq).
+
+## Ion Torrent
+
+This workflow runs plugins designed for ion torrent.
+
+## Metagenomics
+
+For metagenomics runs. 
+
+# Command line
 
 Each plugin can accept the following options. The first positional
 parameter must be the SneakerNet run.
@@ -22,7 +42,7 @@ parameter must be the SneakerNet run.
 |`--citation`|     | Print a citation statement. | 
 
 
-## Catalog
+# Catalog
 
 Except for the legacy plugins, all plugins are prefixed with `sn_`.
 The plugins are not specific to any one language, although the majority
@@ -48,14 +68,4 @@ are in Perl.
 |assembleAll.pl                  | Assembles Illumina data              |
 |sn_parseSampleSheet.pl          | Turns the sample sheet for Illumina into SneakerNet format |
 |sn_report.pl                    | Creates an HTML report from all other plugins |
-
-## Workflows
-
-Workflows place the plugins in a particular order for a given run.
-
-### Default
-
-MiSeq, HiSeq, MiniSeq, ...
-
-### Ion Torrent
 
