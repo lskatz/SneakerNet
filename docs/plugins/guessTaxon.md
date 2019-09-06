@@ -1,5 +1,7 @@
 # SYNOPSIS
 
+`guessTaxon.pl`
+
 Attempts to guess a taxon for each sample
 
 # Software requirements
