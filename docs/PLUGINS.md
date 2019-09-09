@@ -53,22 +53,22 @@ Some links might not be valid at this time.
 
 | Plugin                         | description |
 |:-------------------------------|:------------|
-|[sn_SalmID.pl](plugins/sn_SalmID.md)          | Salmonella subspecies identification |
-|[sn_passfail.pl](plugins/sn_passfail.md)      | Table of pass/fail for each sample   |
-|[sn_iontorrent_assembleAll.pl](plugins/sn_iontorrent_assembleAll.md)    | Assembly for ion torrent data        |
-|[addReadMetrics.pl](plugins/addReadMetrics.md)| Raw read metrics                     |
-|[sn_helloWorld.py](plugins/sn_helloWorld.md)  | Example plugin in Python             |
-|[baseBalance.pl](plugins/baseBalance.md)      | Dividing all As by Ts and all Cs by Gs to see if we get a ratio of 1 for each|
-|[sn_mlst.pl](plugins/sn_mlst.pl)              | Runs 7-gene MLST on assemblies       |
-|[transferFilesToRemoteComputers.pl](plugins/transferFilesToRemoteComputers.md)|Transfers files to a remote computer |
-|[sn_detectContamination.pl](plugins/sn_detectContamination.md)       | Detects potential contamination by kmer counting|
-|[emailWhoever.pl](plugins/emailWhoever.md)                 | Emails all results                   |
-|[sn_helloWorld.pl](plugins/sn_helloWorld.md)               | Example plugin in Perl               |
-|[sn_detectContamination-mlst.pl](plugins/sn_detectContamination-mlst.md)  | Runs 7-gene MLST on raw reads, checking for abnormal number of alleles |
-|[sn_iontorrent_parseSampleSheet.pl](plugins/sn_iontorrent_parseSampleSheet.md)|Turns the sample sheet for ion torrent into SneakerNet format |
-|[sn_immediateStatus.pl](plugins/sn_immediateStatus.md)           | Emails an immediate report           |
-|[guessTaxon.pl](plugins/guessTaxon.md)                   | Runs metagenomics classifier to guess the taxon for a sample |
-|[assembleAll.pl](plugins/assembleAll.md)                  | Assembles Illumina data              |
-|[sn_parseSampleSheet.pl](plugins/sn_parseSampleSheet.md)          | Turns the sample sheet for Illumina into SneakerNet format |
-|[sn_report.pl](plugins/sn_report.md)                    | Creates an HTML report from all other plugins |
+|[sn_SalmID.pl](plugins/sn_SalmID.pl.md)          | Salmonella subspecies identification |
+|[sn_passfail.pl](plugins/sn_passfail.pl.md)      | Table of pass/fail for each sample   |
+|[sn_iontorrent_assembleAll.pl](plugins/sn_iontorrent_assembleAll.pl.md)    | Assembly for ion torrent data        |
+|[addReadMetrics.pl](plugins/addReadMetrics.pl.md)| Raw read metrics                     |
+|[sn_helloWorld.py](plugins/sn_helloWorld.py.md)  | Example plugin in Python             |
+|[baseBalance.pl](plugins/baseBalance.pl.md)      | Dividing all As by Ts and all Cs by Gs to see if we get a ratio of 1 for each|
+|[sn_mlst.pl](plugins/sn_mlst.pl.md)              | Runs 7-gene MLST on assemblies       |
+|[transferFilesToRemoteComputers.pl](plugins/transferFilesToRemoteComputers.pl.md)|Transfers files to a remote computer |
+|[sn_detectContamination.pl](plugins/sn_detectContamination.pl.md)       | Detects potential contamination by kmer counting|
+|[emailWhoever.pl](plugins/emailWhoever.pl.md)                 | Emails all results                   |
+|[sn_helloWorld.pl](plugins/sn_helloWorld.pl.md)               | Example plugin in Perl               |
+|[sn_detectContamination-mlst.pl](plugins/sn_detectContamination-mlst.pl.md)  | Runs 7-gene MLST on raw reads, checking for abnormal number of alleles |
+|[sn_iontorrent_parseSampleSheet.pl](plugins/sn_iontorrent_parseSampleSheet.pl.md)|Turns the sample sheet for ion torrent into SneakerNet format |
+|[sn_immediateStatus.pl](plugins/sn_immediateStatus.pl.md)           | Emails an immediate report           |
+|[guessTaxon.pl](plugins/guessTaxon.pl.md)                   | Runs metagenomics classifier to guess the taxon for a sample |
+|[assembleAll.pl](plugins/assembleAll.pl.md)                  | Assembles Illumina data              |
+|[sn_parseSampleSheet.pl](plugins/sn_parseSampleSheet.pl.md)          | Turns the sample sheet for Illumina into SneakerNet format |
+|[sn_report.pl](plugins/sn_report.pl.md)                    | Creates an HTML report from all other plugins |
 
