@@ -34,6 +34,7 @@ sub main{
     my $sneakernetDir = makeSneakernetDir($dir,$settings);
     saveSneakernetDir($sneakernetDir, $$settings{outdir});
   }
+  rmdir($$settings{tempdir}) || logmsg "WARNING: might not have been able to remove tempdir $$settings{tempdir}";
 
   return 0;
 }
@@ -174,6 +175,8 @@ sub createSampleSheet{
     open(my $demuxFh, "<", $demuxSamples) or die "ERROR: could not read from $demuxSamples: $!";
     my $found_the_samples = 0;
     while(<$demuxFh>){
+      s/^\s+|\s+$//g; # whitespace trim
+
       if(/,Sample,/){
         s/,Sample,/,SampleID,/;
       }
@@ -186,7 +189,7 @@ sub createSampleSheet{
       if(/^\s*$/){
         next;
       }
-      print $fh $_;
+      print $fh $_."\n"; # add back in newline
       $numSamples++;
     }
     close $demuxFh;
@@ -242,13 +245,14 @@ sub createSampleSheetOutOfThinAir{
 
 
 sub usage{
-  "Parses an unaltered Illumina run and formats it
+  "'SneakerNet-read-only': Parses an unaltered Illumina run and formats it
   into something usable for SneakerNet
 
   Usage: $0 illuminaDirectory [illuminaDirectory2...]
   
-  --numcpus  1
-  --outdir   ''
-  --createsamplesheet
+  --numcpus             1
+  --outdir             ''
+  --tempdir            ''
+  --createsamplesheet     Also create a SampleSheet.csv or samples.tsv as fallback
   "
 }
