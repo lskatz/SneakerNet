@@ -21,5 +21,14 @@ This other peak will be indicative of potential contamination.
 
 Table with columns
 
-`TODO`
+* File
+* numPeaks
+* finalDelta - the amplitude difference between one coverage and the next to determine what a valley is
+* hist       - ascii representation
+* firstPeak  - coverage for the first peak
+* firstValley - coverage for the first valley
+* secondPeak
+* secondValley...
+
+More columns are possible with additional valleys
 
