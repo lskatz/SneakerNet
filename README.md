@@ -45,7 +45,9 @@ SneakerNet is based on plugins.  In this context, a plugin is an independent scr
 that can run an analysis on a run directory, accept standard inputs (e.g., `--help`),
 and create standard output files.
 
+For more details, see the [plugins readme](docs/PLUGINS.md).
+
 ### Plugins for developers
 
-Please look at the (readme for plugins)[SneakerNet.plugins/README.md].
+Please look at the [readme for plugins](docs/PLUGINSDEV.md).
 
