@@ -47,5 +47,5 @@ and create standard output files.
 
 ### Plugins for developers
 
-Please look at the (readme for plugins)[SneakerNet.plugins/README.md].
+Please look at the [readme for plugins](docs/PLUGINSDEV.md).
 
