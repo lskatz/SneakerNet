@@ -110,7 +110,7 @@ sub makeSneakernetDir{
     print $fh join("\t",
       $sample,
       "taxon=",
-      $fastq,
+      basename($fastq),
     )."\n";
   }
 
