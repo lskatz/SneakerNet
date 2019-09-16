@@ -27,7 +27,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help version numcpus=i email! force! workflow=s)) or die $!;
+  GetOptions($settings,qw(dry-run help version numcpus=i email! force! workflow=s)) or die $!;
 
   if($$settings{version}){
     print "SneakerNet $SneakerNet::VERSION\n";
@@ -71,6 +71,11 @@ sub main{
       $command.=" --force" if($$settings{force});
       #print "$command\n\n"; next;
       #command($command); next;
+
+      if($$settings{'dry-run'}){
+        logmsg $command;
+        next;
+      }
       eval{
         command($command);
       };
@@ -103,10 +108,11 @@ sub main{
 sub usage{
   "$0: runs all SneakerNet plugins on a run directory
   Usage: $0 dir [dir2...]
-  --noemail     # Do not send an email at the end.
+  --noemail     Do not send an email at the end.
+  --dry-run     Just print the plugin commands that would have been run
   --numcpus 1
   --force
-  --version     # Print SneakerNet version and exit
+  --version     Print SneakerNet version and exit
   --workflow    Which workflow under plugins.conf should we follow?
                 If not specified, will look at snok.txt.
                 If not snok.txt, will use 'default'
