@@ -49,8 +49,10 @@ sub main{
   # Mark this file as something to attach for an email later
   mkdir "$dir/SneakerNet" if(!-d "$dir/SneakerNet");
   mkdir "$dir/SneakerNet/forEmail" if(!-d "$dir/SneakerNet/forEmail");
-  link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv")
-    or die "ERROR: could not hard link readMetrics.tsv to $dir/SneakerNet/forEmail/ - $!";
+  if(! -f "$dir/SneakerNet/forEmail/readMetrics.tsv"){
+    link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv")
+      or die "ERROR: could not hard link readMetrics.tsv to $dir/SneakerNet/forEmail/ - $!";
+  }
 
   recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv"});
 
