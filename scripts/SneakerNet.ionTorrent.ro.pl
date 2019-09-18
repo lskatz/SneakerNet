@@ -97,15 +97,18 @@ sub makeSneakernetDir{
 
   # Start off a sample sheet with columns: sampleName, [options], R1;R2
   # where R2 is not present if single end
+  my %seenSample; # whether or not we've seen a sample name before
   my $samplesheet = "$outdir/samples.tsv";
   open(my $fh, ">", $samplesheet) or die "ERROR writing to $samplesheet: $!";
   for my $fastq(@localFastq){
     my $longsample = basename($fastq, qw(.fastq.gz .fastq));
     my $sample = ".";
     my $barcode= ".";
+    my $longBarcode = ".";
     if($longsample =~ /([^\.]*).*(IonXpress_(\d+))/){
       $sample = $1;
       $barcode= $2;
+      $longBarcode = $1;
     }
     # ok yes we have the sample name but in case it is listed
     # differently in the json file describing the run, use it
@@ -113,12 +116,18 @@ sub makeSneakernetDir{
     if($barcode{$barcode}){
       $sample = $barcode{$barcode};
     }
+    # Worst case, it's named something like IonExpress_027-SN0054-18-002
+    if($seenSample{$sample}){
+      $sample = $longBarcode."-".$$runInfo{planName};
+    }
 
     print $fh join("\t",
       $sample,
       "taxon=",
       basename($fastq),
     )."\n";
+
+    $seenSample{$sample}++;
   }
 
   close $fh;
