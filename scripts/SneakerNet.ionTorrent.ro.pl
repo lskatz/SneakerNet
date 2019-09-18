@@ -10,7 +10,7 @@ use File::Copy qw/mv/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
-use JSON ();
+use JSON qw/from_json to_json/;
 use Encode qw/encode decode/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
@@ -79,6 +79,13 @@ sub makeSneakernetDir{
   }
 
   my $runInfo = iontorrentRunInfo($dir, $settings);
+
+  # Write the json to the out folder in pretty format
+  open(my $jsonOut, ">", "$outdir/planned_run.json") or die "ERROR: could not write to $outdir/planned_run.json: $!";
+  my $prettyJSON = to_json($runInfo,{pretty=>1});
+  print $jsonOut $prettyJSON;
+  close $jsonOut;
+
   my $barcodedSamples = $$runInfo{objects}[0]{barcodedSamples};
   my @sample = sort keys(%$barcodedSamples);
   my %barcode;
@@ -119,9 +126,10 @@ sub makeSneakernetDir{
   if(-e $snok){
     cp($snok,"$outdir/".basename($snok));
   } else {
-    logmsg "snok.txt not found. I will not read from it.";
+    logmsg "snok.txt not found. I will create one.";
     # "touch" the snok file
     open(my $fh, ">>", "$outdir/".basename($snok)) or die "ERROR: could not touch $outdir/".basename($snok).": $!";
+    print $fh "workflow = iontorrent\n";
     close $fh;
   }
 
@@ -155,6 +163,7 @@ sub iontorrentRunInfo{
     or die "ERROR: $dir/planned_run.json yielded non-utf8 characters\nContents shown below:\n$jsonStr\n";
 
   my $runInfo = $json->decode($jsonStr);
+
   return $runInfo;
 }
 
