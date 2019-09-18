@@ -80,6 +80,8 @@ sub main{
         command($command);
       };
       if($@){
+        logmsg "ERROR with plugin $e: $@";
+
         my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
         my $subject="Run failed for $dir";
         my @to;
@@ -92,9 +94,12 @@ sub main{
         my $email=Email::Stuffer->from($from)
                                 ->subject($subject)
                                 ->to($to);
-
-        logmsg "Email sent to $to";
-        return $@;
+        if($email->send){
+          logmsg "Email sent to $to";
+        } else {
+          logmsg "ERROR email failed to send to $to";
+        }
+        return 1;
       }
 
         
