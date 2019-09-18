@@ -68,8 +68,8 @@ sub assembleAll{
     next if(ref($info) ne "HASH");
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
-    my $outassembly="$outdir/$sample.skesa.fasta";
-    my $outgbk="$outdir/$sample.skesa.gbk";
+    my $outassembly="$outdir/$sample.spades.fasta";
+    my $outgbk="$outdir/$sample.spades.gbk";
     #my $outassembly="$outdir/$sample.megahit.fasta";
     #my $outgbk="$outdir/$sample.megahit.gbk";
 
@@ -97,7 +97,7 @@ sub assembleAll{
   logmsg "Running metrics on the genbank files at $metricsOut";
 
   my @thr;
-  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.skesa.gbk"));
+  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.spades.gbk"));
   for(0..$$settings{numcpus}-1){
     $thr[$_]=threads->new(\&predictionMetricsWorker,$Q,$settings);
     $Q->enqueue(undef);
