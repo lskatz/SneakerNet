@@ -7,7 +7,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use Cwd qw/getcwd/;
+use Cwd qw/getcwd realpath/;
 
 use FindBin qw/$RealBin/;
 use lib "$RealBin/../lib/perl5";
@@ -83,7 +83,7 @@ sub main{
         logmsg "ERROR with plugin $e: $@";
 
         my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
-        my $subject="Run failed for $dir";
+        my $subject="Run failed for ".basename(realpath($dir));
         my @to;
         if(ref($$settings{'default.emails'}) eq "ARRAY"){
           push(@to, @{$$settings{'default.emails'}});
@@ -93,7 +93,8 @@ sub main{
         my $to = join(",",@to);
         my $email=Email::Stuffer->from($from)
                                 ->subject($subject)
-                                ->to($to);
+                                ->to($to)
+                                ->text_body(realpath($dir));
         if($email->send){
           logmsg "Email sent to $to";
         } else {
