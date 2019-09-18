@@ -66,6 +66,7 @@ sub assembleAll{
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
+    logmsg "ASSEMBLE SAMPLE $sample";
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
     my $outassembly="$outdir/$sample.spades.fasta";
@@ -86,10 +87,12 @@ sub assembleAll{
     }
 
     # Genome annotation
+    logmsg "PREDICT SAMPLE GENES $sample";
     if(!-e $outgbk){
       my $gbk=annotateFasta($sample,$outassembly,$settings);
       cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
     }
+
   }
   
   # run assembly metrics with min contig size=0.5kb
@@ -194,6 +197,16 @@ sub assembleSample{
     die "ERROR: could not find fastq for $sample ($fastq): file does not exist but it was listed for this sample.";
   }
 
+  # Dealing with a small file size
+  if((stat($fastq))[7] < 1000){
+    if($$settings{force}){
+      logmsg "Fastq file is tiny, but forcing because of --force.";
+    } else {
+      logmsg "Fastq file is too tiny. Skipping. Force with --force.";
+      return "";
+    }
+  }
+
   logmsg "Assembling $sample";
 
   my $outdir="$$settings{tempdir}/$sample";
@@ -208,7 +221,13 @@ sub assembleSample{
   my $cleanedReads = "$$settings{tempdir}/cleaned.fastq.gz";
   command("run_assembly_trimClean.pl --numcpus $numcpus --min_quality 23 --bases_to_trim 400 --min_length 100 -p 1 --nosingletons -i $fastq -o $cleanedReads");
 
-  command("spades.py -s $cleanedReads --iontorrent --careful --sc --threads $numcpus -o $outdir");
+  eval{
+    command("spades.py -s $cleanedReads --iontorrent --careful --sc --threads $numcpus -o $outdir");
+  };
+  if($@){
+    logmsg "SPAdes failed!\n$@";
+    return "";
+  }
 
   return "$outdir/scaffolds.fasta";
 }
@@ -218,10 +237,13 @@ sub assembleSample{
 sub annotateFasta{
   my($sample,$assembly,$settings)=@_;
 
+  # Ensure a clean slate
   my $outdir="$$settings{tempdir}/$sample/prodigal";
   system("rm -rf $outdir");
+
   mkdir "$$settings{tempdir}/$sample";
   mkdir $outdir;
+
   my $outgff="$outdir/prodigal.gff";
   my $outgbk="$outdir/prodigal.gbk";
 
