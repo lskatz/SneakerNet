@@ -91,8 +91,11 @@ sub mlst{
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
     
-    my $assembly=(glob("$dir/SneakerNet/assemblies/$sample/$sample.*.fasta"))[0]
-      || die "ERROR: no assembly was found for $sample";
+    my $assembly=(glob("$dir/SneakerNet/assemblies/$sample/$sample.*.fasta"))[0];
+    if(!$assembly){
+      logmsg "ERROR: no assembly was found for $sample";
+      next;
+    }
     #my $assembly="$dir/SneakerNet/assemblies/$sample/$sample.megahit.fasta";
     push(@mlstQueueBuffer, {assembly=>$assembly, sample=>$sample});
   }
