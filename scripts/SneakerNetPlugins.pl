@@ -27,7 +27,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(dry-run help version numcpus=i email! force! workflow=s)) or die $!;
+  GetOptions($settings,qw(dry-run keep-going help version numcpus=i email! force! workflow=s)) or die $!;
 
   if($$settings{version}){
     print "SneakerNet $SneakerNet::VERSION\n";
@@ -81,6 +81,10 @@ sub main{
       };
       if($@){
         logmsg "ERROR with plugin $e: $@";
+        if($$settings{'keep-going'}){
+          logmsg "  ... however, --keep-going was specified and I will ignore that.";
+          next;
+        }
 
         my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
         my $subject="Run failed for ".basename(realpath($dir));
@@ -116,6 +120,7 @@ sub usage{
   Usage: $0 dir [dir2...]
   --noemail     Do not send an email at the end.
   --dry-run     Just print the plugin commands that would have been run
+  --keep-going  If a plugin has an error, move onto the next anyway
   --numcpus 1
   --force
   --version     Print SneakerNet version and exit
