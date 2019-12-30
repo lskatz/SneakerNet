@@ -14,7 +14,7 @@ VERSION=1
 
 OPTIONSUSED=""
 
-while getopts "hdtfvcn:" opt; do
+while getopts "hdt:fvcn:" opt; do
   case ${opt} in
     h )
       usage;
@@ -26,7 +26,8 @@ while getopts "hdtfvcn:" opt; do
       ;;
     t )
       echo "You provided '-t'"
-      OPTIONSUSED+=" t"
+      TEMPDIR=$OPTARG
+      OPTIONSUSED+=" t=$TEMPDIR"
       ;;
     f )
       echo "You provided '-f'"
