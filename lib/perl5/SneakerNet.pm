@@ -15,7 +15,7 @@ our @EXPORT_OK = qw(
   command logmsg fullPathToExec version recordProperties readProperties
 );
 
-our $VERSION = 0.5;
+our $VERSION = 0.6;
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 

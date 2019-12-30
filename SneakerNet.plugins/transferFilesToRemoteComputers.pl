@@ -14,7 +14,7 @@ use POSIX qw/strftime/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
-our $VERSION = "1.3";
+our $VERSION = "1.5";
 our $CITATION= "Transfer files to remote computer plugin by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -98,34 +98,40 @@ sub transferFilesToRemoteComputers{
   
   # Which files should be transferred?
   my %filesToTransfer=(); # hash keys are species names
+  SAMPLE:
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
+
+    # Find the taxon
     my $taxon=$$s{species} || $$s{taxon} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
     my @route = (ref($$s{route}) eq 'ARRAY')?@{$$s{route}}:($$s{route});
-    if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
-      FASTQ: for my $fastq(@{ $$s{fastq} }){
-        # Write out the status
-        # The key of each filename is its basename
-        my $f=basename($fastq);
 
-        for my $reason(keys(%{ $$passfail{$f} })){
-          if($$passfail{$f}{$reason} == 1){
-            logmsg "Failed $f because $reason";
-            next FASTQ;
-          }
+    # If we are transferring...
+    if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
+      # if this sample fails at all, then NEXT!
+      for my $reason(keys(%{ $$passfail{$sampleName} })){
+        if($$passfail{$sampleName}{$reason} == 1){
+          logmsg "Failed $sampleName because $reason";
+          next SAMPLE;
         }
-        # low-priority TODO: use ssh to see if subfolder exists
-        my $subfolder=$$s{taxonRules}{dest_subfolder};
-        if(!defined $$s{taxonRules}{dest_subfolder}){
-          if($$s{catchall_subfolder}){
-            $subfolder=$$s{catchall_subfolder};
-          } else {
-            $subfolder="SneakerNet";
-          }
-        }
-        $filesToTransfer{$subfolder}.=$fastq." ";
       }
+
+      # Where does this sample get transferred?
+      my $subfolder=$$s{taxonRules}{dest_subfolder};
+      if(!defined $$s{taxonRules}{dest_subfolder}){
+        if($$s{catchall_subfolder}){
+          $subfolder=$$s{catchall_subfolder};
+        } else {
+          $subfolder="SneakerNet";
+        }
+      }
+
+      # Add on these fastq files for transfer
+      for my $fastq(@{ $$s{fastq} }){
+        $filesToTransfer{$subfolder} .= "$fastq ";
+      }
+
       logmsg "One route for sample $sampleName is the Calculation Engine";
     } else {
       logmsg "Note: The route for $sampleName was not listed in the sample sheet.";
