@@ -172,12 +172,18 @@ sub mlstColorId{
       $locus  = $2;
       $allele = $3;
     } else {
-      die "ERROR: could not parse scheme/locus/allele from $schemeLocusAllele";
+      logmsg "WARNING: could not parse scheme/locus/allele from $schemeLocusAllele. Should be in the form of scheme.locus-allele";
+      next;
     }
     push(@{ $allele{$sample}{$scheme}{$locus} }, $allele);
     $locusIndex{$locus}=1;
   }
   close $hitsFh;
+
+  # Sanity check on whether there are any reference alleles
+  if(!keys(%allele)){
+    die "ERROR: no reference alleles were found";
+  }
 
   # Are there any loci on any samples with multiple alleles?
   my $contaminationReport = "$coloridDir/colorid.tsv";
