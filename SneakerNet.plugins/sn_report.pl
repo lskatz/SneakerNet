@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.4";
+our $VERSION = "1.5";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -55,7 +55,7 @@ sub main{
 
   $html .= htmlHeaders();
   $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
-  $html .= "<p class='genericInfo'>SneakerNet version $SneakerNet::VERSION</p>\n";
+  $html .= "<p class='genericInfo'><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
   #$html .= "<H2>Table of Contents</H2>\n";
   #$html .= "<ul>\n";
   #for my $plugin(sort keys(%$properties)){
@@ -245,6 +245,7 @@ sub htmlFooters{
 
   my $html = "";
 
+  $html .= "<p>For more information, see <a href='https://github.com/lskatz/SneakerNet'>https://github.com/lskatz/SneakerNet</a></p>\n";
   $html .= "</html>\n";
 
   return $html;
