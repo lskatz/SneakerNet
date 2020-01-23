@@ -6,7 +6,8 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Data::Dumper;
-use File::Copy;
+use File::Copy qw/mv/;
+use File::Path qw/remove_tree/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
@@ -34,7 +35,26 @@ sub main{
     my $sneakernetDir = makeSneakernetDir($dir,$settings);
     saveSneakernetDir($sneakernetDir, $$settings{outdir});
   }
-  rmdir($$settings{tempdir}) || logmsg "WARNING: might not have been able to remove tempdir $$settings{tempdir}";
+
+  remove_tree($$settings{tempdir},{
+      verbose => 1,
+      safe    => 1,
+      error   => my $rm_err,
+  });
+  if($rm_err && @$rm_err > 0){
+    # https://perldoc.perl.org/File/Path.html#ERROR-HANDLING
+    for my $diag (@$rm_err) {
+      my ($file, $message) = %$diag;
+      if ($file eq '') {
+        logmsg "general rm error: $message\n";
+      } else {
+        logmsg "problem unlinking $file: $message\n";
+      }
+    }
+
+    return 1;
+  }
+  #rmdir($$settings{tempdir}) || logmsg "WARNING: might not have been able to remove tempdir $$settings{tempdir}";
 
   return 0;
 }
@@ -142,6 +162,7 @@ sub bcl2fastq{
 sub saveSneakernetDir{
   my($tmpdir,$outdir,$settings)=@_;
   system("mv -v $tmpdir $outdir 1>&2");
+  mv($tmpdir, $outdir);
   die if $?;
   #File::Copy::mv($tmpdir,$outdir) or die "ERROR: could not move $tmpdir to $outdir: $!";
   return 1;
@@ -155,7 +176,7 @@ sub cp{
   }
   logmsg "cp $from to $to";
   my $return = link($from, $to) ||
-    File::Copy::cp($from,$to) or warn "ERROR: could not copy $from to $to: $!";
+    File::Copy::cp($from,$to) or warn "WARNING: could not copy $from to $to: $!\n  Making a blank file instead.";
   open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
   close $fh;
   return $return;
