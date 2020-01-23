@@ -147,11 +147,25 @@ sub calculateCoverage{
 
   my $file=basename($$h{File});
   my $samplename=$file || "";
-  $samplename=~s/_S\d+_.*?$//;    # _R1_ or _R2_
-  $samplename=~s/_[12]\.fastq.gz$//; # _1 or _2
-  # Parse HiSeq names correctly
-  if($file=~/(^.+_SAN\d+\w\d+)/){ # e.g., 2015V-1036_SAN5927A15_TCCGGAGA-CAGGACGT_L001_R1_001.fastq.gz
-    $samplename=$1;               #       2015V-1036_SAN5927A15
+
+  # If we don't have a sample name then it's probably because
+  # the "sample name" is a filename.
+  if(!$$sampleInfo{$samplename}){
+    SAMPLENAME:
+    for my $sn(keys(%$sampleInfo)){
+      for my $fastq(@{ $$sampleInfo{$sn}{fastq} }){
+        #logmsg "$fastq eq $file";
+        if($fastq eq $file){
+          #logmsg "FOUND: $sn";
+          $samplename = $sn;
+          last SAMPLENAME;
+        }
+      }
+    }
+  }
+  # If we still don't have this sample, then quit
+  if(!$$sampleInfo{$samplename}){
+    return 0;
   }
 
   # Find out if this file has an expected genome size from the Sample Sheet.
@@ -160,7 +174,7 @@ sub calculateCoverage{
     $expectedGenomeSize *= 10**6;
   }
   my $organism = $$sampleInfo{$samplename}{taxon};
-  #die Dumper $sampleInfo, $organism, $samplename if($samplename =~ /2010.*1786/);
+  #die Dumper $sampleInfo, $organism, $samplename, $file if($samplename =~ /43410/);
 
   my $coverage=$$h{coverage} || 0; 
 
@@ -171,7 +185,9 @@ sub calculateCoverage{
     logmsg "Decided that $$h{File} is $organism with expected genome size $expectedGenomeSize. Calculated coverage: $coverage";
   } else {
     logmsg "Warning: could not understand what organism $$h{File} belongs to. I tried to look it up by $samplename. Coverage was not recalculated.";
+    #logmsg Dumper $sampleInfo, $file;
   }
+  #die Dumper $$sampleInfo{$samplename}, $expectedGenomeSize, $$h{coverage}, $coverage;
   return $coverage;
 }
  

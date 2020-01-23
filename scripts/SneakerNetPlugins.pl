@@ -27,7 +27,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(dry-run keep-going help version numcpus=i email! force! workflow=s)) or die $!;
+  GetOptions($settings,qw(dry-run keep-going tempdir=s help version numcpus=i email! force! workflow=s)) or die $!;
 
   if($$settings{version}){
     print "SneakerNet $SneakerNet::VERSION\n";
@@ -37,6 +37,9 @@ sub main{
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
+  if($$settings{tempdir}){
+    mkdir $$settings{tempdir};
+  }
 
   my @dir=@ARGV;
 
@@ -69,6 +72,7 @@ sub main{
     for my $e(@$exe){
       my $command="$RealBin/../SneakerNet.plugins/$e . --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
+      $command.=" --tempdir $$settings{tempdir}/$e" if($$settings{tempdir});
       #print "$command\n\n"; next;
       #command($command); next;
 
@@ -122,6 +126,7 @@ sub usage{
   --dry-run     Just print the plugin commands that would have been run
   --keep-going  If a plugin has an error, move onto the next anyway
   --numcpus 1
+  --tempdir ''  Force a temporary directory path to each plugin
   --force
   --version     Print SneakerNet version and exit
   --workflow    Which workflow under plugins.conf should we follow?
