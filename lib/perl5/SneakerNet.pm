@@ -76,6 +76,7 @@ sub samplesheetInfo_tsv{
     };
     for my $rule(split(/;/, $rules)){
       my($key,$value)=split(/=/,$rule);
+      $key=lc($key); # ensure lowercase keys
       my @values = split(/,/,$value);
       if(@values > 1){
         $sample{$sampleName}{$key} = \@values;
