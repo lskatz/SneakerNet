@@ -19,7 +19,7 @@ use List::MoreUtils qw/uniq/;
 use SneakerNet qw/recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION = "Add read metrics by Lee Katz. Uses read metrics script in CG-Pipeline.";
 
 local $0=fileparse $0;
