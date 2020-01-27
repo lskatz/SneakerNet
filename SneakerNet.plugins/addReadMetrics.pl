@@ -154,8 +154,8 @@ sub calculateCoverage{
     SAMPLENAME:
     for my $sn(keys(%$sampleInfo)){
       for my $fastq(@{ $$sampleInfo{$sn}{fastq} }){
-        #logmsg "$fastq eq $file";
-        if($fastq eq $file){
+        #logmsg basename($fastq)." eq $file";
+        if(basename($fastq) eq $file){
           #logmsg "FOUND: $sn";
           $samplename = $sn;
           last SAMPLENAME;
