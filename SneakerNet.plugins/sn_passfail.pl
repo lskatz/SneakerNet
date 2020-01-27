@@ -101,7 +101,7 @@ sub identifyBadRuns{
     # -1: unknown
     my %fail=(
       coverage=>-1,
-      quality => 1, # by default passes
+      quality => 0, # by default passes
     );
 
     # Skip anything that says undetermined.
@@ -134,6 +134,8 @@ sub identifyBadRuns{
     }
 
     # Set whether the sample fails coverage
+    #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
+    #logmsg "$totalCoverage < ".$$sampleInfo{$samplename}{taxonRules}{coverage};
     if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
       $fail{coverage} = 1;
     }
