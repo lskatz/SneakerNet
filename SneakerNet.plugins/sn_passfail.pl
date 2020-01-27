@@ -135,7 +135,6 @@ sub identifyBadRuns{
 
     # Set whether the sample fails coverage
     #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
-    #logmsg "$totalCoverage < ".$$sampleInfo{$samplename}{taxonRules}{coverage};
     if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
       $fail{coverage} = 1;
     }
