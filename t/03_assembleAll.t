@@ -49,16 +49,18 @@ is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
 # Let the checks be loose though because of different
 # versions of assemblers.
 subtest "Expected assembly stats" => sub {
-  plan tests => 6;
+  plan tests => 8;
   my %genomeLength = (
     "2010EL-1786.skesa"      => 2955394,
     "Philadelphia_CDC.skesa" => 3328163,
     "FA1090.skesa"           => 1918813,
+    "contaminated.skesa"     => 5782258,
   );
   my %CDS = (
     "2010EL-1786.skesa"      => 2714,
     "Philadelphia_CDC.skesa" => 3096,
     "FA1090.skesa"           => 2017,
+    "contaminated.skesa"     => 8949,
   );
   diag `echo;column -t $run/SneakerNet/forEmail/assemblyMetrics.tsv`;
   open(my $fh, "$run/SneakerNet/forEmail/assemblyMetrics.tsv") or die "ERROR reading $run/SneakerNet/forEmail/assemblyMetrics.tsv: $!";
