@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.1";
+our $VERSION = "2.2";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -125,6 +125,7 @@ sub identifyBadRuns{
       } else {
         $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
         $totalCoverage += $$fastqMetrics{coverage};
+        logmsg "Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
       }
 
       # Set whether this fastq passes quality by the > comparison:
@@ -136,9 +137,14 @@ sub identifyBadRuns{
     # Set whether the sample fails coverage
     #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
     if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
+      logmsg "  I will fail this sample $samplename" if($$settings{debug});
       $fail{coverage} = 1;
+    } else {
+      logmsg "  I will not fail this sample $samplename" if($$settings{debug});
+      $fail{coverage} = 0;
     }
     if($totalCoverage == -1){
+      logmsg "  ==> -1" if($$settings{debug});
       $fail{coverage} = -1;
     }
 
