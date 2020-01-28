@@ -5,12 +5,23 @@ use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname/;
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
 use_ok 'SneakerNet';
+
+subtest 'Perl modules' => sub{
+  my @module = qw(threads Config::Simple);
+  plan tests => scalar(@module);
+
+  for my $module(@module){
+    system("perl -M$module -e 1");
+    is($?, 0, $module);
+  }
+};
+
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";

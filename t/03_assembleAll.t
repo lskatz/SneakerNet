@@ -25,24 +25,6 @@ if(! $skesa){
   exit 0;
 }
 
-=cut
-my $progressThread = threads->new(sub{
-  for(my $i=1;$i<=60;$i++){
-    sleep 60;
-    my @finishedFiles = glob("t/M00123-18-001-test/SneakerNet/assemblies/*/*.gbk");
-    my $numFinished = @finishedFiles;
-    chomp($numFinished);
-    note "$i minutes for assembly, finished with $numFinished...";
-
-    if($numFinished == 3){
-      last;
-    }
-  }
-  sleep 1;
-});
-$progressThread->detach();
-=cut
-
 is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
