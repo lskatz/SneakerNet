@@ -19,7 +19,8 @@ is system("sn_passfail.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Runnin
 
 my $passfail= "$run/SneakerNet/forEmail/passfail.tsv";
 
-note "Reading from $passfail";
+diag "Reading from $passfail";
+diag `cat $passfail`;
 
 # Double check results
 subtest "Expected passfail results from $passfail" => sub {
@@ -35,7 +36,7 @@ subtest "Expected passfail results from $passfail" => sub {
         = split(/\t/, $_);
     
     is $coverage, 1, "Check if $file failed coverage";
-    is $quality , 0, "Check if $file passed quality ";
+    is $quality , 0, "Check if $file passed quality";
   }
   close $fh;
 };
