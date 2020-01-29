@@ -1,8 +1,10 @@
 language: perl
-#perl:
-#  - "5.24-shrplib"
+os: linux
+perl:
+  - "5.24-shrplib"
+python:
+  - "3.7"
 dist: xenial
-sudo: false # faster builds as long as you don't need sudo access
 services:
   - docker
 addons:
@@ -65,8 +67,8 @@ install:
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
   # Python configuration
   - pip install click --user 
-  - export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/*/site-packages
   - find $HOME/.local -name '*click*'
+  - export PYTHONPATH=$PYTHONPATH:$(find $HOME -type d -name site-packages | head -n 1)
 script: 
   - cpanm --installdeps --notest .
   - perl Makefile.PL
