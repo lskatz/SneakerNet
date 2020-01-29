@@ -65,11 +65,6 @@ install:
   - echo -e "KRONADIR\t$HOME/krona/bin" >> config/settings.conf
   - head -n 50 config/*.conf # display configuration file
   - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
-  # Python configuration
-  - pip install click --user 
-  - find $HOME/.local -name '*click*'
-  - export PYTHONPATH=$PYTHONPATH:$(find $HOME -type d -name site-packages | head -n 1)
-  - echo $PYTHONPATH
 script: 
   - cpanm --installdeps --notest .
   - perl Makefile.PL

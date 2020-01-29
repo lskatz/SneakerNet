@@ -2,29 +2,21 @@
 # Hello World example
 
 import tempfile
-import click
+#import click
+import argparse
 import sys
 import os
 import csv
 
-VERSION='1.0'
+VERSION='1.1'
 CITATION='Hello World example by Lee Katz'
 
-@click.command()
-@click.option("-v", "--version",  is_flag=True, default=False, help="show the version and exit")
-@click.option("-c", "--citation", is_flag=True, default=False, help="show the citation and exit")
-@click.option("-d", "--debug",    is_flag=True, default=False, help="show debugging information")
-@click.option("-f", "--force",    is_flag=True, default=False, help="Force output")
-@click.option("-t", "--tempdir", default="", type=str, help="Define where the temporary directory is")
-@click.option("-n", "--numcpus", nargs=1, default=1,  type=int, help="Number of cpus")
-@click.argument("dir", nargs=1, default="")
-
-def main(dir,version, citation, force, debug, tempdir, numcpus):
+def main(args):
   # Take care of version, citation
-  setup(version, citation)
+  setup(args.version, args.citation)
 
-  if not os.path.isdir(dir):
-    print("ERROR: could not find directory "+dir)
+  if not os.path.isdir(args.dir):
+    print("ERROR: could not find directory "+args.dir)
     sys.exit(1)
 
   with tempfile.TemporaryDirectory() as tempdirname:
@@ -43,13 +35,13 @@ def main(dir,version, citation, force, debug, tempdir, numcpus):
     
 
     # make the directory structure just in case it isn't there yet
-    for subdir in dir + "/SneakerNet", dir + "/SneakerNet/forEmail":
+    for subdir in args.dir + "/SneakerNet", args.dir + "/SneakerNet/forEmail":
       if not os.path.isdir(subdir):
         os.mkdir(subdir)
 
     # analysis
-    samples = readWriteSamples(dir)
-    writeProperties(dir, samples)
+    samples = readWriteSamples(args.dir)
+    writeProperties(args.dir, samples)
 
     return 0
 
@@ -90,6 +82,17 @@ def setup(version, citation):
     sys.exit(0)
 
 if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-v", "--version",  default=False, action='store_true', help="show the version and exit")
+  parser.add_argument("-c", "--citation", default=False, action='store_true', help="show the citation and exit")
+  parser.add_argument("-d", "--debug",    default=False, action='store_true', help="show debugging information")
+  parser.add_argument("-f", "--force",    default=False, action='store_true', help="Force output")
+  parser.add_argument("-t", "--tempdir",  default="", type=str, help="Define where the temporary directory is")
+  parser.add_argument("-n", "--numcpus", nargs=1, default=1,  type=int, help="Number of cpus")
+  parser.add_argument("dir", nargs=1, default="")
+
+  args = parser.parse_args()
+
   # Main program
-  sys.exit(main())
+  sys.exit(main(args))
 
