@@ -17,11 +17,11 @@ addons:
     - prodigal
 before_install:
   # Docker
-  - docker pull staphb/skesa:2.3.0
-  - docker pull staphb/mlst:2.16.2
-  - docker pull staphb/prokka:1.14.0
-  - docker pull staphb/kraken:1.1.1
-  - export PATH=$PATH:$(pwd)/scripts/dockerAliases
+  #- docker pull staphb/skesa:2.3.0
+  #- docker pull staphb/mlst:2.16.2
+  #- docker pull staphb/prokka:1.14.0
+  #- docker pull staphb/kraken:1.1.1
+  #- export PATH=$PATH:$(pwd)/scripts/dockerAliases
   # Perl modules
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
   - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
