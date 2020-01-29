@@ -26,8 +26,6 @@ before_install:
   #- docker pull staphb/kraken:1.1.1
   #- export PATH=$PATH:$(pwd)/scripts/dockerAliases
   # Perl modules
-  - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5 # SneakerNet libs
-  - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5/x86_64-linux-gnu-thread-multi # SneakerNet libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5  # user libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi  # user libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi/auto  # user libs
