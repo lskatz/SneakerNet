@@ -26,7 +26,7 @@ before_install:
   # Perl modules
   - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5 # SneakerNet libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5  # user libs
-  - cpanm -l ~ Bio::Perl --notest --force
+  - cpanm -l $(pwd) Bio::Perl --notest --force
   - cpanm -l ~ Bio::FeatureIO --notest --force
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
