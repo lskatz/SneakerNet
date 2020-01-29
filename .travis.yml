@@ -15,6 +15,7 @@ addons:
     - bioperl-run
     - ncbi-blast+
     - prodigal
+    - tree
 before_install:
   # Docker
   #- docker pull staphb/skesa:2.3.0
@@ -27,6 +28,9 @@ before_install:
   - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
+  - tree -d $HOME
+  - find $HOME -type f -name Slurp.pm
+  - find $HOME -type f -name Descriptive.pm
   - cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
   # perl debugging statement
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
