@@ -28,13 +28,15 @@ before_install:
   - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5/x86_64-linux-gnu-thread-multi # SneakerNet libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5  # user libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi  # user libs
-  - cpanm -l $(pwd) Bio::Perl --notest --force
+    #- cpanm -l $(pwd) Bio::Perl --notest --force
   - cpanm -l ~ Bio::FeatureIO --notest --force
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
+  - cpanm -l ~ Config::Simple
   - tree -d $HOME -L 5
   - find $HOME -type f -name Slurp.pm
   - find $HOME -type f -name Descriptive.pm
+  - find $HOME -type f -name Simple.pm
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   - perl -MBio::SeqIO -e 1; # Check for Bio::SeqIO from bioperl
     #- cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
