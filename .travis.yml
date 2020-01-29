@@ -24,16 +24,15 @@ before_install:
   #- docker pull staphb/kraken:1.1.1
   #- export PATH=$PATH:$(pwd)/scripts/dockerAliases
   # Perl modules
-  - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
   - export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
   - tree -d $HOME
   - find $HOME -type f -name Slurp.pm
   - find $HOME -type f -name Descriptive.pm
+  - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   - cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
   # perl debugging statement
-  - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
   # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
