@@ -12,6 +12,7 @@ addons:
     - build-essential
     - libberkeleydb-perl
     - bioperl
+    - bioperl-run
     - ncbi-blast+
     - prodigal
 before_install:
