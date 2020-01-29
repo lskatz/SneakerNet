@@ -43,14 +43,14 @@ before_install:
     #- cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
   # perl debugging statement
   # CGP
-  - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
+  - wget --progress=dot:mega --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
   - tar zxvf v0.5.tar.gz
   - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
 install:
-  - wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+  - wget --progress=dot:mega --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
   - tar zxvf minikraken_20171019_4GB.tgz
   # Krona
-  - wget --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
+  - wget --progress=dot:mega --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
   - tar zxvf xl2.5.tar.gz
   - perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
   # Configure SneakerNet
