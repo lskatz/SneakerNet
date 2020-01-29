@@ -69,6 +69,7 @@ install:
   - pip install click --user 
   - find $HOME/.local -name '*click*'
   - export PYTHONPATH=$PYTHONPATH:$(find $HOME -type d -name site-packages | head -n 1)
+  - echo $PYTHONPATH
 script: 
   - cpanm --installdeps --notest .
   - perl Makefile.PL
