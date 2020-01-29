@@ -32,7 +32,7 @@ before_install:
   - find $HOME -type f -name Slurp.pm
   - find $HOME -type f -name Descriptive.pm
   - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
-  - cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
+    #- cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
   # perl debugging statement
   # CGP
   - wget --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
