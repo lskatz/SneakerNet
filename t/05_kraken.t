@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname/;
-use Scalar::Util /looks_like_number/;
+use Scalar::Util qw/looks_like_number/;
 
 use threads;
 
@@ -96,7 +96,7 @@ subtest 'kraken results' => sub{
     for my $h(qw(PERCENTAGE_OF_GENOME_IS_BEST_GUESS PERCENTAGE_CONTAMINANT)){
       my $got = $F{$h};
       my $expected = $expect{$name}{$h};
-      is(Scalar::Util::looks_like_number($got), 1, "Make sure $h is a number");
+      is(looks_like_number($got), 1, "Make sure $h is a number");
       cmp_ok($got, '>=', 0, "$name $h (check for number > 0)");
       cmp_ok($got, '<=', 100, "$name $h (check for number <= 100)");
     }
