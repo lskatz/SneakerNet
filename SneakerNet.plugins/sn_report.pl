@@ -68,10 +68,14 @@ sub main{
        $inputID =~s/\.+/-/g;
     $html .= "<div class='pluginSplash'>\n";
     $html .= "<input type='checkbox' class='collapsible' id='$inputID' />\n";
-    $html .= "<label class='collapsible' for='$inputID'>$plugin v$$properties{$plugin}{version}</label>\n";
+    $html .= "<label class='collapsible' for='$inputID'>";
+    $html .= "  $plugin v$$properties{$plugin}{version}";
+    $html .= "  <a href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>";
+    $html .= "  documentation";
+    $html .= "  </a>";
+    $html .= "</label>\n";
     $html .= "<div class='pluginContent'>\n";
-    #$html .= "<H2 id='plugin-$plugin'>$plugin</H2>\n";
-    $html .= report($plugin, $properties, $settings);
+    $html .= report($dir, $plugin, $properties, $settings);
     $html .= "</div>\n";
     $html .= "</div>\n";
   }
@@ -86,7 +90,7 @@ sub main{
 }
 
 sub report{
-  my($plugin, $p, $settings) = @_;
+  my($dir, $plugin, $p, $settings) = @_;
 
   my $html = "";
 
@@ -105,7 +109,7 @@ sub report{
     my $value = $$p{$plugin}{$key};
     if($value =~ /\.(tsv|csv)$/i){
       my $type = $1;
-      $html .= tableHtml($plugin, $key, $value, $type);
+      $html .= tableHtml($dir, $plugin, $key, $value, $type);
     }
     else{
       $html .= genericHtml($plugin, $key, $value);
@@ -116,7 +120,7 @@ sub report{
 }
 
 sub tableHtml{
-  my($plugin, $key, $value, $type) = @_;
+  my($dir, $plugin, $key, $value, $type) = @_;
 
   # Set the separator
   my $sep = "\t";
@@ -133,7 +137,9 @@ sub tableHtml{
   my $numColumns= 1;
   my $seen_footer = 0;
   my $rowCounter = 0;
-  open(my $fh, $value) or die "ERROR: could not open $value: $!";
+  my $abspath = File::Spec->rel2abs($value, $dir);
+  open(my $fh, $abspath) or return "";
+  #logmsg("WARNING: could not open $abspath: $!");
   while(<$fh>){
     chomp;
 
