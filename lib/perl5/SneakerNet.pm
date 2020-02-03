@@ -284,6 +284,10 @@ sub recordProperties{
     $writeString.=join("\t", qw(plugin key value))."\n";
   }
   for my $key(keys(%$writeHash)){
+    if(!defined($$writeHash{$key})){
+      carp "WARNING: in SneakerNet::recordProperties(), key '$key' was not defined";
+      next;
+    }
     $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";
   }
 

@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION = "Hello world perl SneakerNet plugin by Lee Katz";
 
 local $0=fileparse $0;
