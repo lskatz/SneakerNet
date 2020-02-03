@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION = "Save failed genomes by Lee Katz";
 
 local $0=fileparse $0;
@@ -126,10 +126,15 @@ sub saveGenomes{
 sub rsync{
   my($sample, $settings) = @_;
 
-  my $subfolder = "$$sample{taxonRules}{dest_subfolder}/QC_Fails";
+  my $subfolder = "$$sample{taxonRules}{dest_subfolder}/QC_fails";
   my $fileString = join(" ", @{$$sample{fastq}});
 
-  command("rsync -av -q --no-motd -av --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/");
+  my $command = "rsync -av -q --no-motd -av --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/";
+  if($$settings{debug}){
+    logmsg "COMMAND: $command";
+  } else {
+    command("rsync -q --no-motd -av --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/");
+  }
 
   return 1;
 }
