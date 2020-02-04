@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION = "Save failed genomes by Lee Katz";
 
 local $0=fileparse $0;
@@ -112,7 +112,7 @@ sub saveGenomes{
   my $table = "sample\tfastqs\n";
   while(my($name, $fastqs) = each(%saved)){
     $table .= $name;
-    $table .= "\t".join(";", @$fastqs);
+    $table .= "\t".join(";", map {basename($_)} @$fastqs);
     $table .= "\n";
   }
   my $outfile = "$dir/SneakerNet/forEmail/qc_fails.tsv";
