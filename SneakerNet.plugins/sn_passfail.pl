@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.2";
+our $VERSION = "2.3";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -56,7 +56,7 @@ sub passfail{
   my $failHash=identifyBadRuns($dir,$sampleInfo,$settings);
   
   my @sample=keys(%$failHash);
-  my @failHeader=keys(%{ $$failHash{$sample[0]} });
+  my @failHeader=sort keys(%{ $$failHash{$sample[0]} });
 
   open(my $failFh, ">", $failFile) or die "ERROR: could not write to $failFile: $!";
   print $failFh join("\t", "Sample", @failHeader)."\n";
