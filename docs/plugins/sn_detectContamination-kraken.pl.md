@@ -24,7 +24,7 @@ onto genus, etc.
 ## contamination ID
 
 For the rank that is identified (species, genus, etc),
-if at least 5% of reads conflict with the species identified,
+if at least 1% of reads conflict with the species identified,
 lists the major conflicting taxon.
 
 # Outputs
