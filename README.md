@@ -1,17 +1,18 @@
 # SneakerNet
 
-A pipeline for processing reads from a sequencing run. Currently only for Illumina-based runs.
-
 ## Synopsis
 
-What do you do with a MiSeq run after it finishes? Are there basic analyses that you run 
-such as counting how many reads you obtained? Checking for contamination? **SneakerNet performs
-all these initial analyses with a nice report that is emailed to you at the end.** Additionally,
-there is a plugins directory such that each installation is expandable.
+A pipeline for processing reads from a sequencing run. Currently supports Illumina or Ion Torrent,
+but it can be expanded to other platforms.
+
+    # Run SneakerNet on the example data
+    SneakerNetPlugins.pl --numcpus 4 t/data/M00123-18-001
+
+![SneakerNet workflow](docs/images/overview.png)
 
 ## Installation
 
-See INSTALL.md
+See [docs/INSTALL.md](docs/INSTALL.md)
 
 ## Workflow
 
@@ -36,7 +37,8 @@ a good idea to pipe the output to a file and then follow it with `tail -f`.
 ## Output
 
 SneakerNet produces a subfolder `SneakerNet` in your run directory.
-It also emails a report. To view a sample report, please go to example/M00123-18-001-test/SneakerNet/forEmail/report.html 
+It also emails a report. To view a sample report, please go to 
+[example/M00123-18-001-test/SneakerNet/forEmail/report.html]
 in this repository.
 
 ## Plugins
