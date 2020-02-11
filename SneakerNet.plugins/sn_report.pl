@@ -243,7 +243,7 @@ sub htmlHeaders{
     background-position-x: left;
   }\n";
   $html .= "input.collapsible {display:none;}\n";
-  $html .= "input:checked ~ .pluginContent{max-height:100%; transition: all ease 1s;}\n";
+  $html .= "input:checked ~ .pluginContent{max-height:200%; transition: all ease 1s;}\n";
   $html .= "input:checked ~ label {
     background-image: url(\"$closedMenuBase64\");
     transition: all ease 0.1s;
