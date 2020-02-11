@@ -35,6 +35,7 @@ Table with columns
 * assumed taxon
 * best-fitting taxon
 * percent of reads that match the best-fitting taxon
+* rank (S is species, G is genus, F is family, ...)
 * major conflicting taxon
 * percent of reads supporting the major conflicting taxon
 
