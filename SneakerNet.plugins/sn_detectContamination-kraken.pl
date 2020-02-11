@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.0";
+our $VERSION = "2.1";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
@@ -69,7 +69,10 @@ sub runKrakenOnDir{
   my %filesToTransfer=(); # hash keys are species names
   my @report; # reporting contamination in an array, in case I want to sort it later
   push(@report, join("\t", qw(
-    NAME LABELED_TAXON BEST_GUESS PERCENTAGE_OF_GENOME_IS_BEST_GUESS MAJOR_CONTAMINANT PERCENTAGE_CONTAMINANT
+    NAME LABELED_TAXON 
+    BEST_GUESS PERCENTAGE_OF_GENOME_IS_BEST_GUESS 
+    RANK
+    MAJOR_CONTAMINANT PERCENTAGE_CONTAMINANT
   )));
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
@@ -109,6 +112,7 @@ sub runKrakenOnDir{
     push(@report,join("\t",
         $sampleName,$expectedSpecies,
         $$guesses{guess}{taxname}, $$guesses{guess}{percent},
+        $$guesses{guess}{rank},
         $$guesses{contaminant}{taxname}, $$guesses{contaminant}{percent},
     ));
     logmsg "Including for email: $html";
