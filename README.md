@@ -30,8 +30,14 @@ machine name, year, ordinal, and optionally a name.
 
 ### Running SneakerNet
 
-Because SneakerNet takes a long time to run through all plugins, it is
-a good idea to pipe the output to a file and then follow it with `tail -f`.
+It is generally a good idea to edit a file `snok.txt` to configure the run further.
+For more information on the workflow, see the configuration section in `INSTALL.md`.
+For example,
+
+    echo "emails = example@example.com, blah@example.com" > t/data/M00123-18-001/snok.txt
+    echo "workflow = default" >> t/data/M00123-18-001/snok.txt
+
+And then run SneakerNet like so (optionally following the log with `tail -f`):
 
     SneakerNetPlugins.pl --numcpus 8 M1234-18-001-test > M1234-18-001-test/SneakerNet.log 2>&1 &
     tail -f M1234-18-001-test/SneakerNet.log
