@@ -46,7 +46,7 @@ And then run SneakerNet like so (optionally following the log with `tail -f`):
 
 SneakerNet produces a subfolder `SneakerNet` in your run directory.
 It also emails a report. To view a sample report, please go to 
-t/data/M00123-18-001-test/SneakerNet/forEmail/report.html
+t/report.html
 in this repository.
 
 ## Plugins
