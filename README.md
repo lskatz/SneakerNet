@@ -39,14 +39,14 @@ For example,
 
 And then run SneakerNet like so (optionally following the log with `tail -f`):
 
-    SneakerNetPlugins.pl --numcpus 8 M1234-18-001-test > M1234-18-001-test/SneakerNet.log 2>&1 &
-    tail -f M1234-18-001-test/SneakerNet.log
+    SneakerNetPlugins.pl --numcpus 8 t/data/M00123-18-001 > t/data/M00123-18-001/SneakerNet.log 2>&1 &
+    tail -f t/data/M00123-18-001/SneakerNet.log
 
 ## Output
 
 SneakerNet produces a subfolder `SneakerNet` in your run directory.
 It also emails a report. To view a sample report, please go to 
-[example/M00123-18-001-test/SneakerNet/forEmail/report.html]
+t/data/M00123-18-001-test/SneakerNet/forEmail/report.html
 in this repository.
 
 ## Plugins
