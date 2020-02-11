@@ -6,7 +6,7 @@ Python example plugin for helping developers
 
 # Software requirements
 
-* Python library click
+None
 
 # Algorithm
 
