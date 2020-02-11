@@ -57,13 +57,14 @@ Some links might not be valid at this time.
 |[sn_passfail.pl](plugins/sn_passfail.pl.md)      | Table of pass/fail for each sample   |
 |[sn_iontorrent_assembleAll.pl](plugins/sn_iontorrent_assembleAll.pl.md)    | Assembly for ion torrent data        |
 |[addReadMetrics.pl](plugins/addReadMetrics.pl.md)| Raw read metrics                     |
+|[sn_helloWorld.pl](plugins/sn_helloWorld.pl.md)               | Example plugin in Perl               |
+|[sn_helloWorld.sh](plugins/sn_helloWorld.sh.md)               | Example plugin in Bash               |
 |[sn_helloWorld.py](plugins/sn_helloWorld.py.md)  | Example plugin in Python             |
 |[baseBalance.pl](plugins/baseBalance.pl.md)      | Dividing all As by Ts and all Cs by Gs to see if we get a ratio of 1 for each|
 |[sn_mlst.pl](plugins/sn_mlst.pl.md)              | Runs 7-gene MLST on assemblies       |
 |[transferFilesToRemoteComputers.pl](plugins/transferFilesToRemoteComputers.pl.md)|Transfers files to a remote computer |
 |[sn_detectContamination.pl](plugins/sn_detectContamination.pl.md)       | Detects potential contamination by kmer counting|
 |[emailWhoever.pl](plugins/emailWhoever.pl.md)                 | Emails all results                   |
-|[sn_helloWorld.pl](plugins/sn_helloWorld.pl.md)               | Example plugin in Perl               |
 |[sn_detectContamination-mlst.pl](plugins/sn_detectContamination-mlst.pl.md)  | Runs 7-gene MLST on raw reads, checking for abnormal number of alleles |
 |[sn_iontorrent_parseSampleSheet.pl](plugins/sn_iontorrent_parseSampleSheet.pl.md)|Turns the sample sheet for ion torrent into SneakerNet format |
 |[sn_immediateStatus.pl](plugins/sn_immediateStatus.pl.md)           | Emails an immediate report           |
