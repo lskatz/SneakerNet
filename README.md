@@ -8,7 +8,9 @@ but it can be expanded to other platforms.
     # Run SneakerNet on the example data
     SneakerNetPlugins.pl --numcpus 4 t/data/M00123-18-001
 
-![SneakerNet workflow](docs/images/overview.png)
+<p align='center'>
+  <img src='./docs/images/overview.png' alt='SneakerNet workflow' width='400' />
+</p>
 
 ## Installation
 
