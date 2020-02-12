@@ -14,11 +14,34 @@
 
 ## Dependencies
 
-* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+There are few core dependencies. However, SneakerNet is
+based on plugins that have individual dependencies.
+Here is a list of dependencies across the board, although
+it is possible that all of the following are not needed
+for a complete SneakerNet analysis.
+
+To find the right dependencies for you, run the following
+
+    SneakerNet.checkdeps.pl --list # and find the workflow, e.g., 'default'
+    SneakerNet.checkdeps.pl default
+
+### Comprehensive list
+
+This list was created using `SneakerNet.checkdeps.pl iontorrent metagenomics cryptosporidium default`
+
 * Multithreaded Perl (already installed on most computers)
-* Kraken: http://ccb.jhu.edu/software/kraken/
+* GNU utilities (`cp`, `cat`, ...)
+* `rsync`
+* `ssh`
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* Kraken1: http://ccb.jhu.edu/software/kraken/
 * Krona: https://github.com/marbl/Krona/
-* _To be continued..._
+* Skesa
+* Prodigal
+* Shovill
+* `mlst`
+* ColorID
+* `zip`
 
 ## Configuration
 
