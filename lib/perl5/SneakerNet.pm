@@ -57,8 +57,21 @@ sub exitOnSomeSneakernetOptions{
   if($$settings{'check-dependencies'}){
     
     logmsg "$0: ".$$properties{_VERSION};
-    for my $exe(sort(keys(%$properties))){
-      next if($exe =~ /^_/);
+    my @exe = sort(
+      grep {!/^_/}
+      keys(%$properties)
+    );
+
+    # Print off all executable names before possible errors
+    # down below.
+    # Prints on stdout.
+    for my $exe(@exe){
+      print "$exe\n";
+    }
+
+    # Run through all execs but die if not present.
+    # Prints on stderr
+    for my $exe(@exe){
       my $path = fullPathToExec($exe);
 
       my $ver = 'UNKNOWN VERSION';
