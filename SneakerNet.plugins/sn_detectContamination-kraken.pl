@@ -13,9 +13,9 @@ use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.1";
+our $VERSION = "2.2";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
@@ -29,15 +29,17 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(minpercent|min_percent|min-percent=f version citation help debug tempdir=s numcpus=i force)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{version}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(minpercent|min_percent|min-percent=f version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      zip       => 'zip --version | grep "This is Zip"',
+      kraken    => 'kraken --version | grep -m 1 version',
+      'kraken-translate' => 'kraken-translate --version | grep -m 1 version',
+      'kraken-report'    => 'kraken-report --version | grep -m 1 version',
+      'ktImportText'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

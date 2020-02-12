@@ -16,10 +16,10 @@ use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use List::MoreUtils qw/uniq/;
-use SneakerNet qw/recordProperties readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION = "Add read metrics by Lee Katz. Uses read metrics script in CG-Pipeline.";
 
 local $0=fileparse $0;
@@ -27,15 +27,13 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force citation inbox=s debug test numcpus=i tempdir=s version)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(help force citation check-dependencies inbox=s debug test numcpus=i tempdir=s version)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      'run_assembly_readMetrics.pl'   => 'echo CG-Pipeline version unknown',
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

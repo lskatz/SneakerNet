@@ -21,3 +21,4 @@ Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,ind
 FA1090,,M947-16-035,A01,N705,GGACTCCT,S510,CGTCTAAT,,Species=Neisseria_gonorrhoeae;ExpectedGenomeSize=2;Route=CalcEngine
 2010EL-1786,,M947-16-035,B01,N706,TAGGCATG,S510,CGTCTAAT,,Species=Vibrio_cholerae;ExpectedGenomeSize=3;Route=CalcEngine
 Philadelphia_CDC,,M947-16-035,C01,N707,CTCTCTAC,S510,CGTCTAAT,,Species=Legionella_pneumophila;ExpectedGenomeSize=3.4;Route=CalcEngine
+contaminated,,M947-16-035,C01,N707,CTCTCTAC,S510,CGTCTAAT,,Species=Legionella_pneumophila;ExpectedGenomeSize=3.4;Route=CalcEngine

@@ -11,9 +11,9 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.3";
+our $VERSION = "2.4";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -23,15 +23,12 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version tempdir=s citation help debug force numcpus=i)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version tempdir=s citation check-dependencies help debug force numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

@@ -16,11 +16,11 @@ use POSIX qw/strftime/;
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig passfail command logmsg version/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "2.1";
+our $VERSION = "2.2";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -30,15 +30,13 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(citation version help force numcpus=i debug tempdir=s email-only|email|just=s)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(citation check-dependencies version help force numcpus=i debug tempdir=s email-only|email|just=s)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      sendmail  => 'sendmail -d0.4 -bv root | grep -m 1 Version'
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

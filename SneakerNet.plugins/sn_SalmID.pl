@@ -11,9 +11,9 @@ use File::Temp;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg version/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg version/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION= "SalmID plugin by Lee Katz. Uses SalmID by Henk den Bakker.";
 
 my @fastqExt=qw(.fastq.gz .fq.gz .fastq .fq);
@@ -25,15 +25,15 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation help numcpus=i debug tempdir=s force)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version citation check-dependencies help numcpus=i debug tempdir=s force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      cat         => 'cat --version | head -n 1',
+      mv          => 'mv --version | head -n 1',
+      'SalmID.py' => 'echo Unknown Version',
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

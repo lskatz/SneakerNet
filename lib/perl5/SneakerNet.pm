@@ -13,9 +13,10 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo samplesheetInfo_tsv passfail
   command logmsg fullPathToExec version recordProperties readProperties
+  exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.7.3';
+our $VERSION = '0.8.0';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -36,6 +37,39 @@ sub fullPathToExec($;$) {
     croak $errStr;
   }
 	return $fullpath;
+}
+
+sub exitOnSomeSneakernetOptions{
+  my($properties, $settings) = @_;
+
+  if($$settings{version}){
+    print $$properties{_VERSION}."\n";
+    exit 0;
+  }
+  if($$settings{citation}){
+    print $$properties{_CITATION}."\n";
+    exit 0;
+  }
+  if($$settings{'check-dependencies'}){
+    
+    logmsg "$0: ".$$properties{_VERSION};
+    for my $exe(sort(keys(%$properties))){
+      next if($exe =~ /^_/);
+      my $path = fullPathToExec($exe);
+
+      my $ver = 'UNKNOWN VERSION';
+      if(my $vcmd = $$properties{$exe}){
+        ($ver) = qx($vcmd);
+        chomp($ver);
+        $ver or die "ERROR: could not determine version of '$exe' via '$vcmd'";
+        logmsg "$exe: $ver";
+      }
+    }
+
+    exit(0);
+  }
+
+  return 0;
 }
 
 sub readConfig{

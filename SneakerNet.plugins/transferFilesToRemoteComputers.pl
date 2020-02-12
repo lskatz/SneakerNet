@@ -12,9 +12,9 @@ use List::Util qw/sum/;
 use POSIX qw/strftime/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
-our $VERSION = "1.5";
+our $VERSION = "1.6";
 our $CITATION= "Transfer files to remote computer plugin by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -24,15 +24,14 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version citation check-dependencies tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      rsync     => 'rsync --version | grep version',
+      ssh       => 'ssh -V 2>&1',
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

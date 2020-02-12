@@ -46,6 +46,7 @@ Two major steps are described below for making a plugin.
 |`--force`|        |This is loosely defined but can be used for many things like overwriting output files|
 |`--version`|      |Print a version in the format of X.Y or X.Y.Z|
 |`--citation`|     | Print a citation statement to give yourself credit. | 
+|`--check-dependencies`|     | check all executable dependencies | 
 
 ## Activate the script as a plugin
 

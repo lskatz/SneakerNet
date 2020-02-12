@@ -13,9 +13,9 @@ use Bio::FeatureIO::gff;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION = "Save failed genomes by Lee Katz";
 
 local $0=fileparse $0;
@@ -23,16 +23,14 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation help force tempdir=s debug numcpus=i coverage=f)) or die $!;
+  GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i coverage=f)) or die $!;
   $$settings{coverage} //= 10;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      rsync     => 'rsync --version | grep version',
+    }, $settings,
+  );
 
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

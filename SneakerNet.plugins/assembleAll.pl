@@ -16,9 +16,9 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION = "assembleAll.pl by Lee Katz. Uses Skesa and Prodigal for assembly and gene prediction.";
 
 local $0=fileparse $0;
@@ -26,15 +26,16 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation help tempdir=s debug numcpus=i force)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      'run_assembly_filterContigs.pl' => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
+      'skesa'                         => 'skesa --version 2>&1 | grep SKESA',
+      'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

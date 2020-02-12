@@ -16,9 +16,9 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION= "Cryptosporidium assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -26,15 +26,22 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation help tempdir=s debug numcpus=i force)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      'run_assembly_filterContigs.pl' => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
+      'run_assembly_metrics.pl'       => "echo CG Pipeline version unknown",
+      cat                             => 'cat --version | head -n 1',
+      sort                            => 'sort --version | head -n 1',
+      head                            => 'head --version | head -n 1',
+      uniq                            => 'uniq --version | head -n 1',
+      touch                           => 'touch --version | head -n 1',
+      shovill                         => 'shovill --version',
+      prodigal                        => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+    }, $settings,
+  );
 
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

@@ -16,12 +16,12 @@ use threads;
 use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION = "Base Balance by Lee Katz";
 
 # Global
@@ -33,15 +33,13 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation tempdir=s help inbox=s debug test force numcpus=i)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version citation check-dependencies tempdir=s help inbox=s debug test force numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      cp        => 'cp --version | head -n 1',
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;

@@ -43,7 +43,7 @@ cmp_ok(scalar(@plugin), '>', 1, "Gathering all plugins. ".scalar(@plugin)." foun
 subtest 'flagopt' => sub{
   for my $path(@plugin){
     my $file = basename($path);
-    for my $flagOpt(qw(debug force version citation)){
+    for my $flagOpt(qw(debug force version citation check-dependencies)){
       my $stdout = "";
       my $exit_code = eval{
         $stdout = `$path --$flagOpt --help 2>$path.tmp`;

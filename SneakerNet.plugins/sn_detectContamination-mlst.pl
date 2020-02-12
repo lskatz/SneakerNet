@@ -12,9 +12,9 @@ use FindBin;
 use Bio::SeqIO;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "Contamination detection by Eshaw Vidyaprakash and Lee Katz.  Uses ColorID by Henk den Bakker.";
 
 local $0=fileparse $0;
@@ -22,15 +22,14 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
-  if($$settings{version}){
-    print $VERSION."\n";
-    return 0;
-  }
-  if($$settings{citation}){
-    print $CITATION."\n";
-    return 0;
-  }
+  GetOptions($settings,qw(version citation check-dependencies help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      mlst      => 'mlst --version',
+      colorid   => 'colorid --version',
+    }, $settings,
+  );
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
