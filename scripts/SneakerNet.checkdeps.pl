@@ -34,7 +34,13 @@ while(my $file = readdir($dh)){
 }
 closedir($dh);
 
+my $err_count = 0;
 for my $path(@plugin){
   system("$path --check-dependencies");
+  my $is_error = !! $?;
+  $err_count += $is_error;
   #die if $?;
 }
+
+logmsg "Number of plugins with missing dependencies: $err_count";
+

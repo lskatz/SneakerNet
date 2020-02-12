@@ -39,6 +39,10 @@ sub fullPathToExec($;$) {
 	return $fullpath;
 }
 
+# Takes a hash of executables => `way to check version`
+# Some keys in the hash however are special and have an
+# underscore at the beginning: _CITATION and _VERSION.
+# Exits with 0 if any uses are invoked.
 sub exitOnSomeSneakernetOptions{
   my($properties, $settings) = @_;
 
