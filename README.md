@@ -18,6 +18,9 @@ See [docs/INSTALL.md](docs/INSTALL.md)
 
 ## Workflow
 
+_NOTE_: to ensure all dependencies are met, please follow
+the dependencies section under the [installation document](docs/INSTALL.md).
+
 ### Creating a SneakerNet project directory
 
 SneakerNet requires a project directory that is in a certain format already.
