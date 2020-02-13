@@ -4,9 +4,9 @@ os: linux
 #  - "5.24-shrplib"
 python:
   - "3.7"
-dist: bionic
-services:
-  - docker
+dist: eoan
+#services:
+#  - docker
 addons:
   apt:
     #sources:
