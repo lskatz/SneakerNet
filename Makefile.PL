@@ -44,7 +44,6 @@ WriteMakefile1(
     "SneakerNet.plugins/sn_mlst.pl",
     "SneakerNet.plugins/sn_parseSampleSheet.pl",
     "SneakerNet.plugins/sn_passfail.pl",
-    "SneakerNet.plugins/sn_SalmID.pl",
     "SneakerNet.plugins/transferFilesToRemoteComputers.pl",
   ],
   PREREQ_PM    => {

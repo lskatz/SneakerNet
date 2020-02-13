@@ -87,6 +87,7 @@ sub usage{
               Multiple workflows can be given.
               If not given, the default workflow will be used.
   --list      Lists possible workflows
+  --versions  Lists versions (not yet implemented)
   ";
   exit 0;
 }
