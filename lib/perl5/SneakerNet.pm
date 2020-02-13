@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.0';
+our $VERSION = '0.8.1';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -77,8 +77,8 @@ sub exitOnSomeSneakernetOptions{
       my $ver = 'UNKNOWN VERSION';
       if(my $vcmd = $$properties{$exe}){
         ($ver) = qx($vcmd);
-        chomp($ver);
         $ver or die "ERROR: could not determine version of '$exe' via '$vcmd'";
+        chomp($ver);
         logmsg "$exe: $ver";
       }
     }
