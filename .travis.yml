@@ -19,7 +19,6 @@ addons:
     - prodigal
     - tree
     - sendmail
-    - skesa
     - kraken
 before_install:
   # Configure cpanm properly

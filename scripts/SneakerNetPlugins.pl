@@ -44,6 +44,7 @@ sub main{
   # Have a not-so-hidden Konami code Easter egg for fun
   if(join(" ", @ARGV) =~ /up up down down left right left right B A( start)?/i){
     logmsg "The great bioinformatics god in the sky blesses this run.";
+    exit(0);
   }
 
   # The rest of the positional arguments are the run director(ies)
