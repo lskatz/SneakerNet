@@ -48,7 +48,7 @@ if($ENV{TRAVIS}){
   @plugin = sort @plugin;
   note "Removed some plugins b/c Travis-CI environment";
 }
-note "Testing these plugins: " join(", ", @plugin);
+note "Testing these plugins: ". join(", ", @plugin);
 
 # Do we have all plugins here?  At least one!
 cmp_ok(scalar(@plugin), '>', 1, "Gathering all plugins. ".scalar(@plugin)." found.");
