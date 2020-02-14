@@ -55,8 +55,9 @@ before_install:
   - export PATH=$PATH:$(pwd -P)/shovill-1.0.0/bin
   - tree $(pwd -P)/shovill*
 install:
-  - wget --progress=dot:mega --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-  - tar zxvf minikraken_20171019_4GB.tgz
+  # Kraken testing
+  #- wget --progress=dot:mega --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+  #- tar zxvf minikraken_20171019_4GB.tgz
   # Krona
   - wget --progress=dot:mega --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
   - tar zxvf xl2.5.tar.gz
