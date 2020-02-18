@@ -31,6 +31,7 @@ sub main{
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
       mlst      => 'mlst --version',
+      blastn    => 'blastn -version | head -n 1',
       rm        => 'rm --version | head -n 1',
     }, $settings,
   );
@@ -42,11 +43,6 @@ sub main{
 
   my $dir=$ARGV[0];
 
-  # Check for required executables
-  for (qw(mlst blastn)){
-    fullPathToExec($_);
-  }
- 
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/mlst";
   mkdir "$dir/SneakerNet/forEmail";
