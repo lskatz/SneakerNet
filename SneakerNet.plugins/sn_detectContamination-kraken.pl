@@ -20,9 +20,9 @@ our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Krake
 
 # Get the executable directories
 my $tmpSettings=readConfig();
-my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
-my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
-$ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
+#my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
+#my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
+#$ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
 
 local $0=fileparse $0;
 exit(main());
@@ -43,7 +43,7 @@ sub main{
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
-  $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings";
+  $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings.conf";
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{minpercent} ||= 25;
 
@@ -141,7 +141,9 @@ sub runKraken{
   my($sample,$sampledir,$settings)=@_;
 
   my $html="$sampledir/report.html";
-  return 1 if(-e $html);
+  if(-e $html && !$$settings{force}){
+    return 1;
+  }
 
   if(!defined($$sample{fastq})){
     logmsg "ERROR: no reads found for $sampledir";
@@ -185,9 +187,9 @@ sub runKrakenSE{
 
   return 0 if(!$reads);
 
-  command("$KRAKENDIR/kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
+  command("kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
 
-  command("$KRAKENDIR/kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
+  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
     s/^ +//;   # remove leading spaces
     s/ +/\t/;  # change first set of spaces from uniq -c to a tab
     s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
@@ -195,7 +197,7 @@ sub runKrakenSE{
     ' | sort -k1,1nr > $sampledir/kraken.taxonomy
   ");
 
-  command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -209,7 +211,7 @@ sub runKrakenSE{
   print $taxFh $unclassifiedReadsCount."\n";
   close $taxFh;
 
-  command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy");
 
   # Go ahead and remove kraken.out which is a huge file
   unlink("$sampledir/kraken.out");
@@ -229,9 +231,9 @@ sub runKrakenPE{
   my $reads="'".join("' '", @twoReads)."'";
   return 0 if(!$reads);
   
-  command("$KRAKENDIR/kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
+  command("kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
 
-  command("$KRAKENDIR/kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
+  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
     s/^ +//;   # remove leading spaces
     s/ +/\t/;  # change first set of spaces from uniq -c to a tab
     s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
@@ -239,7 +241,7 @@ sub runKrakenPE{
     ' | sort -k1,1nr > $sampledir/kraken.taxonomy
   ");
 
-  command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -253,7 +255,7 @@ sub runKrakenPE{
   print $taxFh $unclassifiedReadsCount."\n";
   close $taxFh;
 
-  command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy");
 
   # Go ahead and remove kraken.out which is a huge file
   unlink("$sampledir/kraken.out");
@@ -332,6 +334,7 @@ sub usage{
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --version
+  --force         Overwrite any previous results
   --min-percent   What percent of reads have to be attributed
                   to a taxon before presuming it as the taxon
                   sequenced? Default: 25
