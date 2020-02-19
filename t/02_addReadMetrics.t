@@ -47,7 +47,17 @@ subtest "Expected coverage" => sub {
       note "Skipping $file";
       next;
     }
-    ok $coverage > $expected{$file} - 1 && $coverage < $expected{$file} + 1, "Coverage for $file";
+    subtest "Coverage for $file" => sub{
+      plan tests => 3;
+      my $is_numerical = isnt($coverage, '.', "Coverage is numerical");
+      if($is_numerical){
+        cmp_ok($coverage, '>', $expected{$file} - 1, "Coverage numerical test");
+        cmp_ok($coverage, '<', $expected{$file} + 1, "Coverage numerical test");
+      } else {
+        fail("Coverage");
+        fail("Coverage");
+      }
+    }
   }
   close $fh;
 };
