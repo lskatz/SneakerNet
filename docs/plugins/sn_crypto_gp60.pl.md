@@ -2,7 +2,7 @@
 
 `sn_crypto_gp60`
 
-Runs 7-gene MLST on each sample
+Runs gp60 on each genome
 
 # Software requirements
 
