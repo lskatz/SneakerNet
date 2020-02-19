@@ -35,6 +35,7 @@ before_install:
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi/auto  # user libs
     #- cpanm -l $(pwd) Bio::Perl --notest --force
   - find /usr/local/share /lib* $HOME -type f -name SeqIO.pm || echo "SeqIO.pm NOT FOUND"
+  - locate SeqIO.pm || echo "SeqIO.pm NOT FOUND"
   - cpanm -l ~ Bio::FeatureIO --notest --force
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
