@@ -30,13 +30,12 @@ before_install:
   #- docker pull staphb/kraken:1.1.1
   #- export PATH=$PATH:$(pwd)/scripts/dockerAliases
   # Perl modules
+  - export PERL5LIB=$PERL5LIB:/usr/share/perl5
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5  # user libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi  # user libs
   - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi/auto  # user libs
-    #- cpanm -l $(pwd) Bio::Perl --notest --force
-  - find / -type f -name SeqIO.pm 2>/dev/null || echo "SeqIO.pm NOT FOUND"
-  - cpanm -l ~ Bio::SeqIO --notest --force
-  - find / -type f -name SeqIO.pm 2>/dev/null || echo "SeqIO.pm NOT FOUND"
+  #- find / -type f -name SeqIO.pm 2>/dev/null || echo "SeqIO.pm NOT FOUND"
+  - echo $PERL5LIB | tr ':' '\n' | cat -n
   - cpanm -l ~ Bio::FeatureIO --notest --force
   - cpanm -l ~ Statistics::Descriptive
   - cpanm -l ~ File::Slurp
