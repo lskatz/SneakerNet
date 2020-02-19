@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.2';
+our $VERSION = '0.8.3';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -110,9 +110,34 @@ sub readConfig{
 sub samplesheetInfo_tsv{
   my($samplesheet,$settings)=@_;
 
+  my $runDir = dirname($samplesheet);
+
   # Get possible taxon rules.
   my $config = readConfig();
-  
+
+  # If species have been detected already, load them up.
+  # The kraken folder will be the way we do that for now.
+  my %speciesSuggestion;
+  my $krakenReport = "$runDir/SneakerNet/forEmail/kraken.tsv";
+  if(-e $krakenReport){
+    open(my $fh, '<', $krakenReport) or die "ERROR: could not read from $krakenReport: $!";
+    my $header = <$fh>;
+    chomp($header);
+    my @header = split(/\t/, $header);
+    while(<$fh>){
+      next if(/^#/);
+      chomp;
+      my %F;
+      my @F = split /\t/;
+      @F{@header} = @F;
+      my @suggestions = ($F{BEST_GUESS}, (split(/\s+/, $F{BEST_GUESS}))[0]);
+      $speciesSuggestion{$F{NAME}} = \@suggestions;
+    }
+    close $fh;
+  }
+  # TODO species suggestion from other sources???
+  #print Dumper \%speciesSuggestion;
+
   my %sample;
   open(my $fh, "<", $samplesheet) or croak "ERROR: reading $samplesheet";
   while(<$fh>){
@@ -138,10 +163,21 @@ sub samplesheetInfo_tsv{
 
     # Set up the taxon rules if possible
     $sample{$sampleName}{taxonRules}={};
-    if(defined(my $taxon = $sample{$sampleName}{taxon})){
-      my $possibleRules = $$config{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
-      if(defined($possibleRules)){
-        $sample{$sampleName}{taxonRules}=$possibleRules;
+    # Get a few options for the taxon: explicit from the samplesheet or guessed
+    my $explicitTaxon = $sample{$sampleName}{taxon};
+    my $guessedTaxons = $speciesSuggestion{$sampleName} || [];
+    my @taxonGuess = ($explicitTaxon, @$guessedTaxons);
+    # Loop through the different taxa guesses, starting with
+    # what was explicitly given
+    for my $taxon(@taxonGuess){
+      if(defined($taxon) && $taxon ne ""){
+        my $possibleRules = $$config{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
+        # This is the right taxon if we have rules associated with it
+        if(defined($possibleRules) && scalar(keys(%$possibleRules))>1){
+          $sample{$sampleName}{taxonRules}=$possibleRules;
+          # If we give it taxon rules, then we're done going through different taxon guesses
+          last;
+        }
       }
     }
   }
