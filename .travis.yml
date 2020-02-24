@@ -57,9 +57,9 @@ before_install:
   - export PATH=$PATH:$(pwd -P)/shovill-1.0.0/bin
   - tree $(pwd -P)/shovill*
   # chewbbaca
-  - pip install chewbbaca --user
-  - find $HOME -maxdepth 3 -name chewBBACA.py
-  - export PATH=$PATH:$HOME/.local/bin
+  #- pip install chewbbaca --user
+  #- find $HOME -maxdepth 3 -name chewBBACA.py
+  #- export PATH=$PATH:$HOME/.local/bin
 install:
   # Kraken testing
   #- wget --progress=dot:mega --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
