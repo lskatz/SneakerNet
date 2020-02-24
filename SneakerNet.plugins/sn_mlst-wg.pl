@@ -88,6 +88,10 @@ sub main{
   print $fh "# INF: inferred new alleles using Prodigal CDS predictions\n";
   print $fh "# LNF: loci not found.\n";
   print $fh "# PLOT: possible loci on the tip of the query genome contigs.\n";
+  print $fh "# NIPH: non-informative paralogous hit\n";
+  print $fh "# NIPHEM: similar to NIPH classification (NIPH with exact match), but specifically referring to exact matches\n";
+  print $fh "# ALM: alleles 20% larger than length mode of the distribution of the matched loci\n";
+  print $fh "# ASM: similar to ALM but for alleles 20% smaller than length mode distribution of the matched loci\n";
   print $fh "# For more information: https://github.com/B-UMMI/chewBBACA/wiki/2.-Allele-Calling#allele-call-statistics-output-results_statisticstxt\n";
   close $fh;
 
