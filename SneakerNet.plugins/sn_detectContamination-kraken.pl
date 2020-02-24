@@ -48,7 +48,8 @@ sub main{
   $$settings{minpercent} ||= 25;
 
   my $dir=$ARGV[0];
-  mkdir "$dir/forEmail";
+  mkdir "$dir/SneakerNet/forEmail";
+  mkdir "$dir/SneakerNet/kraken";
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
