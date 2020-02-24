@@ -63,6 +63,7 @@ Some links might not be valid at this time.
 |[sn_helloWorld.py](plugins/sn_helloWorld.py.md)  | Example plugin in Python             |
 |[baseBalance.pl](plugins/baseBalance.pl.md)      | Dividing all As by Ts and all Cs by Gs to see if we get a ratio of 1 for each|
 |[sn_mlst.pl](plugins/sn_mlst.pl.md)              | Runs 7-gene MLST on assemblies       |
+|[sn_mlst-wg.pl](plugins/sn_mlst-wg.pl.md)              | Runs whole-genome MLST on assemblies       |
 |[transferFilesToRemoteComputers.pl](plugins/transferFilesToRemoteComputers.pl.md)|Transfers files to a remote computer |
 |[sn_detectContamination.pl](plugins/sn_detectContamination.pl.md)       | Detects potential contamination by kmer counting|
 |[emailWhoever.pl](plugins/emailWhoever.pl.md)                 | Emails all results                   |
