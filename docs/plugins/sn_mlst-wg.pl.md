@@ -9,14 +9,25 @@ or anything smaller.
 # Software requirements
 
 * chewBBACA
-* BLAST
+* BLAST+
 * Database
+
+## The database
 
 The database must be listed under taxonProperties.conf. At least
 one example is provided at this time for Salmonella.
 
+The raw database must be downloaded. One method is with https://github.com/Public-Health-Bioinformatics/pubmlst_client
+
+For example,
+
+    pubmlst_download --scheme_name salmonella --scheme_id 4 --outdir ./salmonella_enterobase.raw
+
 The database must be formatted according to chewBBACA instructions
 at https://github.com/B-UMMI/chewBBACA/wiki/1.-Schema-Creation#14-using-an-external-schema
+
+    chewBBACA.py PrepExternalSchema -i salmonella_enterobase.raw -o wgMLST/salmonella.enterobase.chewBBACA --cpu 4
+    rm -rf salmonella_enterobase.raw
 
 Next, the database must be located under your SneakerNet installation
 directory, under `SneakerNet/db/wgMLST/something` where _something_

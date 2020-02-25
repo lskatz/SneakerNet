@@ -55,6 +55,7 @@ Some links might not be valid at this time.
 | Plugin                         | description |
 |:-------------------------------|:------------|
 |[sn_SalmID.pl](plugins/sn_SalmID.pl.md)          | Salmonella subspecies identification |
+|[sn_staramr.pl](plugins/sn_staramr.pl.pl.md)          | staramr antimicrobial resistance determinant analysis |
 |[sn_passfail.pl](plugins/sn_passfail.pl.md)      | Table of pass/fail for each sample   |
 |[sn_iontorrent_assembleAll.pl](plugins/sn_iontorrent_assembleAll.pl.md)    | Assembly for ion torrent data        |
 |[addReadMetrics.pl](plugins/addReadMetrics.pl.md)| Raw read metrics                     |
