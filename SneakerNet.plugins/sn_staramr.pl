@@ -13,7 +13,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION = "StarAMR plugin by Lee Katz and Jess Chen";
 
 local $0=fileparse $0;
@@ -110,7 +110,7 @@ sub staramr{
 
   my $samples = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
 
-  while(my($sampleName, $s) = each($samples)){
+  while(my($sampleName, $s) = each(%$samples)){
     # Jess's shell script:
     # detectARDs.sh genus assembly R1 R2 strainID
     # staramr search --pointfinder-organism $1 --exclude-genes-file $1_genes_to_exclude.tsv --pid-threshold 90 --percent-length-overlap-resfinder 50  -o $5.staramr $2
@@ -130,8 +130,14 @@ sub staramr{
     my @asm = glob("$dir/SneakerNet/assemblies/$sampleName/*.fasta");
     my $asm = $asm[0];
 
+    if(-s $asm < 30000){
+      logmsg "Assembly for $sampleName is too small. Skipping.";
+      next;
+    }
+
     # Run staramr
-    command("staramr search --pid-threshold 90 --percent-length-overlap-resfinder 50 --output-dir $tempdir $asm");
+    logmsg "staramr on $sampleName";
+    command("staramr search --pid-threshold 90 --percent-length-overlap-resfinder 50 --output-dir $tempdir $asm 2>&1");
 
     system("mv $tempdir $outdir");
   }
