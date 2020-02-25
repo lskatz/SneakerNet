@@ -15,7 +15,7 @@ use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION= "wgMLST plugin by Lee Katz.  Uses chewBBACA for wgMLST.";
 
 # wget --recursive http://enterobase.warwick.ac.uk/schemes/SALwgMLST.cgMLSTv1/
@@ -92,7 +92,6 @@ sub main{
   print $fh "# NIPHEM: similar to NIPH classification (NIPH with exact match), but specifically referring to exact matches\n";
   print $fh "# ALM: alleles 20% larger than length mode of the distribution of the matched loci\n";
   print $fh "# ASM: similar to ALM but for alleles 20% smaller than length mode distribution of the matched loci\n";
-  print $fh "# For more information: https://github.com/B-UMMI/chewBBACA/wiki/2.-Allele-Calling#allele-call-statistics-output-results_statisticstxt\n";
   close $fh;
 
   recordProperties($dir,{version=>$VERSION,table=>$outputTsv});
@@ -127,6 +126,12 @@ sub runWgMlst{
       logmsg "WARNING: no assembly found for $sampleName. Not analyzing";
       next;
     }
+    # Assembly needs to be > 20000bp to predict genes from.
+    # Be safe with 30000 bytes.
+    if(-s $asm < 30000){
+      logmsg "WARNING: assembly is too small for $sampleName. Not analyzing.";
+      next;
+    }
 
     # Database directory, formatted by chewBBACA
     my $wgMlstSubdir = $$s{taxonRules}{wgMLST};
@@ -135,6 +140,8 @@ sub runWgMlst{
       logmsg "Taxon was defined as ".$$s{taxon};
       next;
     }
+
+    logmsg "Taxon was defined for $sampleName. prepping the analysis.";
     my $wgMlstDir    = realpath($RealBin."/../db/wgMLST/$wgMlstSubdir");
     my $wgMlstDirBak = $wgMlstDir;
     # Error checking for the wgMLST database: does the dir exist
@@ -167,6 +174,7 @@ sub runWgMlst{
     if(-d "/dev/shm"){
       # Copy over the database to ram since it is disk IO intensive
       my $ramTempdir = "/dev/shm/$ENV{USER}";
+      mkdir $ramTempdir;
       my $newWgMlstDir = tempdir("$0.$$s{taxon}.XXXXXX",DIR=>$ramTempdir, CLEANUP=>1);
       logmsg "Copying wgMLST database to RAM at $newWgMlstDir";
       system("cp -r $wgMlstDir/* $newWgMlstDir/ >&2");
@@ -179,6 +187,11 @@ sub runWgMlst{
     logmsg "wgMLST results in $tmpout";
     my @chewbbacaOut = glob("$tmpout/results_*");
     my $from = $chewbbacaOut[0];
+    if(!defined($from)){
+      logmsg "ERROR: no results found!";
+      logmsg `tree $tmpout`;
+      next;
+    }
     logmsg "Found results in $from";
     command("cp -r '$from' '$sampleOutdir'");
 
