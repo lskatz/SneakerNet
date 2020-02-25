@@ -91,6 +91,7 @@ sub main{
   open(my $fh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
   print $fh $html;
   close $fh;
+  logmsg "Report can be found in $outfile";
 
   return 0;
 }
