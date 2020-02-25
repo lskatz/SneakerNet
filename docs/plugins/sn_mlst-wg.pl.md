@@ -13,7 +13,7 @@ or anything smaller.
 * Database
 
 The database must be listed under taxonProperties.conf. At least
-one example is provided at this time for Neisseria.
+one example is provided at this time for Salmonella.
 
 The database must be formatted according to chewBBACA instructions
 at https://github.com/B-UMMI/chewBBACA/wiki/1.-Schema-Creation#14-using-an-external-schema
