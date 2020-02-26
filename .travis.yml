@@ -65,7 +65,7 @@ before_install:
   # Python things
   - export PATH=$PATH:$HOME/.local/bin
   # staramr
-  - pip3 install staramr --user
+  #- pip3 install staramr --user
   # chewbbaca
   #- pip install chewbbaca --user
   #- find $HOME -maxdepth 3 -name chewBBACA.py

@@ -44,7 +44,7 @@ if($ENV{TRAVIS}){
   # Remove plugins with kraken, taxonomy, assembly, mlst, ...
   # because it is difficult to get travis to download and
   # install it all.
-  @plugin = grep {!/kraken|taxon|assembl|mlst|crypto/i} @plugin;
+  @plugin = grep {!/kraken|taxon|assembl|mlst|crypto|staramr/i} @plugin;
   @plugin = sort @plugin;
   note "Removed some plugins b/c Travis-CI environment";
 }
