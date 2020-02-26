@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.7";
+our $VERSION = "1.8";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -221,13 +221,13 @@ sub htmlHeaders{
   $html .= "th    {border:1px solid #009900; margin:0px; word-wrap: break-all;}\n";
   $html .= "thead {font-weight:bold; background-color:#BBE;}\n";
   $html .= "tbody {color:black;} \n";
-  $html .= "tfoot {font-size:75%; color:#DD3333;}\n";
+  $html .= "tfoot {font-size:12px; color:#DD3333;}\n";
   $html .= ".genericInfo {background-color:#EEEEEE; border: 1px solid #666666; margin:2px 0px; padding:1px;}\n";
   $html .= ".genericInfo p {margin-bottom:1em;}\n";
-  $html .= ".version {font-size:75%; padding:1px; margin-top:10px; font-family:monospace; font-size:10px;}\n";
+  $html .= ".version {font-size:12px; padding:1px; margin-top:10px; font-family:monospace; font-size:10px;}\n";
   $html .= ".pluginSplash{background-color:#FAFFFF;border:1px solid black; margin:6px 0px; padding:1px;}\n";
   # https://codeburst.io/how-to-make-a-collapsible-menu-using-only-css-a1cd805b1390
-  $html .= ".pluginContent{max-height:0px; overflow:hidden; }\n";
+  $html .= ".pluginContent{display:none;}\n";
   $html .= "label.collapsible {
     display: block; 
     font-size:16px;
@@ -241,7 +241,7 @@ sub htmlHeaders{
     background-position-x: left;
   }\n";
   $html .= "input.collapsible {display:none;}\n";
-  $html .= "input:checked ~ .pluginContent{max-height:200%; transition: all ease 1s;}\n";
+  $html .= "input:checked ~ .pluginContent{display:block;}\n";
   $html .= "input:checked ~ label {
     background-image: url(\"$closedMenuBase64\");
     transition: all ease 0.1s;
