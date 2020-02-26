@@ -26,7 +26,7 @@ before_install:
   - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
   - sudo update-alternatives --set python /usr/bin/python3
   - python --version
-  - pip --version
+  - pip3 --version
   # Configure cpanm properly
   - cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
   # Docker
@@ -65,7 +65,7 @@ before_install:
   # Python things
   - export PATH=$PATH:$HOME/.local/bin
   # staramr
-  - pip install staramr --user
+  - pip3 install staramr --user
   # chewbbaca
   #- pip install chewbbaca --user
   #- find $HOME -maxdepth 3 -name chewBBACA.py
