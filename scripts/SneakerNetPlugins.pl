@@ -27,7 +27,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(dry-run keep-going tempdir=s help version numcpus=i email! force! workflow=s)) or die $!;
+  GetOptions($settings,qw(dry-run keep-going tempdir=s help version numcpus=i no|skip=s@ email! force! workflow=s)) or die $!;
 
   if($$settings{version}){
     print "SneakerNet $SneakerNet::VERSION\n";
@@ -37,6 +37,7 @@ sub main{
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{email}//=1;
+  $$settings{no}   //=[];
   if($$settings{tempdir}){
     mkdir $$settings{tempdir};
   }
@@ -70,13 +71,20 @@ sub main{
       die "ERROR: workflow in snok.txt was defined as $workflow, but this workflow is not defined in config/plugins.conf";
     }
 
+    # Should we skip any plugins?
+    # First, email since that is its own parameter
     if(!$$settings{email}){
       $exe = [grep {$_ !~ /email/} @$exe];
+    }
+    # Additional skips
+    for my $skipPlugin(@{ $$settings{no} }){
+      $exe = [grep {$_ !~ /$skipPlugin/i} @$exe];
     }
     
     # Run all plugins
     chdir($dir) or die "ERROR: could not change to directory $dir: $!";
     for my $e(@$exe){
+
       my $command="$RealBin/../SneakerNet.plugins/$e . --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
       $command.=" --tempdir $$settings{tempdir}/$e" if($$settings{tempdir});
@@ -130,6 +138,10 @@ sub usage{
   "$0: runs all SneakerNet plugins on a run directory
   Usage: $0 dir [dir2...]
   --noemail     Do not send an email at the end.
+  --no      ''  Specify a regex of which plugins to skip.
+                Can provide multiple instances.  E.g.,
+                --no email --no transfer --no save
+                Case insensitive.
   --dry-run     Just print the plugin commands that would have been run
   --keep-going  If a plugin has an error, move onto the next anyway
   --numcpus 1
