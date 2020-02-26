@@ -22,6 +22,7 @@ addons:
     - python3
       #- kraken  # travis kraken testing for another day
 before_install:
+  - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3
   - sudo update-alternatives --set python /usr/bin/python3
   - python --version
   # Configure cpanm properly
