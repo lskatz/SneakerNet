@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.8";
+our $VERSION = "1.9";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -62,9 +62,9 @@ sub main{
 
   # Icons
   # https://www.iconfinder.com/icons/1276876/card_misc_notes_icon
-  my $documentationBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAElSURBVDhPpZLPSsNAEMa/2Si2vSmCCknaLYLXXvsM3kTfRPDSRyiC4MX38JInEB+h2JKkVU96ErHBpuPudihiCKbtD8L8yfLlm81gU8j3/b0a1xpSV2L4MnyWFKR9fUfEH1L/CwFHUHw7StMH12gHrb5LKnIc6nPzXEgJJXFttiRCa31AOV9JWYAUolGSRAB3ZnN02mGr6xG9LwXiOH47CYLycXYa7p4YGGwrjBXn9xm83m8H+985X0pZgLLMfB0Rgb6MyHQwmbwaF9OVHRTY5C8YB9ekm2YPmD+J0bRNJqQ2lmH24FAp3DwlyaMTCMNwt85cn5N3at/by1kcLcfOb6MVcA3L3wWpgnMguRMwA3SNicWKVoDBZ0sBy6oOzLxjSdcF+AFbkmBu6BBUlwAAAABJRU5ErkJggg==';
+  #my $documentationBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAElSURBVDhPpZLPSsNAEMa/2Si2vSmCCknaLYLXXvsM3kTfRPDSRyiC4MX38JInEB+h2JKkVU96ErHBpuPudihiCKbtD8L8yfLlm81gU8j3/b0a1xpSV2L4MnyWFKR9fUfEH1L/CwFHUHw7StMH12gHrb5LKnIc6nPzXEgJJXFttiRCa31AOV9JWYAUolGSRAB3ZnN02mGr6xG9LwXiOH47CYLycXYa7p4YGGwrjBXn9xm83m8H+985X0pZgLLMfB0Rgb6MyHQwmbwaF9OVHRTY5C8YB9ekm2YPmD+J0bRNJqQ2lmH24FAp3DwlyaMTCMNwt85cn5N3at/by1kcLcfOb6MVcA3L3wWpgnMguRMwA3SNicWKVoDBZ0sBy6oOzLxjSdcF+AFbkmBu6BBUlwAAAABJRU5ErkJggg==';
   # https://www.iconfinder.com/icons/107161/circle_github_icon
-  my $githubBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEhSURBVDhPldLNKkVRGIfxF4WOjzIQnRIZGxkYKBOUDI9yBybcgGSkFCamlPsQJkZKbkDkBoiUr3wMeJ619xYnp+x//fZe79te5+y91oo887jEGnptNEg/1nGFmo0mL2QPC9kwnrCJa/TYIPeoYhkVG2QHS9kw4hifJR0hmr2Q4lfL5HuO3//XP/xHWoezH42yTl3EN7TmDRfmEB/oQjfMQ87nZrAI574jXuFkt8cMYy4b/oqfOpQNYwvOebG4yIsRC1J80kSqskzB3kmqIkZhfe4u+MqmLb931t1NR929ePbAyyAe4eEx41hBscWmBasYS1XENlyTgVSRadzBdfC4NoqncQO3mLRRHGXTB1d3Fh4S38oFNu1wV56xj13cRER8AYj4WxD5sLxiAAAAAElFTkSuQmCC';
+  #my $githubBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEhSURBVDhPldLNKkVRGIfxF4WOjzIQnRIZGxkYKBOUDI9yBybcgGSkFCamlPsQJkZKbkDkBoiUr3wMeJ619xYnp+x//fZe79te5+y91oo887jEGnptNEg/1nGFmo0mL2QPC9kwnrCJa/TYIPeoYhkVG2QHS9kw4hifJR0hmr2Q4lfL5HuO3//XP/xHWoezH42yTl3EN7TmDRfmEB/oQjfMQ87nZrAI574jXuFkt8cMYy4b/oqfOpQNYwvOebG4yIsRC1J80kSqskzB3kmqIkZhfe4u+MqmLb931t1NR929ePbAyyAe4eEx41hBscWmBasYS1XENlyTgVSRadzBdfC4NoqncQO3mLRRHGXTB1d3Fh4S38oFNu1wV56xj13cRER8AYj4WxD5sLxiAAAAAElFTkSuQmCC';
 
   for my $plugin(sort keys(%$properties)){
     my $inputID = "menu-$plugin";
@@ -77,10 +77,12 @@ sub main{
     $html .= "<div class='pluginContent'>\n";
     $html .= report($dir, $plugin, $properties, $settings);
     $html .= "  <a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>\n";
-    $html .= "    <img style='width:16px;height:16px;' alt='documentation' src='$documentationBase64' />\n";
+    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>&#128196;</span>\n"; # UTF-8 for page facing up
+    #$html .= "    <img style='width:16px;height:16px;' alt='documentation' src='$documentationBase64' />\n";
     $html .= "  </a>";
     $html .= "  <a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'>\n";
-    $html .= "    <img style='width:16px;height:16px;' alt='github' src='$githubBase64' />\n";
+    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>1011</span>\n";
+    #$html .= "    <img style='width:16px;height:16px;' alt='github' src='$githubBase64' />\n";
     $html .= "  </a>";
     $html .= "</div>\n"; # end div pluginContent
     $html .= "</div>\n"; # end div pluginSplash
