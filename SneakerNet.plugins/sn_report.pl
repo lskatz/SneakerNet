@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.7";
+our $VERSION = "1.11";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -62,9 +62,9 @@ sub main{
 
   # Icons
   # https://www.iconfinder.com/icons/1276876/card_misc_notes_icon
-  my $documentationBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAElSURBVDhPpZLPSsNAEMa/2Si2vSmCCknaLYLXXvsM3kTfRPDSRyiC4MX38JInEB+h2JKkVU96ErHBpuPudihiCKbtD8L8yfLlm81gU8j3/b0a1xpSV2L4MnyWFKR9fUfEH1L/CwFHUHw7StMH12gHrb5LKnIc6nPzXEgJJXFttiRCa31AOV9JWYAUolGSRAB3ZnN02mGr6xG9LwXiOH47CYLycXYa7p4YGGwrjBXn9xm83m8H+985X0pZgLLMfB0Rgb6MyHQwmbwaF9OVHRTY5C8YB9ekm2YPmD+J0bRNJqQ2lmH24FAp3DwlyaMTCMNwt85cn5N3at/by1kcLcfOb6MVcA3L3wWpgnMguRMwA3SNicWKVoDBZ0sBy6oOzLxjSdcF+AFbkmBu6BBUlwAAAABJRU5ErkJggg==';
+  #my $documentationBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAElSURBVDhPpZLPSsNAEMa/2Si2vSmCCknaLYLXXvsM3kTfRPDSRyiC4MX38JInEB+h2JKkVU96ErHBpuPudihiCKbtD8L8yfLlm81gU8j3/b0a1xpSV2L4MnyWFKR9fUfEH1L/CwFHUHw7StMH12gHrb5LKnIc6nPzXEgJJXFttiRCa31AOV9JWYAUolGSRAB3ZnN02mGr6xG9LwXiOH47CYLycXYa7p4YGGwrjBXn9xm83m8H+985X0pZgLLMfB0Rgb6MyHQwmbwaF9OVHRTY5C8YB9ekm2YPmD+J0bRNJqQ2lmH24FAp3DwlyaMTCMNwt85cn5N3at/by1kcLcfOb6MVcA3L3wWpgnMguRMwA3SNicWKVoDBZ0sBy6oOzLxjSdcF+AFbkmBu6BBUlwAAAABJRU5ErkJggg==';
   # https://www.iconfinder.com/icons/107161/circle_github_icon
-  my $githubBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEhSURBVDhPldLNKkVRGIfxF4WOjzIQnRIZGxkYKBOUDI9yBybcgGSkFCamlPsQJkZKbkDkBoiUr3wMeJ619xYnp+x//fZe79te5+y91oo887jEGnptNEg/1nGFmo0mL2QPC9kwnrCJa/TYIPeoYhkVG2QHS9kw4hifJR0hmr2Q4lfL5HuO3//XP/xHWoezH42yTl3EN7TmDRfmEB/oQjfMQ87nZrAI574jXuFkt8cMYy4b/oqfOpQNYwvOebG4yIsRC1J80kSqskzB3kmqIkZhfe4u+MqmLb931t1NR929ePbAyyAe4eEx41hBscWmBasYS1XENlyTgVSRadzBdfC4NoqncQO3mLRRHGXTB1d3Fh4S38oFNu1wV56xj13cRER8AYj4WxD5sLxiAAAAAElFTkSuQmCC';
+  #my $githubBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEhSURBVDhPldLNKkVRGIfxF4WOjzIQnRIZGxkYKBOUDI9yBybcgGSkFCamlPsQJkZKbkDkBoiUr3wMeJ619xYnp+x//fZe79te5+y91oo887jEGnptNEg/1nGFmo0mL2QPC9kwnrCJa/TYIPeoYhkVG2QHS9kw4hifJR0hmr2Q4lfL5HuO3//XP/xHWoezH42yTl3EN7TmDRfmEB/oQjfMQ87nZrAI574jXuFkt8cMYy4b/oqfOpQNYwvOebG4yIsRC1J80kSqskzB3kmqIkZhfe4u+MqmLb931t1NR929ePbAyyAe4eEx41hBscWmBasYS1XENlyTgVSRadzBdfC4NoqncQO3mLRRHGXTB1d3Fh4S38oFNu1wV56xj13cRER8AYj4WxD5sLxiAAAAAElFTkSuQmCC';
 
   for my $plugin(sort keys(%$properties)){
     my $inputID = "menu-$plugin";
@@ -77,10 +77,12 @@ sub main{
     $html .= "<div class='pluginContent'>\n";
     $html .= report($dir, $plugin, $properties, $settings);
     $html .= "  <a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>\n";
-    $html .= "    <img style='width:16px;height:16px;' alt='documentation' src='$documentationBase64' />\n";
+    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>&#128196;</span>\n"; # UTF-8 for page facing up
+    #$html .= "    <img style='width:16px;height:16px;' alt='documentation' src='$documentationBase64' />\n";
     $html .= "  </a>";
     $html .= "  <a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'>\n";
-    $html .= "    <img style='width:16px;height:16px;' alt='github' src='$githubBase64' />\n";
+    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>1011</span>\n";
+    #$html .= "    <img style='width:16px;height:16px;' alt='github' src='$githubBase64' />\n";
     $html .= "  </a>";
     $html .= "</div>\n"; # end div pluginContent
     $html .= "</div>\n"; # end div pluginSplash
@@ -203,7 +205,7 @@ sub genericHtml{
 sub htmlHeaders{
   my($settings)=@_;
   my $html = "";
-  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">';
+  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">'."\n";
   #$html .= "<!DOCTYPE PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN' >\n";
 
   # Images encoded from https://www.iconfinder.com
@@ -211,6 +213,11 @@ sub htmlHeaders{
   my $closedMenuBase64 = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgZmlsbD0ibm9uZSIgaGVpZ2h0PSIyNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjE4IiB4Mj0iNiIgeTE9IjYiIHkyPSIxOCIvPjxsaW5lIHgxPSI2IiB4Mj0iMTgiIHkxPSI2IiB5Mj0iMTgiLz48L3N2Zz4=';
 
   $html .= "<html><head><title>SneakerNet report</title>\n";
+
+  $html .= "<!-- Favicon image credit: shoe print by John Winowiecki from the Noun Project -->\n";
+  $html .= "<link rel='icon' href='data:image/gif;base64,R0lGODlhDQAQAPUsAAAAAAEBAQICAgMDAw4ODhcXFx4eHi8vLzIyMjQ0NDo6OkZGRklJSU9PT1FRUVhYWFpaWmRkZGVlZWlpaXNzc4KCgoWFhYaGhpOTk5aWlp6enqCgoL6+vsLCwsfHx83NzdbW1t/f3+np6erq6uvr6+zs7O3t7fHx8fPz8/f39/v7+/7+/v///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAAAAAAALAAAAAANABAAAAZMQJaQZaI8PsOkMDMAMFBKocoBABA6URZKUQVksqlFt5JlWbqWMshQ3ZSnVk+ZpXlMRuWRIxGBZkEFAAd4WSMIABEqcxwWIXOPkJFCQQA7'>\n";
+
+  #$html .= "<link id='favicon' rel='icon' type='text/plain' href='data:,...' />\n";
 
   $html .= "<style>\n";
   $html .= "h1    {font-weight:bold; font-size:24px; margin:3px 0px;}\n";
@@ -221,13 +228,13 @@ sub htmlHeaders{
   $html .= "th    {border:1px solid #009900; margin:0px; word-wrap: break-all;}\n";
   $html .= "thead {font-weight:bold; background-color:#BBE;}\n";
   $html .= "tbody {color:black;} \n";
-  $html .= "tfoot {font-size:75%; color:#DD3333;}\n";
+  $html .= "tfoot {font-size:12px; color:#DD3333;}\n";
   $html .= ".genericInfo {background-color:#EEEEEE; border: 1px solid #666666; margin:2px 0px; padding:1px;}\n";
   $html .= ".genericInfo p {margin-bottom:1em;}\n";
-  $html .= ".version {font-size:75%; padding:1px; margin-top:10px; font-family:monospace; font-size:10px;}\n";
+  $html .= ".version {font-size:12px; padding:1px; margin-top:10px; font-family:monospace; font-size:10px;}\n";
   $html .= ".pluginSplash{background-color:#FAFFFF;border:1px solid black; margin:6px 0px; padding:1px;}\n";
   # https://codeburst.io/how-to-make-a-collapsible-menu-using-only-css-a1cd805b1390
-  $html .= ".pluginContent{max-height:0px; overflow:hidden; }\n";
+  $html .= ".pluginContent{display:none;}\n";
   $html .= "label.collapsible {
     display: block; 
     font-size:16px;
@@ -241,7 +248,7 @@ sub htmlHeaders{
     background-position-x: left;
   }\n";
   $html .= "input.collapsible {display:none;}\n";
-  $html .= "input:checked ~ .pluginContent{max-height:200%; transition: all ease 1s;}\n";
+  $html .= "input:checked ~ .pluginContent{display:block;}\n";
   $html .= "input:checked ~ label {
     background-image: url(\"$closedMenuBase64\");
     transition: all ease 0.1s;

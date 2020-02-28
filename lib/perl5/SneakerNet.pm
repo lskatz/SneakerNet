@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.3';
+our $VERSION = '0.8.4';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
