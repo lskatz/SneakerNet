@@ -82,6 +82,7 @@ sub main{
     }
     print $fh "\n";
   }
+  print $fh "# The predicted phenotypes/drug resistances are for microbiological resistance and not clinical resistance. Predictions are provided with support from the NARMS/CIPARS Molecular Working Group with an emphasis on Salmonella, Shigella, E. coli, and Campylobacter and are continually being improved.\n";
   close $fh;
 
 
