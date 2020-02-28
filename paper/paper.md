@@ -1,5 +1,4 @@
 ---
-
 title: 'SneakerNet: a modular quality assurance and quality check workflow for raw genomic and metagenomic read data'
 authors:
 - affiliation: 1
@@ -25,7 +24,6 @@ affiliations:
     Atlanta, GA, USA
 - index: 2
   name: Center for Food Safety, University of Georgia, Griffin, GA, USA
-
 ---
 
 # Summary
