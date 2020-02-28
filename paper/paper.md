@@ -7,6 +7,9 @@ authors:
   name: Curtis Kapsak
 - affiliation: 1
   name: Jessica C. Chen
+- affiliation: 2
+  name: Henk C. den Bakker
+  orcid: 0000-0002-4086-1580
 - affiliation: 1
   name: Grant Williams
 - affiliation: 1
