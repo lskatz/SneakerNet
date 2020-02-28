@@ -55,7 +55,7 @@ sub main{
 
   # make the report emailable 
   cp("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
-  command("cd $dir/SneakerNet/forEmail && zip -v kraken.zip *.kraken.html && rm -v *.kraken.html");
+  command("cd $dir/SneakerNet/forEmail && zip -v9 kraken.zip *.kraken.html && rm -v *.kraken.html");
 
   recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},table=>"$dir/SneakerNet/forEmail/kraken.tsv"});
 

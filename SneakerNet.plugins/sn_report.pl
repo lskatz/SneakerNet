@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.9";
+our $VERSION = "1.11";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -205,7 +205,7 @@ sub genericHtml{
 sub htmlHeaders{
   my($settings)=@_;
   my $html = "";
-  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">';
+  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">'."\n";
   #$html .= "<!DOCTYPE PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN' >\n";
 
   # Images encoded from https://www.iconfinder.com
@@ -213,6 +213,11 @@ sub htmlHeaders{
   my $closedMenuBase64 = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgZmlsbD0ibm9uZSIgaGVpZ2h0PSIyNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjE4IiB4Mj0iNiIgeTE9IjYiIHkyPSIxOCIvPjxsaW5lIHgxPSI2IiB4Mj0iMTgiIHkxPSI2IiB5Mj0iMTgiLz48L3N2Zz4=';
 
   $html .= "<html><head><title>SneakerNet report</title>\n";
+
+  $html .= "<!-- Favicon image credit: shoe print by John Winowiecki from the Noun Project -->\n";
+  $html .= "<link rel='icon' href='data:image/gif;base64,R0lGODlhDQAQAPUsAAAAAAEBAQICAgMDAw4ODhcXFx4eHi8vLzIyMjQ0NDo6OkZGRklJSU9PT1FRUVhYWFpaWmRkZGVlZWlpaXNzc4KCgoWFhYaGhpOTk5aWlp6enqCgoL6+vsLCwsfHx83NzdbW1t/f3+np6erq6uvr6+zs7O3t7fHx8fPz8/f39/v7+/7+/v///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAAAAAAALAAAAAANABAAAAZMQJaQZaI8PsOkMDMAMFBKocoBABA6URZKUQVksqlFt5JlWbqWMshQ3ZSnVk+ZpXlMRuWRIxGBZkEFAAd4WSMIABEqcxwWIXOPkJFCQQA7'>\n";
+
+  #$html .= "<link id='favicon' rel='icon' type='text/plain' href='data:,...' />\n";
 
   $html .= "<style>\n";
   $html .= "h1    {font-weight:bold; font-size:24px; margin:3px 0px;}\n";
