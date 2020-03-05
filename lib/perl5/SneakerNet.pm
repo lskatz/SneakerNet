@@ -7,6 +7,7 @@ use File::Basename qw/fileparse basename dirname/;
 use Config::Simple;
 use Data::Dumper;
 use Carp qw/croak confess carp/;
+use Cwd qw/realpath/;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
@@ -16,7 +17,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.4';
+our $VERSION = '0.8.5';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -394,11 +395,27 @@ sub readProperties{
   my($runDir, $settings) = @_;
   my %prop = ();
   my $propertiesFile = "$runDir/SneakerNet/properties.txt";
-  open(my $fh, '<', $propertiesFile) or croak "ERROR reading $propertiesFile: $!";
-  my $header = <$fh>;
+  open(my $fh, "tac $propertiesFile | ") or croak "ERROR reading $propertiesFile: $!";
+  #my $header = <$fh>;
   while(my $line = <$fh>){
     chomp($line);
     my($plugin, $key, $value) = split(/\t/, $line);
+    next if($plugin =~ /^plugin$/i); # skip the header
+
+    next if(defined $prop{$plugin}{$key});
+    if($key =~ /table/i){
+      my $path = $value;
+      if(!-f $path){
+        $path = "$runDir/SneakerNet/forEmail/".basename($value);
+      }
+      if(!-f $path){
+        die "ERROR ($plugin): value for table was given as $value but it was not found";
+      }
+      $path = File::Spec->rel2abs($path);
+
+      $value = realpath($path);
+      logmsg $value;
+    }
     $prop{$plugin}{$key} = $value;
   }
 

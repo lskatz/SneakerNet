@@ -10,12 +10,13 @@ use File::Temp qw/tempdir/;
 use File::Spec;
 use Cwd qw/realpath/;
 use POSIX qw/strftime/;
+use List::Util qw/min max/;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "1.11";
+our $VERSION = "2.0";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -38,9 +39,18 @@ sub main{
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/forEmail";
 
+  # Make the summary table before writing properties
+  # so that it can get encoded with the rest of the 
+  # tables in the html.
+  my $file = "$dir/SneakerNet/forEmail/QC_summary.tsv";
+  makeSummaryTable($file, $dir, $settings);
+
+  my $pathFromDir = File::Spec->abs2rel(realpath($file), realpath($dir));
+
   # Special to this plugin: record any properties before
   # reading the properties.
   recordProperties($dir,{
+    table => $pathFromDir,
     version=>$VERSION,
     date=>strftime("%Y-%m-%d", localtime()),
     time=>strftime("%H:%M:%S", localtime()),
@@ -53,26 +63,37 @@ sub main{
   $html .= htmlHeaders();
   $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
   $html .= "<p class='genericInfo'><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
-  #$html .= "<H2>Table of Contents</H2>\n";
-  #$html .= "<ul>\n";
-  #for my $plugin(sort keys(%$properties)){
-  #  $html .= "<li><a href='#plugin-$plugin'>$plugin</a> v$$properties{$plugin}{version}</li>\n"; # TODO add version here too
-  #}
-  #$html .= "</ul>\n";
 
-  # Icons
-  # https://www.iconfinder.com/icons/1276876/card_misc_notes_icon
-  #my $documentationBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAElSURBVDhPpZLPSsNAEMa/2Si2vSmCCknaLYLXXvsM3kTfRPDSRyiC4MX38JInEB+h2JKkVU96ErHBpuPudihiCKbtD8L8yfLlm81gU8j3/b0a1xpSV2L4MnyWFKR9fUfEH1L/CwFHUHw7StMH12gHrb5LKnIc6nPzXEgJJXFttiRCa31AOV9JWYAUolGSRAB3ZnN02mGr6xG9LwXiOH47CYLycXYa7p4YGGwrjBXn9xm83m8H+985X0pZgLLMfB0Rgb6MyHQwmbwaF9OVHRTY5C8YB9ekm2YPmD+J0bRNJqQ2lmH24FAp3DwlyaMTCMNwt85cn5N3at/by1kcLcfOb6MVcA3L3wWpgnMguRMwA3SNicWKVoDBZ0sBy6oOzLxjSdcF+AFbkmBu6BBUlwAAAABJRU5ErkJggg==';
-  # https://www.iconfinder.com/icons/107161/circle_github_icon
-  #my $githubBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEhSURBVDhPldLNKkVRGIfxF4WOjzIQnRIZGxkYKBOUDI9yBybcgGSkFCamlPsQJkZKbkDkBoiUr3wMeJ619xYnp+x//fZe79te5+y91oo887jEGnptNEg/1nGFmo0mL2QPC9kwnrCJa/TYIPeoYhkVG2QHS9kw4hifJR0hmr2Q4lfL5HuO3//XP/xHWoezH42yTl3EN7TmDRfmEB/oQjfMQ87nZrAI574jXuFkt8cMYy4b/oqfOpQNYwvOebG4yIsRC1J80kSqskzB3kmqIkZhfe4u+MqmLb931t1NR929ePbAyyAe4eEx41hBscWmBasYS1XENlyTgVSRadzBdfC4NoqncQO3mLRRHGXTB1d3Fh4S38oFNu1wV56xj13cRER8AYj4WxD5sLxiAAAAAElFTkSuQmCC';
+  my @sortedPluginName = sort{
+                        if($a eq basename($0)){
+                          return -1;
+                        }
+                        elsif($b eq basename($0)){
+                          return 1;
+                        }
+                        $a cmp $b;
+                        } keys(%$properties);
 
-  for my $plugin(sort keys(%$properties)){
+  for my $plugin(@sortedPluginName){
     my $inputID = "menu-$plugin";
        $inputID =~s/\.+/-/g;
+
+    # HTML attribute: should the checkbox be checked?
+    # If so, the splash div will be open.
+    my $checked = "";
+    if($plugin eq basename($0)){
+      $checked = 'checked';
+    }
+    my $version = $$properties{$plugin}{version};
+    if(!$version){
+      logmsg "WARNING: no version found for plugin $plugin. Setting to version '-1'";
+      $version = -1;
+    }
+
     $html .= "<div class='pluginSplash'>\n";
-    $html .= "<input type='checkbox' class='collapsible' id='$inputID' />\n";
+    $html .= "<input type='checkbox' class='collapsible' id='$inputID' $checked></input>\n";
     $html .= "<label class='collapsible' for='$inputID'>";
-    $html .= "  $plugin v$$properties{$plugin}{version}";
+    $html .= "  $plugin v$version";
     $html .= "</label>\n";
     $html .= "<div class='pluginContent'>\n";
     $html .= report($dir, $plugin, $properties, $settings);
@@ -96,6 +117,69 @@ sub main{
   logmsg "Report can be found in $outfile";
 
   return 0;
+}
+
+sub makeSummaryTable{
+  my($outfile, $dir, $settings) = @_;
+
+  # Gather some information
+  my $sample   = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
+  my $passfail = passfail($dir, $settings);
+  # Also add in contamination detection
+  open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
+  my $header = <$krakenFh>;
+  chomp($header);
+  my @header = split(/\t/, $header);
+  while(<$krakenFh>){
+    chomp;
+    my @F = split(/\t/, $_);
+    my %F;
+    @F{@header} = @F;
+    $F{PERCENTAGE_CONTAMINANT} //= 0;
+
+    if($F{PERCENTAGE_CONTAMINANT} > 10){
+      $$passfail{$F{NAME}}{kraken}=1;
+    }
+  }
+  close $krakenFh;
+
+  my $happiness = $$settings{happiness_range};
+  if(!$happiness){
+    my @default = ('&#128512;', '&#128556;', '&#128561;');
+    logmsg "WARNING: happiness_range was not set in settings.conf. Creating a default of @default";
+    $happiness = \@default;
+  }
+  # Any knock on the perfection of a genome gets this penalty
+  my $penalty = 1/scalar(@$happiness) * 100;
+
+  open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
+  print $fh join("\t", qw(sample emoji score failure_code))."\n";
+  while(my($sampleName, $s) = each(%$sample)){
+    my $score = 100;
+    my $emojiIdx= 0;
+    my @failure_code;
+    my $failures = $$passfail{$sampleName};
+    die "ERROR: sn_passfail.pl was not run on sample $sampleName" if(!$failures);
+    while(my($failure_code, $is_failure) = each(%$failures)){
+      if($is_failure){
+        $score = $score - $penalty;
+        $emojiIdx++;
+        push(@failure_code, $failure_code);
+      }
+    }
+
+    $score = sprintf("%0.0f", $score); # round
+    $score = max($score, 0); # can't go negative on score
+    
+    # The emoji index is at most the last element of the emojis
+    $emojiIdx = min($emojiIdx, scalar(@$happiness)-1);
+    my $emoji = $$happiness[$emojiIdx];
+    
+    @failure_code = ("None") if(!@failure_code);
+    print $fh join("\t", $sampleName, $emoji, $score, join(", ", @failure_code))."\n";
+  }
+  print $fh "# Score is out of 100\n";
+  close $fh;
 }
 
 sub report{
