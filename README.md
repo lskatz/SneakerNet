@@ -23,7 +23,7 @@ the dependencies section under the [installation document](docs/INSTALL.md).
 
 ### Creating a SneakerNet project directory
 
-_For more information on a SneakerNet-style folder, see [docs/SneakerNetInput.md](../docs/SneakerNetInput.md)_
+_For more information on a SneakerNet-style folder, see [docs/SneakerNetInput.md](docs/SneakerNetInput.md)_
 
 SneakerNet requires a project directory that is in a certain format already.
 To create the project, you can use `SneakerNet.ro.pl`.  For example,
