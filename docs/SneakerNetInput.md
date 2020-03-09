@@ -32,18 +32,13 @@ Workflows are further described in [config/plugins.conf](PLUGINS.md).
 
 ## Optional
 
-### CompletedJobInfo.xml
+These files are found in the Illumina run directory although they are optional.
 
-### config.xml
-
-
-### QC/CompletedJobInfo.xml
-
-### QC/GenerateFASTQRunStatistics.xml
-
-### QC/RunInfo.xml
-
-### QC/runParameters.xml
-
-### QC/InterOp/
+* CompletedJobInfo.xml
+* config.xml
+* QC/CompletedJobInfo.xml
+* QC/GenerateFASTQRunStatistics.xml
+* QC/RunInfo.xml
+* QC/runParameters.xml
+* QC/InterOp/ - this directory contains other files from the default Illumina run directory
 
