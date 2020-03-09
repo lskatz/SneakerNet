@@ -17,7 +17,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.6';
+our $VERSION = '0.8.8';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -168,6 +168,7 @@ sub samplesheetInfo_tsv{
     my $explicitTaxon = $sample{$sampleName}{taxon};
     my $guessedTaxons = $speciesSuggestion{$sampleName} || [];
     my @taxonGuess = ($explicitTaxon, @$guessedTaxons);
+    @taxonGuess    = ((grep {!/^unknown$/i} @taxonGuess), 'UNKNOWN');
     # Loop through the different taxa guesses, starting with
     # what was explicitly given
     for my $taxon(@taxonGuess){
@@ -176,6 +177,7 @@ sub samplesheetInfo_tsv{
         # This is the right taxon if we have rules associated with it
         if(defined($possibleRules) && scalar(keys(%$possibleRules))>1){
           $sample{$sampleName}{taxonRules}=$possibleRules;
+          $sample{$sampleName}{taxon} = $taxon;
           # If we give it taxon rules, then we're done going through different taxon guesses
           last;
         }

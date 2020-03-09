@@ -199,6 +199,7 @@ sub makeSummaryTable{
     
     @failure_code = ("None") if(!@failure_code);
     push(@tableRow, [$sampleName, $emoji, $score, join(", ", @failure_code),$qual, $cov, $$s{taxon}]);
+
   }
   my @sortedRow = sort{$$a[2] <=> $$b[2] || $$a[0] cmp $$b[0]} @tableRow;
 
