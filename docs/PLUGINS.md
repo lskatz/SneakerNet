@@ -13,6 +13,8 @@ They help resolve dependencies like ensuring that genome assemblies
 are present before analyzed or enforcing that a report is generated only
 after all plugins have created their outputs.
 
+Workflows are defined in [plugins.conf](../config.bak/plugins.conf).
+
 ## Default
 
 This workflow runs most plugins and assumes that you have some flavor
