@@ -16,7 +16,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "2.0";
+our $VERSION = "2.1";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -54,6 +54,7 @@ sub main{
     version=>$VERSION,
     date=>strftime("%Y-%m-%d", localtime()),
     time=>strftime("%H:%M:%S", localtime()),
+    fullpath=>realpath($dir).'/SneakerNet',
   });
 
   my $properties = readProperties($dir);
@@ -108,7 +109,7 @@ sub main{
     $html .= "</div>\n"; # end div pluginContent
     $html .= "</div>\n"; # end div pluginSplash
   }
-  $html .= htmlFooters();
+  $html .= htmlFooters($dir,$settings);
 
   my $outfile = "$dir/SneakerNet/forEmail/report.html";
   open(my $fh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
@@ -143,17 +144,16 @@ sub makeSummaryTable{
   }
   close $krakenFh;
 
-  my $happiness = $$settings{happiness_range};
-  if(!$happiness){
-    my @default = ('&#128512;', '&#128556;', '&#128561;');
+  my $happiness = $$settings{happiness_range} || [];
+  if(ref($happiness) ne 'ARRAY' || !@$happiness){
+    my @default = ('&#128515;', '&#128556;', '&#128561;');
     logmsg "WARNING: happiness_range was not set in settings.conf. Creating a default of @default";
     $happiness = \@default;
   }
   # Any knock on the perfection of a genome gets this penalty
   my $penalty = 1/scalar(@$happiness) * 100;
 
-  open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
-  print $fh join("\t", qw(sample emoji score failure_code))."\n";
+  my @tableRow; # to be sorted
   while(my($sampleName, $s) = each(%$sample)){
     my $score = 100;
     my $emojiIdx= 0;
@@ -176,9 +176,17 @@ sub makeSummaryTable{
     my $emoji = $$happiness[$emojiIdx];
     
     @failure_code = ("None") if(!@failure_code);
-    print $fh join("\t", $sampleName, $emoji, $score, join(", ", @failure_code))."\n";
+    push(@tableRow, [$sampleName, $emoji, $score, join(", ", @failure_code)]);
   }
-  print $fh "# Score is out of 100\n";
+  my @sortedRow = sort{$$a[2] <=> $$b[2] || $$a[0] cmp $$b[0]} @tableRow;
+
+  # Write the summary table
+  open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
+  print $fh join("\t", qw(sample emoji score failure_code))."\n";
+  for my $row(@sortedRow){
+    print $fh join("\t", @$row)."\n";
+  }
+  print $fh "# Scores start at 100 percent and receive a 33 percent penalty for each: low coverage, low quality, or high contamination in the Kraken report.\n";
   close $fh;
 }
 
@@ -289,19 +297,21 @@ sub genericHtml{
 sub htmlHeaders{
   my($settings)=@_;
   my $html = "";
-  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">'."\n";
   #$html .= "<!DOCTYPE PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN' >\n";
 
   # Images encoded from https://www.iconfinder.com
   my $menuBase64 = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjwhRE9DVFlQRSBzdmcgIFBVQkxJQyAnLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4nICAnaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkJz48c3ZnIGhlaWdodD0iMzJweCIgaWQ9IkxheWVyXzEiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMyIDMyOyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIzMnB4IiB4bWw6c3BhY2U9InByZXNlcnZlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48cGF0aCBkPSJNNCwxMGgyNGMxLjEwNCwwLDItMC44OTYsMi0ycy0wLjg5Ni0yLTItMkg0QzIuODk2LDYsMiw2Ljg5NiwyLDhTMi44OTYsMTAsNCwxMHogTTI4LDE0SDRjLTEuMTA0LDAtMiwwLjg5Ni0yLDIgIHMwLjg5NiwyLDIsMmgyNGMxLjEwNCwwLDItMC44OTYsMi0yUzI5LjEwNCwxNCwyOCwxNHogTTI4LDIySDRjLTEuMTA0LDAtMiwwLjg5Ni0yLDJzMC44OTYsMiwyLDJoMjRjMS4xMDQsMCwyLTAuODk2LDItMiAgUzI5LjEwNCwyMiwyOCwyMnoiLz48L3N2Zz4=';
   my $closedMenuBase64 = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgZmlsbD0ibm9uZSIgaGVpZ2h0PSIyNCIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjE4IiB4Mj0iNiIgeTE9IjYiIHkyPSIxOCIvPjxsaW5lIHgxPSI2IiB4Mj0iMTgiIHkxPSI2IiB5Mj0iMTgiLz48L3N2Zz4=';
 
-  $html .= "<html><head><title>SneakerNet report</title>\n";
+  $html .= "<html>\n<head><title>SneakerNet report</title>\n";
+
+  # meta tags are in head
+  $html.='<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">'."\n";
+  # https://purecss.io/start/#add-the-viewport-meta-element
+  $html.='<meta name="viewport" content="width=device-width, initial-scale=1">'."\n";
 
   $html .= "<!-- Favicon image credit: shoe print by John Winowiecki from the Noun Project -->\n";
   $html .= "<link rel='icon' href='data:image/gif;base64,R0lGODlhDQAQAPUsAAAAAAEBAQICAgMDAw4ODhcXFx4eHi8vLzIyMjQ0NDo6OkZGRklJSU9PT1FRUVhYWFpaWmRkZGVlZWlpaXNzc4KCgoWFhYaGhpOTk5aWlp6enqCgoL6+vsLCwsfHx83NzdbW1t/f3+np6erq6uvr6+zs7O3t7fHx8fPz8/f39/v7+/7+/v///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAAAAAAALAAAAAANABAAAAZMQJaQZaI8PsOkMDMAMFBKocoBABA6URZKUQVksqlFt5JlWbqWMshQ3ZSnVk+ZpXlMRuWRIxGBZkEFAAd4WSMIABEqcxwWIXOPkJFCQQA7'>\n";
-
-  #$html .= "<link id='favicon' rel='icon' type='text/plain' href='data:,...' />\n";
 
   $html .= "<style>\n";
   $html .= "h1    {font-weight:bold; font-size:24px; margin:3px 0px;}\n";
@@ -361,11 +371,15 @@ sub htmlHeaders{
 }
 
 sub htmlFooters{
-  my($settings)=@_;
+  my($dir,$settings)=@_;
+
+  my $realpath = realpath($dir);
+  my $snPath   = $realpath . '/SneakerNet';
 
   my $html = "";
 
   $html .= "<p>For more information, see <a href='https://github.com/lskatz/SneakerNet'>https://github.com/lskatz/SneakerNet</a></p>\n";
+  $html .= "<p>SneakerNet files can be found in <span style='font-weight:bold'>$snPath</span></p>\n";
   $html .= "</html>\n";
 
   return $html;
