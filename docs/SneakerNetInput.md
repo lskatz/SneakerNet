@@ -2,6 +2,10 @@
 
 ## Required
 
+### \*.fastq.gz
+
+Raw read files, both R1 and R2 if available. Single end raw reads are okay too.
+
 ### samples.tsv
 
 This file can be created from SampleSheet.csv by the plugin [sn_parseSampleSheet.pl](../docs/plugins/sn_parseSampleSheet.pl.md), from `SneakerNet.ro.pl --createsamplesheet`, or manually.
