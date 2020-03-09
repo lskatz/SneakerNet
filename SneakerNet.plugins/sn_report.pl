@@ -143,6 +143,19 @@ sub makeSummaryTable{
     }
   }
   close $krakenFh;
+  
+  # Read the readMetrics file into %readMetrics
+  my %readMetrics = ();
+  open(my $readMetricsFh,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
+  my @rmHeader=split(/\t/,<$readMetricsFh>); chomp(@rmHeader);
+  while(<$readMetricsFh>){
+    chomp;
+    my %F;
+    @F{@rmHeader}=split(/\t/,$_);
+    $F{File} = basename($F{File});
+    $readMetrics{$F{File}} = \%F;
+  }
+  close $readMetricsFh;
 
   my $happiness = $$settings{happiness_range} || [];
   if(ref($happiness) ne 'ARRAY' || !@$happiness){
@@ -174,15 +187,24 @@ sub makeSummaryTable{
     # The emoji index is at most the last element of the emojis
     $emojiIdx = min($emojiIdx, scalar(@$happiness)-1);
     my $emoji = $$happiness[$emojiIdx];
+
+    # Get the coverage and quality
+    my $cov = "";
+    my $qual= "";
+    for my $fastq(@{ $$s{fastq} }){
+      my $f = basename($fastq);
+      $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
+      $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
+    }
     
     @failure_code = ("None") if(!@failure_code);
-    push(@tableRow, [$sampleName, $emoji, $score, join(", ", @failure_code)]);
+    push(@tableRow, [$sampleName, $emoji, $score, join(", ", @failure_code),$qual, $cov, $$s{taxon}]);
   }
   my @sortedRow = sort{$$a[2] <=> $$b[2] || $$a[0] cmp $$b[0]} @tableRow;
 
   # Write the summary table
   open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
-  print $fh join("\t", qw(sample emoji score failure_code))."\n";
+  print $fh join("\t", qw(sample emoji score failure_code qual cov taxon))."\n";
   for my $row(@sortedRow){
     print $fh join("\t", @$row)."\n";
   }
