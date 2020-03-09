@@ -144,6 +144,7 @@ sub emailWhoever{
                           #->html_body(`cat report.html`
 
   for my $file(glob("$dir/SneakerNet/forEmail/*")){
+    next if(!-f $file);
     $email->attach_file($file);
   }
 
