@@ -206,13 +206,17 @@ sub samplesheetInfo{
   while(<SAMPLE>){
     s/^\s+|\s+$//g; # trim whitespace
 
+    # If we see this syntax, then we change $section
     if(/^\[(\w+)\]/){  # [sectionname]
       $section=lc($1);
+      # store into @header the field names
       my $header=<SAMPLE>;
       $header=~s/^\s+|\s+$//g; # trim whitespace
       @header=split(/,/,lc($header));
       next;
     }
+
+    # This is where the data are stored for each sample
     if($section eq "data"){
       my %F;
       @F{@header}=split(/,/,$_);
@@ -224,13 +228,13 @@ sub samplesheetInfo{
         $F{description}="";
       }
 
+      # Get the key/value pairs in that description field.
+      # They are separated by semicolon, and key/values by equals.
       for my $keyvalue(split(/;/,lc($F{description}))){
         my($key,$value)=split(/=/,$keyvalue);
         $value||="";
         $key=~s/^\s+|\s+$//g;      #whitespace trim
         $value=~s/^\s+|\s+$//g;    #whitespace trim
-        #$F{$key}={} if(!$F{$key});
-        #$F{$key}{$value}++;
         if($F{$key}){
           if(ref($F{$key}) ne 'ARRAY'){
             $F{$key}=[$F{$key}];
