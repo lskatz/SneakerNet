@@ -6,6 +6,13 @@
     cd bin
     git clone https://github.com/lskatz/SneakerNet.git
     cd SneakerNet
+    
+    # the following two lines are for local installations
+    cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
+    export PERL5LIB=$PERL5LIB:$HOME/lib/perl5:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi/auto
+    
+    # The following lines are regardless of local or global installation
+    perl Makefile.PL
     make
 
 ## Test the installation
