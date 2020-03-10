@@ -17,7 +17,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.8';
+our $VERSION = '0.8.9';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -72,15 +72,29 @@ sub exitOnSomeSneakernetOptions{
 
     # Run through all execs but die if not present.
     # Prints on stderr
+    my $numNotFound = 0;
     for my $exe(@exe){
-      my $path = fullPathToExec($exe);
+      my $path = eval{fullPathToExec($exe);};
+      if(!defined($path) || !-e $path){
+        logmsg "ERROR: could not find path to $exe";
+        $numNotFound++;
+        next;
+      }
 
       my $ver = 'UNKNOWN VERSION';
       if(my $vcmd = $$properties{$exe}){
         ($ver) = qx($vcmd);
-        $ver or die "ERROR: could not determine version of '$exe' via '$vcmd'";
-        chomp($ver);
-        logmsg "$exe: $ver";
+        if(!$ver){
+          logmsg "ERROR: could not determine version of '$exe' via '$vcmd'";
+          $numNotFound++;
+        } else {
+          chomp($ver);
+          logmsg "$exe: $ver";
+        }
+      }
+
+      if($numNotFound > 0){
+        croak "$numNotFound dependencies were not found.";
       }
     }
 

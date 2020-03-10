@@ -13,6 +13,8 @@ use SneakerNet qw/logmsg readConfig/;
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 
+our $VERSION = 1;
+
 exit(main());
 
 sub main{
@@ -45,6 +47,7 @@ sub main{
   }
 
   # Print dependencies
+  print "DEPENDENCIES THAT WERE CHECKED:\n";
   for my $d(sort keys %dep){
     print "$d\n";
   }
@@ -68,12 +71,15 @@ sub checkWorkflowDependencies{
   my %dep;
   for my $plugin(@$pluginArr){
     my $path = "$pluginsDir/$plugin";
-    my @dep = `$path --check-dependencies 2>/dev/null`;
+    my @dep = `$path --check-dependencies`;
     chomp(@dep);
     for my $d(@dep){
       $dep{$d} = 1;
     }
   }
+
+  # A nice newline before stdout takes over
+  print STDERR "\n";
 
   return \%dep;
 }
