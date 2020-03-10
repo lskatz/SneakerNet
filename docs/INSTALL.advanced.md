@@ -1,4 +1,8 @@
-# Installation
+# Advanced installation
+
+This is an installation method to create a whole system centered
+around cronjobs, logs, etc.
+Only follow this method if you really know what you are doing.
 
 ## As root
 

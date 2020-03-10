@@ -11,8 +11,11 @@ use FindBin;
 use List::Util qw/min max/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 use Bio::Kmer;
+
+our $VERSION = "1.1";
+our $CITATION= "Detect contamination by Lee Katz. Uses Bio::Kmer module for kmer counting.";
 
 # http://perldoc.perl.org/perlop.html#Symbolic-Unary-Operators
 # # +Inf and -Inf will be a binary complement of all zeros
@@ -24,14 +27,21 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force debug tempdir=s numcpus=i)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version citation check-dependencies help force debug tempdir=s numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
 
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/kmerHistogram";
+  mkdir "$dir/forEmail";
   
   my $numFastq=kmerContaminationDetection($dir,$settings);
   
@@ -51,6 +61,8 @@ sub main{
   close $outFh;
 
   logmsg "Kmer histograms were saved to $outfile";
+
+  recordProperties($dir,{version=>$VERSION, table=>$outfile});
 
   return 0;
 }
@@ -212,11 +224,13 @@ sub sparkString{
 
 
 sub usage{
-  "Guesses if there is contamination in a miseq run using kmer magic
+  print "Guesses if there is contamination in a miseq run using kmer magic
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --debug       Just run three random samples
   --force       Overwrite all results
-  "
+  --version
+";
+  exit(0);
 }
 

@@ -3,17 +3,21 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
+#use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
-use Carp qw/croak confess/;
+use Carp qw/croak confess carp/;
+use Cwd qw/realpath/;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo samplesheetInfo_tsv passfail
-  command logmsg fullPathToExec version
+  command logmsg fullPathToExec version recordProperties readProperties
+  exitOnSomeSneakernetOptions
 );
 
+our $VERSION = '0.8.9';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -31,9 +35,73 @@ sub fullPathToExec($;$) {
 	}
   if(! -x $fullpath){
 	  my $errStr="Error finding full path to executable ($executable)";
-    die $errStr;
+    croak $errStr;
   }
 	return $fullpath;
+}
+
+# Takes a hash of executables => `way to check version`
+# Some keys in the hash however are special and have an
+# underscore at the beginning: _CITATION and _VERSION.
+# Exits with 0 if any uses are invoked.
+sub exitOnSomeSneakernetOptions{
+  my($properties, $settings) = @_;
+
+  if($$settings{version}){
+    print $$properties{_VERSION}."\n";
+    exit 0;
+  }
+  if($$settings{citation}){
+    print $$properties{_CITATION}."\n";
+    exit 0;
+  }
+  if($$settings{'check-dependencies'}){
+    
+    logmsg "$0: ".$$properties{_VERSION};
+    my @exe = sort(
+      grep {!/^_/}
+      keys(%$properties)
+    );
+
+    # Print off all executable names before possible errors
+    # down below.
+    # Prints on stdout.
+    for my $exe(@exe){
+      print "$exe\n";
+    }
+
+    # Run through all execs but die if not present.
+    # Prints on stderr
+    my $numNotFound = 0;
+    for my $exe(@exe){
+      my $path = eval{fullPathToExec($exe);};
+      if(!defined($path) || !-e $path){
+        logmsg "ERROR: could not find path to $exe";
+        $numNotFound++;
+        next;
+      }
+
+      my $ver = 'UNKNOWN VERSION';
+      if(my $vcmd = $$properties{$exe}){
+        ($ver) = qx($vcmd);
+        if(!$ver){
+          logmsg "ERROR: could not determine version of '$exe' via '$vcmd'";
+          $numNotFound++;
+        } else {
+          chomp($ver);
+          logmsg "$exe: $ver";
+        }
+      }
+
+      if($numNotFound > 0){
+        croak "$numNotFound dependencies were not found.";
+      }
+    }
+
+    exit(0);
+  }
+
+  return 0;
 }
 
 sub readConfig{
@@ -57,11 +125,36 @@ sub readConfig{
 sub samplesheetInfo_tsv{
   my($samplesheet,$settings)=@_;
 
+  my $runDir = dirname($samplesheet);
+
   # Get possible taxon rules.
   my $config = readConfig();
-  
+
+  # If species have been detected already, load them up.
+  # The kraken folder will be the way we do that for now.
+  my %speciesSuggestion;
+  my $krakenReport = "$runDir/SneakerNet/forEmail/kraken.tsv";
+  if(-e $krakenReport){
+    open(my $fh, '<', $krakenReport) or die "ERROR: could not read from $krakenReport: $!";
+    my $header = <$fh>;
+    chomp($header);
+    my @header = split(/\t/, $header);
+    while(<$fh>){
+      next if(/^#/);
+      chomp;
+      my %F;
+      my @F = split /\t/;
+      @F{@header} = @F;
+      my @suggestions = ($F{BEST_GUESS}, (split(/\s+/, $F{BEST_GUESS}))[0]);
+      $speciesSuggestion{$F{NAME}} = \@suggestions;
+    }
+    close $fh;
+  }
+  # TODO species suggestion from other sources???
+  #print Dumper \%speciesSuggestion;
+
   my %sample;
-  open(my $fh, "<", $samplesheet) or die "ERROR: reading $samplesheet";
+  open(my $fh, "<", $samplesheet) or croak "ERROR: reading $samplesheet";
   while(<$fh>){
     chomp;
     my @F = split /\t/;
@@ -74,6 +167,7 @@ sub samplesheetInfo_tsv{
     };
     for my $rule(split(/;/, $rules)){
       my($key,$value)=split(/=/,$rule);
+      $key=lc($key); # ensure lowercase keys
       my @values = split(/,/,$value);
       if(@values > 1){
         $sample{$sampleName}{$key} = \@values;
@@ -84,10 +178,23 @@ sub samplesheetInfo_tsv{
 
     # Set up the taxon rules if possible
     $sample{$sampleName}{taxonRules}={};
-    if(defined(my $taxon = $sample{$sampleName}{taxon})){
-      my $possibleRules = $$config{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
-      if(defined($possibleRules)){
-        $sample{$sampleName}{taxonRules}=$possibleRules;
+    # Get a few options for the taxon: explicit from the samplesheet or guessed
+    my $explicitTaxon = $sample{$sampleName}{taxon};
+    my $guessedTaxons = $speciesSuggestion{$sampleName} || [];
+    my @taxonGuess = ($explicitTaxon, @$guessedTaxons);
+    @taxonGuess    = ((grep {!/^unknown$/i} @taxonGuess), 'UNKNOWN');
+    # Loop through the different taxa guesses, starting with
+    # what was explicitly given
+    for my $taxon(@taxonGuess){
+      if(defined($taxon) && $taxon ne ""){
+        my $possibleRules = $$config{obj}{"taxonProperties.conf"}->param(-block=>$taxon);
+        # This is the right taxon if we have rules associated with it
+        if(defined($possibleRules) && scalar(keys(%$possibleRules))>1){
+          $sample{$sampleName}{taxonRules}=$possibleRules;
+          $sample{$sampleName}{taxon} = $taxon;
+          # If we give it taxon rules, then we're done going through different taxon guesses
+          last;
+        }
       }
     }
   }
@@ -109,17 +216,21 @@ sub samplesheetInfo{
   my $section="";
   my @header=();
   my %sample;
-  open(SAMPLE,$samplesheet) or die "ERROR: could not open sample spreadsheet $samplesheet: $!";
+  open(SAMPLE,$samplesheet) or croak "ERROR: could not open sample spreadsheet $samplesheet: $!";
   while(<SAMPLE>){
     s/^\s+|\s+$//g; # trim whitespace
 
+    # If we see this syntax, then we change $section
     if(/^\[(\w+)\]/){  # [sectionname]
       $section=lc($1);
+      # store into @header the field names
       my $header=<SAMPLE>;
       $header=~s/^\s+|\s+$//g; # trim whitespace
       @header=split(/,/,lc($header));
       next;
     }
+
+    # This is where the data are stored for each sample
     if($section eq "data"){
       my %F;
       @F{@header}=split(/,/,$_);
@@ -131,13 +242,13 @@ sub samplesheetInfo{
         $F{description}="";
       }
 
+      # Get the key/value pairs in that description field.
+      # They are separated by semicolon, and key/values by equals.
       for my $keyvalue(split(/;/,lc($F{description}))){
         my($key,$value)=split(/=/,$keyvalue);
         $value||="";
         $key=~s/^\s+|\s+$//g;      #whitespace trim
         $value=~s/^\s+|\s+$//g;    #whitespace trim
-        #$F{$key}={} if(!$F{$key});
-        #$F{$key}{$value}++;
         if($F{$key}){
           if(ref($F{$key}) ne 'ARRAY'){
             $F{$key}=[$F{$key}];
@@ -153,14 +264,14 @@ sub samplesheetInfo{
       if(!$F{sample_id}){
         $F{sample_id}=$F{sampleid};
       }
-      die "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
+      croak "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
       my $alignedWith="";
       my %taxonProperties=%{ $$settings{obj}{"taxonProperties.conf"}->vars };
       my @taxa=$$settings{obj}{"taxonProperties.conf"}->get_block;
-      #die Dumper $$settings{obj}{"taxonProperties.conf"}->param(-block=>'Salmonella');
+      #croak Dumper $$settings{obj}{"taxonProperties.conf"}->param(-block=>'Salmonella');
       for my $taxon(@taxa){
         my $taxonRegex=$$settings{obj}{"taxonProperties.conf"}->param("$taxon.regex");
         
@@ -205,6 +316,9 @@ sub samplesheetInfo{
     if(!@possibleFastq){
       logmsg "WARNING: there is a sample $samplename but no files $samplename*.fastq.gz";
     }
+    #for (@possibleFastq){
+    #  $_ = File::Spec->abs2rel($_, dirname($samplesheet));
+    #}
     $sample{$samplename}{fastq}=\@possibleFastq;
     
     # Make some links from file to sample
@@ -223,7 +337,7 @@ sub command{
   my $stdout=`$command`;
   if($?){
     my $msg="ERROR running command\n  $command";
-    confess $msg;
+    croak $msg;
   }
 
   return $stdout;
@@ -239,7 +353,7 @@ sub passfail{
   # or fail values.
   my $passfail="$dir/SneakerNet/forEmail/passfail.tsv";
   my %failure;
-  open(my $passfailFh, $passfail) or die "ERROR: could not read $passfail: $!\n  Please make sure that sn_passfail.pl is run before this script, but after the read metrics script.";
+  open(my $passfailFh, $passfail) or croak "ERROR: could not read $passfail: $!\n  Please make sure that sn_passfail.pl is run before this script, but after the read metrics script.";
   my $header=<$passfailFh>;
   chomp($header);
   my @header=split(/\t/,$header);
@@ -263,27 +377,71 @@ sub passfail{
 
 # Return the version of SneakerNet
 sub version{
-
-  my $codeRepoVer="-1";
-  my $configVer="-1";
-
-  my $cfg = new Config::Simple();
-  if(!$cfg->read("$thisdir/../../config.bak/settings.conf")){
-    logmsg "WARNING: could not read $thisdir/../../config.bak/settings.conf: ".$cfg->error;
-  }
-  $codeRepoVer=$cfg->param("version");
-
-  # See if the code's version matches the custom version
-  my %settings=%{ readConfig() };
-  $configVer=$settings{version} if($settings{version});
-
-  if($configVer ne $codeRepoVer){
-    logmsg "WARNING: the codebase version is reported differently than the configuration. Please review the config folder to update any new options and to update the version number.";
-    logmsg "The current code repository version is $codeRepoVer.  The custom version is $configVer";
-  }
-
-  return $codeRepoVer;
+  return $VERSION;
 }
+
+# Record the plugin version and any other misc things
+# into a run directory.
+# Returns length of string that was written.
+sub recordProperties{
+  my($runDir,$writeHash, $settings)=@_;
+
+  my $propertiesFile = "$runDir/SneakerNet/properties.txt";
+  my $writeString="";
+  if(!-e $propertiesFile || (stat($propertiesFile))[7] == 0){
+    $writeString.=join("\t", qw(plugin key value))."\n";
+  }
+  for my $key(keys(%$writeHash)){
+    if(!defined($$writeHash{$key})){
+      carp "WARNING: in SneakerNet::recordProperties(), key '$key' was not defined";
+      next;
+    }
+    $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";
+  }
+
+  open(my $fh, ">>", $propertiesFile) or croak "ERROR writing to $propertiesFile: $!";
+  print $fh $writeString;
+  close $fh;
+  
+  return length($writeString);
+}
+
+# Read properties, the opposite of recordProperties().
+# Returns a properties hash of hash, where the primary
+# key is the plugin, and each plugin has a hash.
+# Each plugin should have a "version" key/value.
+# E.g., $property{"guessTaxon.pl"}{version} = 1.0
+sub readProperties{
+  my($runDir, $settings) = @_;
+  my %prop = ();
+  my $propertiesFile = "$runDir/SneakerNet/properties.txt";
+  open(my $fh, "tac $propertiesFile | ") or croak "ERROR reading $propertiesFile: $!";
+  #my $header = <$fh>;
+  while(my $line = <$fh>){
+    chomp($line);
+    my($plugin, $key, $value) = split(/\t/, $line);
+    next if($plugin =~ /^plugin$/i); # skip the header
+
+    next if(defined $prop{$plugin}{$key});
+    if($key =~ /table/i){
+      my $path = $value;
+      if(!-f $path){
+        $path = "$runDir/SneakerNet/forEmail/".basename($value);
+      }
+      if(!-f $path){
+        die "ERROR ($plugin): value for table was given as $value but it was not found";
+      }
+      $path = File::Spec->rel2abs($path);
+
+      $value = realpath($path);
+      logmsg $value;
+    }
+    $prop{$plugin}{$key} = $value;
+  }
+
+  return \%prop;
+}
+
 
 1;
 

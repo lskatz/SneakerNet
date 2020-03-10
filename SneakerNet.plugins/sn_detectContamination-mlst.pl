@@ -12,15 +12,26 @@ use FindBin;
 use Bio::SeqIO;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+
+our $VERSION = "1.2";
+our $CITATION= "Contamination detection by Eshaw Vidyaprakash and Lee Katz.  Uses ColorID by Henk den Bakker.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version citation check-dependencies help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      mlst      => 'mlst --version',
+      colorid   => 'colorid --version',
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{k}||=39;
@@ -44,21 +55,32 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/colorid";
-
-  system("which colorid >& /dev/null");
-  if($?){
-    die "ERROR: could not find colorid in your PATH";
-  }
-
-  logmsg "Filtering $$settings{mlstfasta}";
-  my $mlstFasta = readMlstFasta($$settings{mlstfasta}, $settings);
-  
-  logmsg "Running colorid workflow";
-  my $report = mlstColorId($dir, $mlstFasta, $settings);
+  mkdir "$dir/forEmail";
 
   my $finalReport = "$dir/SneakerNet/forEmail/mlst-contamination-detection.tsv";
-  cp($report, $finalReport);
-  logmsg "Report can be found in $finalReport";
+
+  # If the report doesn't exist, then run the workflow
+  if( (!-e $finalReport || !-s $finalReport) || $$settings{force} ){
+    system("which colorid >& /dev/null");
+    if($?){
+      die "ERROR: could not find colorid in your PATH";
+    }
+
+    logmsg "Filtering $$settings{mlstfasta}";
+    my $mlstFasta = readMlstFasta($$settings{mlstfasta}, $settings);
+    
+    logmsg "Running colorid workflow";
+    my $report = mlstColorId($dir, $mlstFasta, $settings);
+
+    cp($report, $finalReport);
+    logmsg "Report can be found in $finalReport";
+
+    recordProperties($dir,{version=>$VERSION, table=>$finalReport});
+  } 
+  # If the report does exist, then just say so
+  else {
+    logmsg "Found the report at $finalReport. Skipping analysis.";
+  }
 
   return 0;
 }
@@ -117,7 +139,13 @@ sub mlstColorId{
     $ENV{RUST_BACKTRACE}=1;
     logmsg "colorid build => $indexPrefix.bxi";
     system("colorid build -b $coloridDir/tmp -s 30000000 -n 2 -k $$settings{k} -t $$settings{numcpus} -r $peTxt 2> $coloridDir/build.log 1>&2");
-    die "ERROR with colorid build. Here is the log:\n".`cat $coloridDir/build.log` if $?;
+    if($?){
+      warn "ERROR with colorid build. Here is the log:\n".`cat $coloridDir/build.log`;
+      # For right now while this script is buggy, don't die on error so
+      # that the rest of sneakernet can continue.
+      warn "This script is exiting with 0 so that it does not hold up SneakerNet\n";
+      exit 0;
+    }
     mv("$coloridDir/tmp.bxi","$indexPrefix.bxi") or die "ERROR moving $coloridDir/tmp.bxi => $indexPrefix.bxi: $!";
   }
 
@@ -143,12 +171,18 @@ sub mlstColorId{
       $locus  = $2;
       $allele = $3;
     } else {
-      die "ERROR: could not parse scheme/locus/allele from $schemeLocusAllele";
+      logmsg "WARNING: could not parse scheme/locus/allele from $schemeLocusAllele. Should be in the form of scheme.locus-allele";
+      next;
     }
     push(@{ $allele{$sample}{$scheme}{$locus} }, $allele);
     $locusIndex{$locus}=1;
   }
   close $hitsFh;
+
+  # Sanity check on whether there are any reference alleles
+  if(!keys(%allele)){
+    die "ERROR: no reference alleles were found";
+  }
 
   # Are there any loci on any samples with multiple alleles?
   my $contaminationReport = "$coloridDir/colorid.tsv";
@@ -196,7 +230,7 @@ sub mlstColorId{
 }
 
 sub usage{
-  "Guesses if there is contamination in a miseq run by detecting how many alleles of 7-gene MLST genes there are
+  print "Guesses if there is contamination in a miseq run by detecting how many alleles of 7-gene MLST genes there are
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --mlstfasta mlst.fa  The mlst.fa file in Torsten's mlst package
@@ -204,6 +238,8 @@ sub usage{
                        to where the mlst executable is.
   --k   kmer length
   --quality            Minimum quality for bp
-  "
+  --version
+";
+  exit(0);
 }
 

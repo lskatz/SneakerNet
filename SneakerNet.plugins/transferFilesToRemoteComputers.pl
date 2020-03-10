@@ -9,9 +9,13 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp;
 use FindBin;
 use List::Util qw/sum/;
+use POSIX qw/strftime/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg passfail/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
+
+our $VERSION = "1.6";
+our $CITATION= "Transfer files to remote computer plugin by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -20,8 +24,16 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help inbox=s debug force force-transfer numcpus=i)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version citation check-dependencies tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      rsync     => 'rsync --version | grep version',
+      ssh       => 'ssh -V 2>&1',
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
@@ -43,17 +55,33 @@ sub main{
   $pid||=0;
   $pid+=0;
   
-  if($pid > 0 && !$$settings{force}){
-    die "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
+  my $numTries=0;
+  while($pid > 0 && !$$settings{force}){
+    logmsg "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
+    logmsg "I will sleep 1 minute to try again.  Delete $remotePid on remote computer to avoid this warning.";
+    sleep 60;
+    $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
+
+    $numTries++;
+    if($numTries > 10){
+      logmsg "Gave up after $numTries tries. I'll continue the transfer anyway, and I'll remove $url:$remotePid.";
+      command("ssh -q $username\@$url rm -vf $remotePid");
+    }
   }
 
   # Make the pid file
-  command("ssh -q $username\@$url 'mkdir $remotePath/.SneakerNet; echo $$ > $remotePid'");
+  command("ssh -q $username\@$url 'mkdir -pv $remotePath/.SneakerNet; echo $$ > $remotePid'");
 
   transferFilesToRemoteComputers($dir,$settings);
 
   # Remove the remote pid file
-  command("ssh -q $username\@$url rm $remotePid");
+  command("ssh -q $username\@$url rm -vf $remotePid");
+
+  recordProperties($dir,{
+    version=>$VERSION,
+    dateSent=>strftime("%Y-%m-%d", localtime()),
+    timeSent=>strftime("%H:%M:%S", localtime()),
+  });
 
   return 0;
 }
@@ -69,34 +97,40 @@ sub transferFilesToRemoteComputers{
   
   # Which files should be transferred?
   my %filesToTransfer=(); # hash keys are species names
+  SAMPLE:
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
+
+    # Find the taxon
     my $taxon=$$s{species} || $$s{taxon} || 'NOT LISTED';
     logmsg "The taxon of $sampleName is $taxon";
     my @route = (ref($$s{route}) eq 'ARRAY')?@{$$s{route}}:($$s{route});
-    if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
-      FASTQ: for my $fastq(@{ $$s{fastq} }){
-        # Write out the status
-        # The key of each filename is its basename
-        my $f=basename($fastq);
 
-        for my $reason(keys(%{ $$passfail{$f} })){
-          if($$passfail{$f}{$reason} == 1){
-            logmsg "Failed $f because $reason";
-            next FASTQ;
-          }
+    # If we are transferring...
+    if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
+      # if this sample fails at all, then NEXT!
+      for my $reason(keys(%{ $$passfail{$sampleName} })){
+        if($$passfail{$sampleName}{$reason} == 1){
+          logmsg "Failed $sampleName because $reason";
+          next SAMPLE;
         }
-        # low-priority TODO: use ssh to see if subfolder exists
-        my $subfolder=$$s{taxonRules}{dest_subfolder};
-        if(!defined $$s{taxonRules}{dest_subfolder}){
-          if($$s{catchall_subfolder}){
-            $subfolder=$$s{catchall_subfolder};
-          } else {
-            $subfolder="SneakerNet";
-          }
-        }
-        $filesToTransfer{$subfolder}.=$fastq." ";
       }
+
+      # Where does this sample get transferred?
+      my $subfolder=$$s{taxonRules}{dest_subfolder};
+      if(!defined $$s{taxonRules}{dest_subfolder}){
+        if($$s{catchall_subfolder}){
+          $subfolder=$$s{catchall_subfolder};
+        } else {
+          $subfolder="SneakerNet";
+        }
+      }
+
+      # Add on these fastq files for transfer
+      for my $fastq(@{ $$s{fastq} }){
+        $filesToTransfer{$subfolder} .= "$fastq ";
+      }
+
       logmsg "One route for sample $sampleName is the Calculation Engine";
     } else {
       logmsg "Note: The route for $sampleName was not listed in the sample sheet.";
@@ -122,12 +156,14 @@ sub transferFilesToRemoteComputers{
 }
 
 sub usage{
-  "Find all reads directories under the inbox
+  print "Find all reads directories under the inbox
   Usage: $0 MiSeq_run_dir
   --debug            No files will actually be transferred
   --force            Ignore some warnings
   --force-transfer   Transfer the reads despite the routing
                      entry in the spreadsheet.
-  "
+  --version
+";
+  exit(0);
 }
 

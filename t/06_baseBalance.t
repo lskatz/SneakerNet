@@ -21,7 +21,7 @@ my $basebalance = "$run/SneakerNet/forEmail/basebalance.tsv";
 
 # Double check results
 subtest "Expected base balance results from $basebalance" => sub {
-  plan tests => 12;
+  plan tests => 16;
   my %AT = (
     "Philadelphia_CDC_1.fastq.gz" => 0.94,
     "Philadelphia_CDC_2.fastq.gz" => 0.94,
@@ -29,6 +29,8 @@ subtest "Expected base balance results from $basebalance" => sub {
     "2010EL-1786_2.fastq.gz"      => 1.01,
     "FA1090_1.fastq.gz"           => 0.91,
     "FA1090_2.fastq.gz"           => 0.91,
+    "contaminated_1.fastq.gz"     => 1.15,
+    "contaminated_2.fastq.gz"     => 1.15,
   );
   my %GC = (
     "Philadelphia_CDC_1.fastq.gz" => 1.12,
@@ -37,6 +39,8 @@ subtest "Expected base balance results from $basebalance" => sub {
     "2010EL-1786_2.fastq.gz"      => 0.97,
     "FA1090_1.fastq.gz"           => 1.06,
     "FA1090_2.fastq.gz"           => 1.06,
+    "contaminated_1.fastq.gz"     => 1.07,
+    "contaminated_2.fastq.gz"     => 1.09,
   );
 
   open(my $fh, $basebalance) or die "ERROR reading base balance file $basebalance: $!";
@@ -47,8 +51,10 @@ subtest "Expected base balance results from $basebalance" => sub {
     
     next if(!$AT || !$AT{$file});
 
-    ok $AT==$AT{$file}, "AT percentage for $file";
-    ok $GC==$GC{$file}, "GC percentage for $file";
+    is sprintf("%0.2f",$AT), sprintf("%0.2f", $AT{$file}), "AT percentage for $file";
+    is sprintf("%0.2f",$GC), sprintf("%0.2f", $GC{$file}), "GC percentage for $file";
+    #ok $AT==$AT{$file}, "AT percentage for $file";
+    #ok $GC==$GC{$file}, "GC percentage for $file";
   }
   close $fh;
 };

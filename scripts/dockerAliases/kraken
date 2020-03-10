@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run staphb/kraken:1.1.1 kraken $@

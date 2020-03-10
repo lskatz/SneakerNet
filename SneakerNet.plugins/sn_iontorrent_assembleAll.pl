@@ -16,20 +16,39 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+
+our $VERSION = "1.2";
+our $CITATION= "Ion torrent assembly plugin by Lee Katz. Uses SPAdes and Prodigal.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help tempdir=s debug numcpus=i force)) or die $!;
+  GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      'run_assembly_filterContigs.pl' => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
+      'spades.py'                     => 'spades.py --version 2>&1',
+      'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+      cat                             => 'cat --version | head -n 1',
+      sort                            => 'sort --version | head -n 1',
+      head                            => 'head --version | head -n 1',
+      uniq                            => 'uniq --version | head -n 1',
+      touch                           => 'touch --version | head -n 1',
+    }, $settings,
+  );
+
   die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
 
   # Check for required executables
   for (qw(spades.py prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
@@ -41,6 +60,8 @@ sub main{
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
 
+  recordProperties($dir,{version=>$VERSION,table=>$metricsOut});
+
   return 0;
 }
 
@@ -51,10 +72,11 @@ sub assembleAll{
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
+    logmsg "ASSEMBLE SAMPLE $sample";
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
-    my $outassembly="$outdir/$sample.skesa.fasta";
-    my $outgbk="$outdir/$sample.skesa.gbk";
+    my $outassembly="$outdir/$sample.spades.fasta";
+    my $outgbk="$outdir/$sample.spades.gbk";
     #my $outassembly="$outdir/$sample.megahit.fasta";
     #my $outgbk="$outdir/$sample.megahit.gbk";
 
@@ -71,10 +93,12 @@ sub assembleAll{
     }
 
     # Genome annotation
+    logmsg "PREDICT SAMPLE GENES $sample";
     if(!-e $outgbk){
       my $gbk=annotateFasta($sample,$outassembly,$settings);
       cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
     }
+
   }
   
   # run assembly metrics with min contig size=0.5kb
@@ -82,7 +106,7 @@ sub assembleAll{
   logmsg "Running metrics on the genbank files at $metricsOut";
 
   my @thr;
-  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.skesa.gbk"));
+  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.spades.gbk"));
   for(0..$$settings{numcpus}-1){
     $thr[$_]=threads->new(\&predictionMetricsWorker,$Q,$settings);
     $Q->enqueue(undef);
@@ -179,6 +203,16 @@ sub assembleSample{
     die "ERROR: could not find fastq for $sample ($fastq): file does not exist but it was listed for this sample.";
   }
 
+  # Dealing with a small file size
+  if((stat($fastq))[7] < 1000){
+    if($$settings{force}){
+      logmsg "Fastq file is tiny, but forcing because of --force.";
+    } else {
+      logmsg "Fastq file is too tiny. Skipping. Force with --force.";
+      return "";
+    }
+  }
+
   logmsg "Assembling $sample";
 
   my $outdir="$$settings{tempdir}/$sample";
@@ -193,7 +227,13 @@ sub assembleSample{
   my $cleanedReads = "$$settings{tempdir}/cleaned.fastq.gz";
   command("run_assembly_trimClean.pl --numcpus $numcpus --min_quality 23 --bases_to_trim 400 --min_length 100 -p 1 --nosingletons -i $fastq -o $cleanedReads");
 
-  command("spades.py -s $cleanedReads --iontorrent --careful --sc --threads $numcpus -o $outdir");
+  eval{
+    command("spades.py -s $cleanedReads --iontorrent --careful --sc --threads $numcpus -o $outdir");
+  };
+  if($@){
+    logmsg "SPAdes failed!\n$@";
+    return "";
+  }
 
   return "$outdir/scaffolds.fasta";
 }
@@ -203,10 +243,13 @@ sub assembleSample{
 sub annotateFasta{
   my($sample,$assembly,$settings)=@_;
 
+  # Ensure a clean slate
   my $outdir="$$settings{tempdir}/$sample/prodigal";
   system("rm -rf $outdir");
+
   mkdir "$$settings{tempdir}/$sample";
   mkdir $outdir;
+
   my $outgff="$outdir/prodigal.gff";
   my $outgbk="$outdir/prodigal.gbk";
 
@@ -249,9 +292,11 @@ sub annotateFasta{
 }
 
 sub usage{
-  "Assemble all genomes
+  print "Assemble all genomes
   Usage: $0 MiSeq_run_dir
   --numcpus 1
-  "
+  --version
+";
+  exit(0);
 }
 

@@ -13,7 +13,10 @@ use FindBin;
 use Config::Simple;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
+
+our $VERSION = "1.1";
+our $CITATION= "Sample sheet parsing by Lee Katz";
 
 my $snVersion=version();
 
@@ -22,8 +25,14 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s force)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(citation check-dependencies version help numcpus=i debug tempdir=s force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   # We have to know if the argument is a directory or file, and so
@@ -36,6 +45,11 @@ sub main{
   my $samplesheet = "";
   if(-d $ARGV[0]){
     $outfile = "$ARGV[0]/samples.tsv";
+    if(-e $outfile && !$$settings{'force'}){
+      logmsg "Found $outfile.  Not reparsing without --force.";
+      return 0;
+    }
+
     $samplesheet = findSampleSheet($ARGV[0], $settings);
   } else {
     $samplesheet = $ARGV[0];
@@ -56,6 +70,9 @@ sub main{
       logmsg "Wrote samples file to $outfile";
     }
   }
+
+  recordProperties($ARGV[0],{version=>$VERSION,samples=>$outfile});
+
   return 0;
 }
 
@@ -149,7 +166,7 @@ sub sampleHashToTsv{
 }
 
 sub usage{
-  "Reformat a SampleSheet.csv file in a SneakerNet run
+  print "Reformat a SampleSheet.csv file in a SneakerNet run
   Usage: $0 run-dir|SampleSheet.csv
   
   Because this is a SneakerNet plugin, the first positional
@@ -160,5 +177,6 @@ sub usage{
   OUTPUT: this script will print the new samplesheet to 
   stdout but if the first argument is a directory, it
   will place the file into the directory.
-  "
+"; 
+  exit(0);
 }

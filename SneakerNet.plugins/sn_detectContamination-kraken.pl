@@ -13,32 +13,51 @@ use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+
+our $VERSION = "2.2";
+our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
 my $tmpSettings=readConfig();
-my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
-my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
-$ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
+#my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
+#my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
+#$ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help debug tempdir=s numcpus=i force)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(minpercent|min_percent|min-percent=f version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      zip       => 'zip --version | grep "This is Zip"',
+      kraken    => 'kraken --version | grep -m 1 version',
+      'kraken-translate' => 'kraken-translate --version | grep -m 1 version',
+      'kraken-report'    => 'kraken-report --version | grep -m 1 version',
+      'ktImportText'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
-  $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings";
+  $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings.conf";
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
+  $$settings{minpercent} ||= 25;
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
+  mkdir "$dir/SneakerNet/kraken";
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
   # make the report emailable 
   cp("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
-  command("cd $dir/SneakerNet/forEmail && zip -v kraken.zip *.kraken.html && rm -v *.kraken.html");
+  #command("cd $dir/SneakerNet/forEmail && zip -v9 kraken.zip *.kraken.html && rm -v *.kraken.html");
+
+  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},table=>"$dir/SneakerNet/forEmail/kraken.tsv"});
 
   return 0;
 }
@@ -52,6 +71,12 @@ sub runKrakenOnDir{
 
   my %filesToTransfer=(); # hash keys are species names
   my @report; # reporting contamination in an array, in case I want to sort it later
+  push(@report, join("\t", qw(
+    NAME LABELED_TAXON 
+    BEST_GUESS PERCENTAGE_OF_GENOME_IS_BEST_GUESS 
+    RANK
+    MAJOR_CONTAMINANT PERCENTAGE_CONTAMINANT
+  )));
   while(my($sampleName,$s)=each(%$sampleInfo)){
     next if(ref($s) ne 'HASH'); # avoid file=>name aliases
 
@@ -75,17 +100,26 @@ sub runKrakenOnDir{
     }
 
     my $expectedSpecies=$$s{species} || $$s{taxon} || "UNKNOWN";
-    #my ($percentContaminated,$html,$bestGuess)=reportContamination($sampledir,$expectedSpecies,$settings);
-    my($percentTaxon,$html,$bestGuess)=guessTaxon($sampledir,$settings);
+    #my($percentTaxon,$html,$bestGuess)=guessTaxon($sampledir,$settings);
+
+    # Create hash of bestGuess
+    # e.g., {guess=>\%guessedTaxon, contaminant=>\%majorConflictingTaxon, html=>"$sampledir/report.html"};
+    my $guesses = guessTaxon($sampledir,$settings);
+    my $html = $$guesses{html};
     if(!$html){
       logmsg "WARNING: html file not found: $html";
       next;
     }
 
     # Add onto the contamination report
-    push(@report,join("\t",$sampleName,$expectedSpecies,$bestGuess,$percentTaxon));
+    push(@report,join("\t",
+        $sampleName,$expectedSpecies,
+        $$guesses{guess}{taxname}, $$guesses{guess}{percent},
+        $$guesses{guess}{rank},
+        $$guesses{contaminant}{taxname}, $$guesses{contaminant}{percent},
+    ));
     logmsg "Including for email: $html";
-    cp($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
+    #cp($html,"$dir/SneakerNet/forEmail/$sampleName.kraken.html");
 
     # Report anything with >10% contamination to the printout.
     #if($percentContaminated > 10){
@@ -95,9 +129,8 @@ sub runKrakenOnDir{
 
   # print the report to a file.
   # Note: Taylor reports 20% unclassified and a 4% contamination in one genome, which was considered uncontaminated.  Further testing is needed.
-  unshift(@report,join("\t",qw(NAME LABELED_TAXON BEST_GUESS PERCENTAGE_OF_GENOME_IS_BEST_GUESS)));
-  push(@report,"NOTE: A genome with >90% reads in agreement with its species has not been shown to indicate contamination");
-  push(@report,"NOTE: More testing needs to be performed before any conclusion can be made from this spreadsheet, and it is given for general information only. For more information, please see your local bioinformatician and/or open the relevant Kraken report.");
+  push(@report,"# A genome with >90% reads in agreement with its species has not been shown to indicate contamination");
+  push(@report,"# More testing needs to be performed before any conclusion can be made from this spreadsheet, and it is given for general information only. For more information, please see your local bioinformatician and/or open the relevant Kraken report.");
   open(KRAKENREPORT,">","$outdir/report.tsv") or die "ERROR: could not open $outdir/report.tsv for writing: $!";
   print KRAKENREPORT join("\n",@report)."\n";
   close KRAKENREPORT;
@@ -109,7 +142,9 @@ sub runKraken{
   my($sample,$sampledir,$settings)=@_;
 
   my $html="$sampledir/report.html";
-  return 1 if(-e $html);
+  if(-e $html && !$$settings{force}){
+    return 1;
+  }
 
   if(!defined($$sample{fastq})){
     logmsg "ERROR: no reads found for $sampledir";
@@ -136,6 +171,10 @@ sub runKraken{
   }
   elsif(@fastq == 2){
     return runKrakenPE(@_);
+  } else {
+    my %sampleCopy = %$sample;
+    splice(@{ $sampleCopy{fastq} }, 2);
+    return runKrakenPE(\%sampleCopy, $sampledir, $settings);
   }
 
   logmsg "INTERNAL ERROR";
@@ -149,9 +188,9 @@ sub runKrakenSE{
 
   return 0 if(!$reads);
 
-  command("$KRAKENDIR/kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
+  command("kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
 
-  command("$KRAKENDIR/kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
+  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
     s/^ +//;   # remove leading spaces
     s/ +/\t/;  # change first set of spaces from uniq -c to a tab
     s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
@@ -159,7 +198,7 @@ sub runKrakenSE{
     ' | sort -k1,1nr > $sampledir/kraken.taxonomy
   ");
 
-  command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -173,7 +212,7 @@ sub runKrakenSE{
   print $taxFh $unclassifiedReadsCount."\n";
   close $taxFh;
 
-  command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy");
 
   # Go ahead and remove kraken.out which is a huge file
   unlink("$sampledir/kraken.out");
@@ -193,9 +232,9 @@ sub runKrakenPE{
   my $reads="'".join("' '", @twoReads)."'";
   return 0 if(!$reads);
   
-  command("$KRAKENDIR/kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
+  command("kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
 
-  command("$KRAKENDIR/kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
+  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
     s/^ +//;   # remove leading spaces
     s/ +/\t/;  # change first set of spaces from uniq -c to a tab
     s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
@@ -203,7 +242,7 @@ sub runKrakenPE{
     ' | sort -k1,1nr > $sampledir/kraken.taxonomy
   ");
 
-  command("$KRAKENDIR/kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -217,7 +256,7 @@ sub runKrakenPE{
   print $taxFh $unclassifiedReadsCount."\n";
   close $taxFh;
 
-  command("$KRONADIR/ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy");
 
   # Go ahead and remove kraken.out which is a huge file
   unlink("$sampledir/kraken.out");
@@ -233,48 +272,74 @@ sub guessTaxon{
   my($sampledir,$settings)=@_;
   logmsg $sampledir;
 
-  my $taxfile="$sampledir/kraken.taxonomy";
+  my $taxfile="$sampledir/kraken.report";
 
-  my $numReads=0;
   my %bestGuess;
-  my @header=qw(numReads toplevel domain kingdom phylum class order family genus species);
-  my @tier=@header[2..9];
-  open(TAXONOMY,'<',$taxfile) or die "ERROR: could not open $taxfile for reading: $!";
-  while(<TAXONOMY>){
-    chomp;
-    my %F;
-    @F{@header}=split /\t/;
-    $F{$_}//="" for(@header);
-    $numReads+=$F{numReads};
-    #$F{species}=~s/^.+\s+(.+)/$1/; # sometimes there are genus and species in the species column, but you just want the second word to be the species.
-    # Refine the species to the scientific name
-    #$F{species}=join(" ",$F{genus},$F{species});
-    
-    # Decide on a best guess for what this taxon is.
-    for (reverse @tier){
-      my $tier=$F{$_};
-      next if(!$tier || $tier=~/^\s*$/); # don't consider this tier if it's empty
-      $bestGuess{$tier}+=$F{numReads};
-      last;
-    }
+  my @header = qw(percent classifiedReads specificClassifiedReads rank taxid taxname);
+  open(TAXONOMY, '<', $taxfile) or die "ERROR: could not open $taxfile for reading: $!";
+  while(my $taxline = <TAXONOMY>){
+    # trim whitespace
+    $taxline =~ s/^\s+|\s+$//g;
+
+    # Split fields on tab, but also remove whitespace on fields
+    my @F = split(/\s*\t\s*/, $taxline);
+
+    # Name the fields
+    my %field;
+    @field{@header} = @F;
+
+    # We only care about named ranks like phylum, family, genus, or species
+    next if($field{rank} eq '-');
+
+    push(@{ $bestGuess{$field{rank}} }, \%field);
+
   }
   close TAXONOMY;
 
-  my $bestGuess="";
-  my $percentBestGuess="0%";
-  if($numReads > 10){
-    $bestGuess=(sort{$bestGuess{$b} <=> $bestGuess{$a}} keys(%bestGuess))[0] || "";
-    $percentBestGuess=sprintf("%0.2f%%",$bestGuess{$bestGuess}/$numReads*100);
+  my @sortedRank = qw(S G F O C P K D U);
+
+  # Starting with species, if >min-percent% reads are attributed to
+  # a taxon, then guess that taxon.
+  my %guessedTaxon;
+  RANK:
+  for my $rank(@sortedRank){
+    for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
+      if($$taxHash{percent} > $$settings{minpercent}){
+        %guessedTaxon = %$taxHash;
+        last RANK;
+      }
+    }
   }
-  
-  return ($percentBestGuess, "$sampledir/report.html", $bestGuess) if wantarray;
-  return $percentBestGuess;
+  my $rank = $guessedTaxon{rank};
+
+  # Are there any competing taxa at that rank?
+  # Initialize the competing taxon to boolean false numbers
+  my %majorConflictingTaxon = (rank=>"", percent => 0, taxid=>0, taxname=>".", specificClassifiedReads=>0, classifiedReads=>0);
+  for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
+    # Skip comparing against self, by comparing taxids
+    next if($$taxHash{taxid} == $guessedTaxon{taxid});
+
+    # Accept the conflicting taxon if it's over 1% and if
+    # it is the biggest contaminant.
+    if($$taxHash{percent} > 1 && $$taxHash{percent} > $majorConflictingTaxon{percent}){
+      %majorConflictingTaxon = %$taxHash;
+    }
+  }
+
+  # Return the best guess and the major conflict
+  return {guess=>\%guessedTaxon, contaminant=>\%majorConflictingTaxon, html=>"$sampledir/report.html"};
 }
 
 sub usage{
-  "Finds contamination in a miseq run
+  print "Finds contamination in a miseq run with kraken and guesses the taxon
   Usage: $0 MiSeq_run_dir
   --numcpus 1
-  "
+  --version
+  --force         Overwrite any previous results
+  --min-percent   What percent of reads have to be attributed
+                  to a taxon before presuming it as the taxon
+                  sequenced? Default: 25
+";
+  exit(0);
 }
 

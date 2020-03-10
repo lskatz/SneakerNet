@@ -16,15 +16,28 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+
+our $VERSION = "1.3";
+our $CITATION = "assembleAll.pl by Lee Katz. Uses Skesa and Prodigal for assembly and gene prediction.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help tempdir=s debug numcpus=i force)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      'run_assembly_filterContigs.pl' => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
+      'skesa'                         => 'skesa --version 2>&1 | grep SKESA',
+      'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
@@ -38,7 +51,14 @@ sub main{
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
-  my $metricsOut=assembleAll($dir,$settings);
+  mkdir "$dir/SneakerNet/forEmail";
+
+  my $metricsOut = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+  if(!-e $metricsOut){
+    assembleAll($dir,$settings);
+    recordProperties($dir,{version=>$VERSION, table=>$metricsOut});
+  }
+
   logmsg "Metrics can be found in $metricsOut";
 
   return 0;
@@ -55,8 +75,6 @@ sub assembleAll{
     my $outdir="$dir/SneakerNet/assemblies/$sample";
     my $outassembly="$outdir/$sample.skesa.fasta";
     my $outgbk="$outdir/$sample.skesa.gbk";
-    #my $outassembly="$outdir/$sample.megahit.fasta";
-    #my $outgbk="$outdir/$sample.megahit.gbk";
 
     # Run the assembly
     if(!-e $outassembly){
@@ -79,6 +97,7 @@ sub assembleAll{
   
   # run assembly metrics with min contig size=0.5kb
   my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+
   logmsg "Running metrics on the genbank files at $metricsOut";
 
   my @thr;
@@ -91,8 +110,9 @@ sub assembleAll{
     $_->join;
   }
   
-  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
-  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
+  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut.tmp"); # header
+  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut.tmp"); # content
+  mv("$metricsOut.tmp", $metricsOut);
   
   return $metricsOut;
 }
@@ -191,7 +211,7 @@ sub assembleSample{
   #command("skesa --cores $numcpus --gz --fastq $R1,$R2 > $$settings{tempdir}/$sample.fasta");
   # faster skesa command taken from 
   #  https://github.com/ncbi/SKESA/issues/11#issuecomment-429007711
-  system("skesa --fastq $R1,$R2 --steps 1 --kmer 51 --cores $numcpus > $$settings{tempdir}/$sample.fasta");
+  system("skesa --fastq $R1,$R2 --steps 1 --kmer 51 --cores $numcpus --vector_percent 1 > $$settings{tempdir}/$sample.fasta");
   if($?){
     command("skesa --fastq $R1,$R2 --cores $numcpus > $$settings{tempdir}/$sample.fasta");
   }
@@ -255,9 +275,11 @@ sub annotateFasta{
 }
 
 sub usage{
-  "Assemble all genomes
+  print "Assemble all genomes
   Usage: $0 MiSeq_run_dir
   --numcpus 1
-  "
+  --version
+  ";
+  exit(0);
 }
 

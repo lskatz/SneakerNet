@@ -11,13 +11,17 @@ use Cwd qw/realpath/;
 use File::Temp;
 use FindBin;
 use Config::Simple;
+use POSIX qw/strftime/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig passfail command logmsg version/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
+
+our $VERSION = "2.2";
+our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
 
@@ -26,13 +30,27 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help numcpus=i debug tempdir=s email-only=s)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(citation check-dependencies version help force numcpus=i debug tempdir=s email-only|email|just=s)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      sendmail  => 'sendmail -d0.4 -bv root 2>&1 | grep -m 1 Version'
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
 
-  emailWhoever($dir,$settings);
+  my $to = emailWhoever($dir,$settings);
+
+  recordProperties($dir,{
+    version=>$VERSION, 
+    reportSentTo=>join(", ", @$to),
+    dateSent=>strftime("%Y-%m-%d", localtime()),
+    timeSent=>strftime("%H:%M:%S", localtime()),
+  });
 
   return 0;
 }
@@ -99,7 +117,8 @@ sub emailWhoever{
   logmsg "To: $to";
   my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
   my $subject="$runName QC";
-  my $body ="Please open the following attachments for QC information on $runName.\n";
+  my $body ="Please see below for QC information on $runName.\n\n";
+     $body.="For more details, please see the other attachments.\n";
      $body.=" - TSV files can be opened in Excel\n";
      $body.=" - LOG files can be opened in Wordpad\n";
      $body.=" - HTML files can be opened in Internet Explorer\n";
@@ -120,11 +139,32 @@ sub emailWhoever{
 
   my $email=Email::Stuffer->from($from)
                           ->subject($subject)
-                          ->to($to)
-                          ->text_body($body);
+                          ->to($to);
+                          #->text_body($body);
+                          #->html_body(`cat report.html`
 
   for my $file(glob("$dir/SneakerNet/forEmail/*")){
+    next if(!-f $file);
     $email->attach_file($file);
+  }
+
+  if(-e "$dir/SneakerNet/forEmail/report.html"){
+    logmsg "Body will be report.html";
+
+    # reformat the text body
+    $body =~ s/(\n)/<br \/>$1/g;      # newlines to line breaks
+    $body = "<div>\n$body\n</div>\n"; # wrap it in a div
+
+    $body.= "<div>Please open report.html if there are any issues with the body of this email.</div>\n";
+
+    # Read the html body as a scalar string
+    my $htmlbody = `cat $dir/SneakerNet/forEmail/report.html`;
+    # Add in the text body
+    $htmlbody =~ s/(SneakerNet reporting plugin version .+?<.+?>)/$1\n$body/;
+    $email->html_body($htmlbody);
+  } else {
+    logmsg "Not found: $dir/SneakerNet/forEmail/report.html";
+    $email->text_body($body);
   }
 
   my $was_sent=$email->send;
@@ -147,11 +187,13 @@ sub flatten {
 }
 
 sub usage{
-  "Email a SneakerNet run's results
+  print "Email a SneakerNet run's results
   Usage: $0 run-dir
   --debug          Show debugging information
   --numcpus     1  Number of CPUs (has no effect on this script)
   --email-only  '' Choose the email to send the report to instead
                    of what is supplied.
-  "
+  --version
+  ";
+  exit(0);
 }

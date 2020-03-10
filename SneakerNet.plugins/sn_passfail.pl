@@ -11,7 +11,10 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+
+our $VERSION = "2.4";
+our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -20,15 +23,24 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help debug force numcpus=i)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version tempdir=s citation check-dependencies help debug force numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
 
   my $outfile=passfail($dir,$settings);
   logmsg "The pass/fail file is under $outfile";
   
+  recordProperties($dir,{version=>$VERSION,table=>$outfile});
+
   return 0;
 }
 
@@ -41,7 +53,7 @@ sub passfail{
   my $failHash=identifyBadRuns($dir,$sampleInfo,$settings);
   
   my @sample=keys(%$failHash);
-  my @failHeader=keys(%{ $$failHash{$sample[0]} });
+  my @failHeader=sort keys(%{ $$failHash{$sample[0]} });
 
   open(my $failFh, ">", $failFile) or die "ERROR: could not write to $failFile: $!";
   print $failFh join("\t", "Sample", @failHeader)."\n";
@@ -63,15 +75,22 @@ sub identifyBadRuns{
 
   my %whatFailed=();  # reasons why it failed
 
+  # Read the readMetrics file into %readMetrics
   open(READMETRICS,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
   my @header=split(/\t/,<READMETRICS>); chomp(@header);
+  my %readMetrics = ();
   while(<READMETRICS>){
     chomp;
     my %F;
     @F{@header}=split(/\t/,$_);
-    my $samplename=basename($F{File},'.fastq.gz');
-    $samplename=~s/_S\d+_.*//; # figure out the sample name before the the _S1_ pattern
-    $samplename=~s/_[ACGT]+\-[ACGT]+_L\d+_.*//; # HiSeq compatibility: remove anything starting with index info and lane info
+    $F{File} = basename($F{File});
+    $readMetrics{$F{File}} = \%F;
+  }
+  close READMETRICS;
+
+  # Understand for each sample whether it passed or failed
+  # on each category
+  for my $samplename(keys(%$sampleInfo)){
 
     # Possible values for each:
     #  1: failed the category
@@ -79,47 +98,78 @@ sub identifyBadRuns{
     # -1: unknown
     my %fail=(
       coverage=>-1,
-      quality => 0,
+      quality => 0, # by default passes
     );
 
     # Skip anything that says undetermined.
-    if($samplename=~/^Undetermined/){
+    if($samplename=~/^Undetermined/i){
       next;
     }
 
     # Get the name of all files linked to this file through the sample.
-    $$sampleInfo{$samplename}{fastq}//=[];
+    $$sampleInfo{$samplename}{fastq}//=[]; # Set {fastq} to an empty list if it does not exist
     my @file=@{$$sampleInfo{$samplename}{fastq}};
-    
-    # Compare coverage of one read against half of the
-    # threshold coverage because of PE reads.
-    if($F{coverage} ne '.'){ # dot means coverage is unknown.
-      $F{coverage}||=0;
-      $$sampleInfo{$samplename}{taxonRules}{coverage}||=0;
-      if($F{coverage} < $$sampleInfo{$samplename}{taxonRules}{coverage}/2){
-        $fail{coverage}=1;
-        logmsg "Low coverage in $F{File}";
+
+    # Get metrics from the fastq files
+    my $totalCoverage = 0;
+    my %is_passing_quality = (); # Whether a read passes quality
+    for my $fastq(@file){
+      my $fastqMetrics = $readMetrics{basename($fastq)};
+
+      # Coverage
+      if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
+        $totalCoverage = -1; # -1 means 'unknown' coverage
       } else {
-        $fail{coverage}=0;
+        $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
+        $totalCoverage += $$fastqMetrics{coverage};
+        logmsg "Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
+      }
+
+      # Set whether this fastq passes quality by the > comparison:
+      # if yes, then bool=true, if less than, bool=false
+      $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
+      $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
+    }
+
+    # Set whether the sample fails coverage
+    #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
+    if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
+      logmsg "  I will fail this sample $samplename" if($$settings{debug});
+      $fail{coverage} = 1;
+    } else {
+      logmsg "  I will not fail this sample $samplename" if($$settings{debug});
+      $fail{coverage} = 0;
+    }
+    if($totalCoverage == -1){
+      logmsg "  ==> -1" if($$settings{debug});
+      $fail{coverage} = -1;
+    }
+
+    # if any filename fails quality, then overall quality fails
+    while(my($fastq,$passed) = each(%is_passing_quality)){
+      # If
+      if($passed == 0){
+        $fail{$samplename} = 1;
+        last;
+      }
+      # Likewise if a file's quality is unknown, then it's all unknown
+      if($passed == -1){
+        $fail{$samplename} = -1;
+        last;
       }
     }
 
-    $F{avgQuality} ||= 0;
-    $$sampleInfo{$samplename}{taxonRules}{quality}||=0;
-    if($F{avgQuality} < $$sampleInfo{$samplename}{taxonRules}{quality}){
-      $fail{quality}=1;
-      logmsg "low quality in $F{File}";
-    }
-    $whatFailed{$F{File}}=\%fail;
-
+    $whatFailed{$samplename} = \%fail;
   }
 
   return \%whatFailed;
 }
 
 sub usage{
-  "Passes or fails a run based on available information
+  print "Passes or fails a run based on available information
   Usage: $0 MiSeq_run_dir
-  "
+  --version
+";
+  exit(0);
 }
 

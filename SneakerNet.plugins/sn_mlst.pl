@@ -16,28 +16,36 @@ use Thread::Queue;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+
+our $VERSION = "1.1";
+our $CITATION= "MLST plugin by Lee Katz. Uses mlst by Torsten Seemann.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force tempdir=s debug numcpus=i)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      mlst      => 'mlst --version',
+      blastn    => 'blastn -version | head -n 1',
+      rm        => 'rm --version | head -n 1',
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
 
-  # Check for required executables
-  for (qw(mlst blastn)){
-    fullPathToExec($_);
-  }
- 
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/mlst";
+  mkdir "$dir/SneakerNet/forEmail";
   my $reportArr=mlst($dir,$settings);
 
   # Make a report for email
@@ -62,6 +70,8 @@ sub main{
   print $fh "# For more details: https://github.com/tseemann/mlst\n";
   close $fh;
 
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv"});
+
   return 0;
 }
 
@@ -76,7 +86,11 @@ sub mlst{
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
     
-    my $assembly="$dir/SneakerNet/assemblies/$sample/$sample.skesa.fasta";
+    my $assembly=(glob("$dir/SneakerNet/assemblies/$sample/$sample.*.fasta"))[0];
+    if(!$assembly){
+      logmsg "ERROR: no assembly was found for $sample";
+      next;
+    }
     #my $assembly="$dir/SneakerNet/assemblies/$sample/$sample.megahit.fasta";
     push(@mlstQueueBuffer, {assembly=>$assembly, sample=>$sample});
   }
@@ -139,10 +153,12 @@ sub mlstSample{
   return $mlst;
 }
 sub usage{
-  "Run MLST on all genomes
+  print "Run MLST on all genomes
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --force        To overwrite previous results
-  "
+  --version
+";
+  exit(0);
 }
 

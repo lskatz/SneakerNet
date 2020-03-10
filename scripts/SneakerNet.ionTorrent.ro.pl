@@ -6,10 +6,12 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Data::Dumper;
-use File::Copy;
+use File::Copy qw/mv/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
+use JSON qw/from_json to_json/;
+use Encode qw/encode decode/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
@@ -34,6 +36,7 @@ sub main{
     my $sneakernetDir = makeSneakernetDir($dir,$settings);
     saveSneakernetDir($sneakernetDir, $$settings{outdir});
   }
+  rmdir($$settings{tempdir});
 
   return 0;
 }
@@ -45,59 +48,141 @@ sub makeSneakernetDir{
   mkdir $outdir;
 
   my $snok        = "$dir/snok.txt";
-  my @bam         = glob("$dir/exportedReports/*/basecaller_results/rawtf.basecaller.bam");
-  #                                            ^-< this is the sample name
+  my @remoteFastq = sort{(-s $a) <=> (-s $b) }
+                      glob("$dir/plugin_out/FileExporter_out.*/*.fastq");
 
-  # Start off a sample sheet with columns: sampleName, R1, R2
-  # where R2 is not present if single end
-  my $samplesheet = "$outdir/SampleSheet.tsv";
-  open(my $fh, ">", $samplesheet) or die "ERROR writing to $samplesheet: $!";
-  # TODO accept the three-column format in SneakerNet
+  my @localFastq;
+  for my $old(@remoteFastq){
+    my $new   = "$outdir/".basename($old);
+    my $newGz = $new;
+       $newGz =~ s/(\.gz)?$/.gz/;
+    next if(! -f $old); # must be a file and not a symlink
 
-  # Generate fastq files
-  my $samtoolThreads = $$settings{numcpus} - 1;
-  for my $bam(@bam){
-    # Get some filenames
-    my $sampleName;
-    if($bam =~ m|^.+/exportedReports/(.+)/basecaller_results/|){
-      $sampleName = $1;
-    } else {
-      die "ERROR: could not parse the sample name for $bam";
+    # Copy over the fastq file but make sure it is compressed
+    if(! -e $newGz){
+      if($old =~ /\.gz$/){
+        cp($old, "$newGz.tmp");
+      } else {
+        logmsg "gzip $old => $newGz.tmp";
+        system("gzip -c \Q$old\E > \Q$newGz.tmp\E");
+        if($?){
+          die "ERROR: could not gzip $old to $newGz.tmp";
+        }
+      }
+      logmsg "  Removing .tmp from filename";
+      mv("$newGz.tmp", $newGz)
+        or die "ERROR renaming $newGz.tmp to $newGz - $!";
+    }else{
+      logmsg "SKIPPING: Found $newGz";
     }
-    my $basename   = basename($bam, qw(.bam));
-    my $fastq      = "$outdir/$sampleName.fastq";
-    my $R2         = "."; # no idea how to define R2 in an ion torrent run
-
-    # Fastq generation
-    logmsg "Creating fastq from $bam";
-    system("samtools fastq -@ $samtoolThreads -0 $fastq -N $bam");
-    die "ERROR with $bam => $fastq" if $?;
-
-    # Compress
-    system("gzip -v $fastq"); die if $?;
-    $fastq="$fastq.gz";
-
-    # Samplesheet
-    print $fh join("\t", $sampleName, basename($fastq),$R3)."\n";
+    push(@localFastq, $newGz);
   }
+
+  my $runInfo = iontorrentRunInfo($dir, $settings);
+
+  # Write the json to the out folder in pretty format
+  open(my $jsonOut, ">", "$outdir/planned_run.json") or die "ERROR: could not write to $outdir/planned_run.json: $!";
+  my $prettyJSON = to_json($runInfo,{pretty=>1});
+  print $jsonOut $prettyJSON;
+  close $jsonOut;
+
+  my $barcodedSamples = $$runInfo{objects}[0]{barcodedSamples};
+  my @sample = sort keys(%$barcodedSamples);
+  my %barcode;
+  for my $sample(@sample){
+    while(my($barcode, $barcodeHash) = each(%{ $$barcodedSamples{$sample}{barcodeSampleInfo} })){
+      $barcode{$barcode} = $sample;
+    }
+  }
+
+  # Start off a sample sheet with columns: sampleName, [options], R1;R2
+  # where R2 is not present if single end
+  my %seenSample; # whether or not we've seen a sample name before
+  my $samplesheet = "$outdir/samples.tsv";
+  open(my $fh, ">", $samplesheet) or die "ERROR writing to $samplesheet: $!";
+  for my $fastq(@localFastq){
+    my $longsample = basename($fastq, qw(.fastq.gz .fastq));
+    my $sample = ".";
+    my $barcode= ".";
+    my $longBarcode = ".";
+    if($longsample =~ /([^\.]*).*(IonXpress_(\d+))/){
+      $sample = $1;
+      $barcode= $2;
+      $longBarcode = $1;
+    }
+    # ok yes we have the sample name but in case it is listed
+    # differently in the json file describing the run, use it
+    # instead.
+    if($barcode{$barcode}){
+      $sample = $barcode{$barcode};
+    }
+    # Worst case, it's named something like IonExpress_027-SN0054-18-002
+    if($seenSample{$sample}){
+      $sample = $longBarcode."-".$$runInfo{planName};
+    }
+
+    print $fh join("\t",
+      $sample,
+      "taxon=",
+      basename($fastq),
+    )."\n";
+
+    $seenSample{$sample}++;
+  }
+
   close $fh;
 
   if(-e $snok){
     cp($snok,"$outdir/".basename($snok));
   } else {
-    logmsg "snok.txt not found. I will not read from it.";
+    logmsg "snok.txt not found. I will create one.";
     # "touch" the snok file
     open(my $fh, ">>", "$outdir/".basename($snok)) or die "ERROR: could not touch $outdir/".basename($snok).": $!";
+    print $fh "workflow = iontorrent\n";
     close $fh;
   }
 
   return $outdir;
 }
 
+sub iontorrentRunInfo{
+  my($dir, $settings) = @_;
+
+  my $jsonIn = "$dir/planned_run.json";
+  if(! -e $jsonIn){
+    die "ERROR: cannot find $jsonIn";
+  }
+
+  my $json=JSON->new;
+  $json->utf8;           # If we only expect characters 0..255. Makes it fast.
+  $json->allow_nonref;   # can convert a non-reference into its corresponding string
+  $json->allow_blessed;  # encode method will not barf when it encounters a blessed reference
+  $json->pretty;         # enables indent, space_before and space_after
+
+  my $jsonStr = "";
+  open(my $jsonFh, "<", $jsonIn) or die "ERROR reading $jsonIn: $!";
+  {
+    local $/ = undef;
+    $jsonStr = <$jsonFh>;
+  }
+  close $jsonFh;
+
+  # Need to check for valid utf8 or not
+  eval{ my $strCopy = $jsonStr; decode('utf8', $strCopy, Encode::FB_CROAK) }
+    or die "ERROR: $dir/planned_run.json yielded non-utf8 characters\nContents shown below:\n$jsonStr\n";
+
+  my $runInfo = $json->decode($jsonStr);
+
+  return $runInfo;
+}
+
 sub saveSneakernetDir{
   my($indir, $outdir)=@_;
-  system("mv -v '$indir' '$outdir'");
-  die if $?;
+  mkdir($outdir) if(! -e $outdir);
+  for my $file(glob("$indir/*")){
+    mv($file, "$outdir/")
+      or logmsg "WARNING: could not move $file to $outdir/ - $!";
+  }
 }
 
 sub cp{
@@ -107,7 +192,10 @@ sub cp{
     return 1;
   }
   logmsg "cp $from to $to";
-  my $return=File::Copy::cp($from,$to) or die "ERROR: could not copy $from to $to: $!";
+  my $return = link($from, $to) ||
+    File::Copy::cp($from,$to) or die "ERROR: could not copy $from to $to: $!";
+  open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
+  close $fh;
   return $return;
 }
 

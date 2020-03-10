@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Data::Dumper;
-use File::Basename qw/dirname/;
+use File::Basename qw/dirname basename/;
 
 use Test::More tests => 3;
 
@@ -15,7 +15,10 @@ use_ok 'SneakerNet';
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-is system("addReadMetrics.pl --force $run >/dev/null 2>&1"), 0, "Adding read metrics";
+my $readMetricsLog = `addReadMetrics.pl --force $run 2>&1`;
+is $?, 0, "Adding read metrics";
+
+note $readMetricsLog;
 
 # Double check that everything is 10x.  ish.
 # The exception is that the Vibrio sample is only the
@@ -32,13 +35,29 @@ subtest "Expected coverage" => sub {
     "Philadelphia_CDC_2.fastq.gz" => 5,
   );
   open(my $fh, "$run/readMetrics.tsv") or die "ERROR reading $run/readMetrics.tsv: $!";
+  system("wc -l $run/readMetrics.tsv");
   while(<$fh>){
     chomp;
     my ($file, $avgReadLength, $totalBases, $minReadLength, $maxReadLength, $avgQuality, $numReads, $PE, $coverage) 
         = split(/\t/, $_);
+
+    $file = basename($file);
     
-    next if(!$expected{$file}); # avoid header
-    ok $coverage > $expected{$file} - 1 && $coverage < $expected{$file} + 1, "Coverage for $file";
+    if(!$expected{$file}){ # avoid header
+      note "Skipping $file";
+      next;
+    }
+    subtest "Coverage for $file" => sub{
+      plan tests => 3;
+      my $is_numerical = isnt($coverage, '.', "Coverage is numerical");
+      if($is_numerical){
+        cmp_ok($coverage, '>', $expected{$file} - 1, "Coverage numerical test");
+        cmp_ok($coverage, '<', $expected{$file} + 1, "Coverage numerical test");
+      } else {
+        fail("Coverage");
+        fail("Coverage");
+      }
+    }
   }
   close $fh;
 };

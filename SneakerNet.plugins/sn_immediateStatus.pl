@@ -11,28 +11,38 @@ use File::Spec;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 use Text::Fuzzy;
 use Email::Stuffer;
+
+our $VERSION = "1.2";
+our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force tempdir=s debug numcpus=i)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      sendmail  => 'sendmail -d0.4 -bv root | grep -m 1 Version',
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet";
+  mkdir "$dir/SneakerNet/forEmail";
 
   my $errHash = doubleCheckRun($dir,$settings);
 
-  mkdir "$dir/SneakerNet";
-  mkdir "$dir/SneakerNet/forEmail";
   my $outfile = "$dir/SneakerNet/forEmail/immediateReaction.tsv";
   open(my $fh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
   print $fh join("\t", qw(ErrType Sample ErrKeyword Error))."\n";
@@ -79,6 +89,8 @@ sub main{
   if(!$email->send){
     die "ERROR: email was not sent to $to!";
   }
+
+  recordProperties($dir,{version=>$VERSION, reportTo=>$to});
 
   return 0;
 }
@@ -135,9 +147,11 @@ sub doubleCheckRun{
 
 
 sub usage{
-  "Double check a run and its completeness. Email a report.
+  print "Double check a run and its completeness. Email a report.
   Usage: $0 MiSeq_run_dir
   --emails  ''   email1,[email2...]
-  "
+  --version
+";
+  exit(0);
 }
 

@@ -1,25 +1,33 @@
+#!/usr/bin/env perl
+
 use strict;
 use warnings;
+use File::Copy qw/cp mv/;
+use File::Basename qw/basename/;
  
 use 5.010;
  
 use ExtUtils::MakeMaker;
 
-my $VERSION = `grep -i version config.bak/settings.conf  | cut -f 2`;
-chomp $VERSION;
+# Copy the config.bak directory
+mkdir "config";
+for my $file(glob("config.bak/*")){
+  cp($file, "config/".basename($file)) or die $!;
+}
 
 # Some help from
 # http://blogs.perl.org/users/michal_wojciechowski/2011/11/github-friendly-readme-files-with-extutils-makemaker-and-module-build.html
 my $preop =
-  #'sed -i.bak "s/.5f/.10f/g" bin/quicktree-2.3/src/tree.c bin/quicktree-2.3/src/distancemat.c;' .
-  #'make -C bin/quicktree-2.3;' .
   'perldoc -uT $(VERSION_FROM) | tee $(DISTVNAME)/README.pod > README.pod;' .
-  'pod2text README.pod | tee $(DISTVNAME)/README > README';
+  'pod2text README.pod | tee $(DISTVNAME)/README > README;' .
+  #'mkdir -pv config' .
+  #'cp -v config.bak/ config/' .
+  '';
 
 WriteMakefile1(
   NAME         => 'SneakerNet',
-  VERSION      => $VERSION,
-  ABSTRACT_FROM => 'README.md',
+  VERSION_FROM => 'lib/perl5/SneakerNet.pm',
+  #ABSTRACT_FROM => 'lib/perl5/SneakerNet.pm',
   AUTHOR => q{Lee S. Katz <gzu2@cdc.gov>},
   EXE_FILES    => [
     "scripts/SneakerNet.ionTorrent.ro.pl",
@@ -30,13 +38,12 @@ WriteMakefile1(
     "SneakerNet.plugins/assembleAll.pl",
     "SneakerNet.plugins/baseBalance.pl",
     "SneakerNet.plugins/emailWhoever.pl",
-    "SneakerNet.plugins/guessTaxon.pl",
     "SneakerNet.plugins/read_length_quality_stats_fastq.py",
     "SneakerNet.plugins/sn_detectContamination.pl",
+    "SneakerNet.plugins/sn_detectContamination-kraken.pl",
     "SneakerNet.plugins/sn_mlst.pl",
     "SneakerNet.plugins/sn_parseSampleSheet.pl",
     "SneakerNet.plugins/sn_passfail.pl",
-    "SneakerNet.plugins/sn_SalmID.pl",
     "SneakerNet.plugins/transferFilesToRemoteComputers.pl",
   ],
   PREREQ_PM    => {
@@ -54,9 +61,9 @@ WriteMakefile1(
     'Config::Simple' => 0,
     'File::Slurp'    => 0,
     'Bio::Kmer'      => 0,
+    'Bio::SeqIO'     => 0,
     'Text::Fuzzy'    => 0,
     'Email::Stuffer' => 0,
-    'Bio::SeqIO'     => 0,
     'Bio::FeatureIO' => 0,
     # MLST module
     'Moo'            => 0,
@@ -112,3 +119,4 @@ sub WriteMakefile1 {  #Compatibility code for old versions of EU::MM. Written by
 
   WriteMakefile(%params);
 }
+

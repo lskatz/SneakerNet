@@ -16,17 +16,26 @@ use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use List::MoreUtils qw/uniq/;
-use SneakerNet qw/readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
+our $VERSION = "1.3";
+our $CITATION = "Add read metrics by Lee Katz. Uses read metrics script in CG-Pipeline.";
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(help force inbox=s debug test numcpus=i tempdir=s)) or die $!;
-  die usage() if($$settings{help} || !@ARGV);
+  GetOptions($settings,qw(help force citation check-dependencies inbox=s debug test numcpus=i tempdir=s version)) or die $!;
+  exitOnSomeSneakernetOptions({
+      _CITATION => $CITATION,
+      _VERSION  => $VERSION,
+      'run_assembly_readMetrics.pl'   => 'echo CG-Pipeline version unknown',
+    }, $settings,
+  );
+
+  usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=tempdir($0.".XXXXXX", TMPDIR=>1, CLEANUP=>1);
   logmsg "Tempdir is $$settings{tempdir}";
@@ -36,7 +45,14 @@ sub main{
   addReadMetrics($dir,$settings);
 
   # Mark this file as something to attach for an email later
-  link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv");
+  mkdir "$dir/SneakerNet" if(!-d "$dir/SneakerNet");
+  mkdir "$dir/SneakerNet/forEmail" if(!-d "$dir/SneakerNet/forEmail");
+  if(! -f "$dir/SneakerNet/forEmail/readMetrics.tsv"){
+    link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv")
+      or die "ERROR: could not hard link readMetrics.tsv to $dir/SneakerNet/forEmail/ - $!";
+  }
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv"});
 
   return 0;
 }
@@ -129,11 +145,25 @@ sub calculateCoverage{
 
   my $file=basename($$h{File});
   my $samplename=$file || "";
-  $samplename=~s/_S\d+_.*?$//;    # _R1_ or _R2_
-  $samplename=~s/_[12]\.fastq.gz$//; # _1 or _2
-  # Parse HiSeq names correctly
-  if($file=~/(^.+_SAN\d+\w\d+)/){ # e.g., 2015V-1036_SAN5927A15_TCCGGAGA-CAGGACGT_L001_R1_001.fastq.gz
-    $samplename=$1;               #       2015V-1036_SAN5927A15
+
+  # If we don't have a sample name then it's probably because
+  # the "sample name" is a filename.
+  if(!$$sampleInfo{$samplename}){
+    SAMPLENAME:
+    for my $sn(keys(%$sampleInfo)){
+      for my $fastq(@{ $$sampleInfo{$sn}{fastq} }){
+        #logmsg basename($fastq)." eq $file";
+        if(basename($fastq) eq $file){
+          #logmsg "FOUND: $sn";
+          $samplename = $sn;
+          last SAMPLENAME;
+        }
+      }
+    }
+  }
+  # If we still don't have this sample, then quit
+  if(!$$sampleInfo{$samplename}){
+    return 0;
   }
 
   # Find out if this file has an expected genome size from the Sample Sheet.
@@ -142,7 +172,7 @@ sub calculateCoverage{
     $expectedGenomeSize *= 10**6;
   }
   my $organism = $$sampleInfo{$samplename}{taxon};
-  #die Dumper $sampleInfo, $organism, $samplename if($samplename =~ /2010.*1786/);
+  #die Dumper $sampleInfo, $organism, $samplename, $file if($samplename =~ /43410/);
 
   my $coverage=$$h{coverage} || 0; 
 
@@ -153,7 +183,9 @@ sub calculateCoverage{
     logmsg "Decided that $$h{File} is $organism with expected genome size $expectedGenomeSize. Calculated coverage: $coverage";
   } else {
     logmsg "Warning: could not understand what organism $$h{File} belongs to. I tried to look it up by $samplename. Coverage was not recalculated.";
+    #logmsg Dumper $sampleInfo, $file;
   }
+  #die Dumper $$sampleInfo{$samplename}, $expectedGenomeSize, $$h{coverage}, $coverage;
   return $coverage;
 }
  
@@ -162,12 +194,15 @@ sub calculateCoverage{
 ################
 
 sub usage{
-  "Find all reads directories under the inbox
+  print "Find all reads directories under the inbox
   Usage: $0 runDir
   --debug # Show debugging information
   --numcpus  1
   --tempdir ''
   --force
-  "
+  --version
+  ";
+
+  exit(0);
 }
 
