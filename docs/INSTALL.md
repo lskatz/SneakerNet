@@ -22,8 +22,8 @@ for a complete SneakerNet analysis.
 
 To find the right dependencies for you, run the following
 
-    SneakerNet.checkdeps.pl --list # and find the workflow, e.g., 'default'
-    SneakerNet.checkdeps.pl default
+    SneakerNet.checkdeps.pl --list  # and find the workflow, e.g., 'default'
+    SneakerNet.checkdeps.pl default # Check deps for all plugins for the workflow 'default'
 
 ### Comprehensive list
 
