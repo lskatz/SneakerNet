@@ -6,6 +6,7 @@
     cd bin
     git clone https://github.com/lskatz/SneakerNet.git
     cd SneakerNet
+    perl Makefile.PL
     make
 
 ## Test the installation
