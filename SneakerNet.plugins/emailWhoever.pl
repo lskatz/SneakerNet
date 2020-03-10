@@ -34,7 +34,7 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'sendmail -d0.4 -bv root | grep -m 1 Version'
+      sendmail  => 'sendmail -d0.4 -bv root 2>&1 | grep -m 1 Version'
     }, $settings,
   );
 
