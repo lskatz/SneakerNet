@@ -28,6 +28,10 @@ This workflow runs plugins designed for ion torrent.
 
 For metagenomics runs. 
 
+## Assembly
+
+For assembly-only runs (ie, only assemblies and not raw reads in the folder).
+
 # Command line
 
 Each plugin can accept the following options. The first positional
