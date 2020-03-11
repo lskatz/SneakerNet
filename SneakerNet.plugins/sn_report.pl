@@ -178,7 +178,7 @@ sub makeSummaryTable{
     my $failures = $$passfail{$sampleName};
     die "ERROR: sn_passfail.pl was not run on sample $sampleName" if(!$failures);
     while(my($failure_code, $is_failure) = each(%$failures)){
-      if($is_failure){
+      if($is_failure==1){
         $score = $score - $penalty;
         $emojiIdx++;
         push(@failure_code, $failure_code);
