@@ -16,7 +16,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "2.1";
+our $VERSION = "2.2";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -127,35 +127,39 @@ sub makeSummaryTable{
   my $sample   = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
   my $passfail = passfail($dir, $settings);
   # Also add in contamination detection
-  open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
-  my $header = <$krakenFh>;
-  chomp($header);
-  my @header = split(/\t/, $header);
-  while(<$krakenFh>){
-    chomp;
-    my @F = split(/\t/, $_);
-    my %F;
-    @F{@header} = @F;
-    $F{PERCENTAGE_CONTAMINANT} //= 0;
+  if(-e "$dir/SneakerNet/forEmail/kraken.tsv"){
+    open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
+    my $header = <$krakenFh>;
+    chomp($header);
+    my @header = split(/\t/, $header);
+    while(<$krakenFh>){
+      chomp;
+      my @F = split(/\t/, $_);
+      my %F;
+      @F{@header} = @F;
+      $F{PERCENTAGE_CONTAMINANT} //= 0;
 
-    if($F{PERCENTAGE_CONTAMINANT} > 10){
-      $$passfail{$F{NAME}}{kraken}=1;
+      if($F{PERCENTAGE_CONTAMINANT} > 10){
+        $$passfail{$F{NAME}}{kraken}=1;
+      }
     }
+    close $krakenFh;
   }
-  close $krakenFh;
   
   # Read the readMetrics file into %readMetrics
   my %readMetrics = ();
-  open(my $readMetricsFh,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
-  my @rmHeader=split(/\t/,<$readMetricsFh>); chomp(@rmHeader);
-  while(<$readMetricsFh>){
-    chomp;
-    my %F;
-    @F{@rmHeader}=split(/\t/,$_);
-    $F{File} = basename($F{File});
-    $readMetrics{$F{File}} = \%F;
+  if(-e "$dir/readMetrics.tsv"){
+    open(my $readMetricsFh,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
+    my @rmHeader=split(/\t/,<$readMetricsFh>); chomp(@rmHeader);
+    while(<$readMetricsFh>){
+      chomp;
+      my %F;
+      @F{@rmHeader}=split(/\t/,$_);
+      $F{File} = basename($F{File});
+      $readMetrics{$F{File}} = \%F;
+    }
+    close $readMetricsFh;
   }
-  close $readMetricsFh;
 
   my $happiness = $$settings{happiness_range} || [];
   if(ref($happiness) ne 'ARRAY' || !@$happiness){
@@ -193,6 +197,8 @@ sub makeSummaryTable{
     my $qual= "";
     for my $fastq(@{ $$s{fastq} }){
       my $f = basename($fastq);
+      $readMetrics{$f}{coverage}   //= -1;
+      $readMetrics{$f}{avgQuality} //= -1;
       $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
       $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
     }
