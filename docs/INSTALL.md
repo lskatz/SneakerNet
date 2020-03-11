@@ -73,7 +73,8 @@ folder on the remote computer.
 
 ### settings
 
-This file has certain key/values and should be left alone, unless you are a developer.
+This file has certain key/values and should be carefully edited.
+Some individual plugin settings are found here.
 
 ### plugins
 
