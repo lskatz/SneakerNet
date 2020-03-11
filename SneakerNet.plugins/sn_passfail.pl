@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Transfers files to a remote destination and QCs them beforehand.
+# Creates a pass/fail file for easy to read results
 
 use strict;
 use warnings;
@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.4";
+our $VERSION = "2.5";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -75,18 +75,25 @@ sub identifyBadRuns{
 
   my %whatFailed=();  # reasons why it failed
 
-  # Read the readMetrics file into %readMetrics
-  open(READMETRICS,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
-  my @header=split(/\t/,<READMETRICS>); chomp(@header);
   my %readMetrics = ();
-  while(<READMETRICS>){
-    chomp;
-    my %F;
-    @F{@header}=split(/\t/,$_);
-    $F{File} = basename($F{File});
-    $readMetrics{$F{File}} = \%F;
+  # If the readMetrics.tsv file exists, read it.
+  if(-e "$dir/readMetrics.tsv"){
+    # Read the readMetrics file into %readMetrics
+    open(READMETRICS,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
+    my @header=split(/\t/,<READMETRICS>); chomp(@header);
+    while(<READMETRICS>){
+      chomp;
+      my %F;
+      @F{@header}=split(/\t/,$_);
+      $F{File} = basename($F{File});
+      $readMetrics{$F{File}} = \%F;
+    }
+    close READMETRICS;
   }
-  close READMETRICS;
+  # If the readmetrics file does not exist, then the values are blank
+  else {
+    logmsg "WARNING: readMetrics.tsv was not found. Unknown whether samples pass or fail by coverage and quality.";
+  }
 
   # Understand for each sample whether it passed or failed
   # on each category
@@ -117,6 +124,7 @@ sub identifyBadRuns{
       my $fastqMetrics = $readMetrics{basename($fastq)};
 
       # Coverage
+      $$fastqMetrics{coverage} //= '.';    # by default, dot.
       if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
         $totalCoverage = -1; # -1 means 'unknown' coverage
       } else {
@@ -125,10 +133,17 @@ sub identifyBadRuns{
         logmsg "Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
       }
 
+      $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
+      # If avgQual is missing, then -1 for unknown pass status
+      $$fastqMetrics{avgQuality} //= '.';
+      if($$fastqMetrics{avgQuality} eq '.'){
+        $is_passing_quality{$fastq} = -1;
+      }
       # Set whether this fastq passes quality by the > comparison:
       # if yes, then bool=true, if less than, bool=false
-      $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
-      $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
+      else {
+        $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
+      }
     }
 
     # Set whether the sample fails coverage
@@ -154,7 +169,7 @@ sub identifyBadRuns{
       }
       # Likewise if a file's quality is unknown, then it's all unknown
       if($passed == -1){
-        $fail{$samplename} = -1;
+        $fail{quality} = -1;
         last;
       }
     }
