@@ -7,7 +7,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use File::Copy qw/cp/;
+use File::Copy qw/cp mv/;
 use File::Temp qw/tempdir/;
 use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
@@ -15,14 +15,11 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.2";
+our $VERSION = "3.0";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
 my $tmpSettings=readConfig();
-#my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
-#my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
-#$ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
 
 local $0=fileparse $0;
 exit(main());
@@ -44,6 +41,7 @@ sub main{
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings.conf";
+  $$settings{KRAKEN_DEFAULT_DB} = '/dev/shm/gzu2/Kalamari_v3.7';logmsg "DEBUG";
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{minpercent} ||= 25;
 
@@ -78,15 +76,6 @@ sub runKrakenOnDir{
     MAJOR_CONTAMINANT PERCENTAGE_CONTAMINANT
   )));
   while(my($sampleName,$s)=each(%$sampleInfo)){
-    next if(ref($s) ne 'HASH'); # avoid file=>name aliases
-
-    # Skip any samples without reads, ie, samples that are misnamed or not sequenced.
-    # There is no way to predict how a sample is misnamed and so it does not fall under
-    # this script's purview.
-    if(!defined($$s{fastq}) || !@{ $$s{fastq} }){
-      logmsg "WARNING: I could not find the reads for $sampleName. Skipping.";
-      next;
-    }
 
     my $sampledir="$outdir/$sampleName";
     system("mkdir -p $sampledir");
@@ -140,32 +129,39 @@ sub runKrakenOnDir{
 
 sub runKraken{
   my($sample,$sampledir,$settings)=@_;
+  my $sampleName = $$sample{sample_id};
 
   my $html="$sampledir/report.html";
   if(-e $html && !$$settings{force}){
     return 1;
   }
-
-  if(!defined($$sample{fastq})){
-    logmsg "ERROR: no reads found for $sampledir";
-    return 0;
-  }
   
-  # Skip small file sizes.
-  # TODO: use something better like readMetrics.pl 
-  for(@{ $$sample{fastq} }){
-    if(-s $_ < 10000){
-      logmsg "There are few reads in $$sample{sample_id}. Skipping.";
-      return 0;
+  # Skip any samples without reads or assemblies, ie, samples that are misnamed or not sequenced.
+  # There is no way to predict how a sample is misnamed and so it does not fall under
+  # this script's purview.
+  my $inputType = "READS";
+  if(!defined($$sample{fastq}) || !@{ $$sample{fastq} }){
+    logmsg "WARNING: I could not find the reads for $sampleName .";
+    $inputType = "";
+    if(!defined($$sample{asm}) || !@{ $$sample{asm} }){
+      logmsg "WARNING: I could not find the assembly for $sampleName .";
+      return 0; # no reads or asm -- give up and return 0
+    } else {
+      $inputType = "ASM";
     }
   }
-  
+
   # Force an array
   if(ref($$sample{fastq}) ne 'ARRAY'){
     $$sample{fastq} = [$$sample{fastq}];
   }
   my @fastq = @{$$sample{fastq}};
 
+  my $asm = $$sample{asm};
+
+  if(@fastq < 2 && -e $asm){
+    return runKrakenAsm(@_);
+  }
   if(@fastq == 1){
     return runKrakenSE(@_);
   }
@@ -180,8 +176,85 @@ sub runKraken{
   logmsg "INTERNAL ERROR";
   return 0;
 }
+sub runKrakenAsm{
+  my($sample,$sampledir,$settings)=@_;
+
+  my $sampleName = $$sample{sample_id};
+  my $asm = $$sample{asm};
+
+  # Skip small file sizes.
+  # TODO: use something better like readMetrics.pl 
+  if(-s $asm < 1000){
+    logmsg "The assembly is too small for $sampleName. Skipping";
+    return 0;
+  }
+
+  my $html="$sampledir/report.html";
+
+  # Run basic kraken command
+  command("kraken --fasta-input $asm --db=$$settings{KRAKEN_DEFAULT_DB} --threads $$settings{numcpus} --output $sampledir/kraken.out.tmp ");
+  mv("$sampledir/kraken.out.tmp", "$sampledir/kraken.out");
+
+  # Create the taxonomy but normalize for contig length
+  # I stole my own code from https://github.com/lskatz/lskScripts/blob/master/scripts/translate-kraken-contigs.pl
+  my %length;     # Contig lengths
+  my %percentage; # Percentage of all nucleotides
+  open(my $fh, '<', "$sampledir/kraken.out") or die "ERROR: could not read $sampledir/kraken.out: $!";
+  while(<$fh>){
+    chomp;
+    my($classified,$seqname,$taxid,$length,$kmerTaxid)=split(/\t/,$_);
+    if($classified eq 'U'){
+      $percentage{'unclassified'}+=$length;
+    } else {
+      $length{$seqname} = $length;
+    }
+  }
+  close $fh;
+
+  # kraken-translate but tally all the sequence lengths
+  open(my $translateFh, "kraken-translate $sampledir/kraken.out | ") or die "ERROR: could not run kraken-translate on $sampledir/kraken.out: $!";
+  while(<$translateFh>){
+    chomp;
+    my($seqname,$taxonomyString)=split(/\t/,$_);
+    $taxonomyString=~s/\s+/_/g;
+    $taxonomyString=~s/;/\t/g;
+    $percentage{$taxonomyString}+=$length{$seqname};
+  }
+  close $translateFh;
+
+  # Create the kraken-translate file
+  my $taxonomyFile = "$sampledir/kraken.taxonomy";
+  open(my $taxonomyFh, '>', "$taxonomyFile.tmp") or die "ERROR: could not write to $taxonomyFile.tmp: $!";
+  while(my($taxonomyString,$sliceOfPie)=each(%percentage)){
+    print $taxonomyFh join("\t",$sliceOfPie,$taxonomyString)."\n";
+  }
+  close $taxonomyFh;
+  mv("$taxonomyFile.tmp", $taxonomyFile) or die $!;
+
+  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+
+  command("ktImportText -o $html $sampledir/kraken.taxonomy");
+
+  unlink("$sampledir/kraken.out");
+  
+  return 1;
+}
+
+
 sub runKrakenSE{
   my($sample,$sampledir,$settings)=@_;
+
+  my $sampleName = $$sample{sample_id};
+  
+  # Skip small file sizes.
+  # TODO: use something better like readMetrics.pl 
+  for(@{ $$sample{fastq} }){
+    if(-s $_ < 10000){
+      logmsg "There are few reads in $sampleName. Skipping.";
+      return 0;
+    }
+  }
+  
   my $html="$sampledir/report.html";
 
   my $reads = $$sample{fastq}[0];
@@ -226,6 +299,18 @@ sub runKrakenSE{
 
 sub runKrakenPE{
   my($sample,$sampledir,$settings)=@_;
+
+  my $sampleName = $$sample{sample_id};
+  
+  # Skip small file sizes.
+  # TODO: use something better like readMetrics.pl 
+  for(@{ $$sample{fastq} }){
+    if(-s $_ < 10000){
+      logmsg "There are few reads in $sampleName. Skipping.";
+      return 0;
+    }
+  }
+  
   my $html="$sampledir/report.html";
 
   my @twoReads = (@{$$sample{fastq}})[0,1];
