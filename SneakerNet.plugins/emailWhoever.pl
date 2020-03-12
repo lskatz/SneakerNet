@@ -76,18 +76,22 @@ sub emailWhoever{
   #                                   Investigator Name,ALS (IAU3)
   #     or:                           Investigator Name,ALS (IAU3;GZU2)
   # And then make IAU3 into a CDC email.
-  my $pocLine=`grep -m 1 'Investigator' $dir/SampleSheet.csv`;
-  if($pocLine=~/\((.+)\)/){
-    my $cdcids=$1;
-    $cdcids=~s/\s+//g; # remove whitespace
-    for my $email(split(/[;,]/,$cdcids)){
-      if($email !~ /\@/){
-        $email.="\@cdc.gov";
+  if(-e "$dir/SampleSheet.csv"){
+    my $pocLine=`grep -m 1 'Investigator' $dir/SampleSheet.csv`;
+    if($pocLine=~/\((.+)\)/){
+      my $cdcids=$1;
+      $cdcids=~s/\s+//g; # remove whitespace
+      for my $email(split(/[;,]/,$cdcids)){
+        if($email !~ /\@/){
+          $email.="\@cdc.gov";
+        }
+        push(@to,$email);
       }
-      push(@to,$email);
+    } else {
+      logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
     }
   } else {
-    logmsg "WARNING: could not parse the investigator line so that I could find CDC IDs";
+    logmsg "WARNING: SampleSheet.csv not found; not parsing for additional emails. More than likely there are some email addresses anyway in snok.txt or emails.conf.";
   }
 
   # Read the run's snok.txt for any emails
