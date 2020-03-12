@@ -41,7 +41,6 @@ sub main{
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings.conf";
-  $$settings{KRAKEN_DEFAULT_DB} = '/dev/shm/gzu2/Kalamari_v3.7';logmsg "DEBUG";
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
   $$settings{minpercent} ||= 25;
 
