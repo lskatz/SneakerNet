@@ -21,7 +21,7 @@ use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "1.2";
+our $VERSION = "1.4";
 our $CITATION = "Base Balance by Lee Katz";
 
 # Global
@@ -137,6 +137,9 @@ sub baseBalance{
     $out.=sprintf("%0.2f",($nt{A}/$nt{T}))."\t".sprintf("%0.2f",($nt{C}/$nt{G}))."\n";
     print $outFh $out;
   }
+  print $outFh "# A/T is the number of As divided by Ts\n";
+  print $outFh "# C/G is the number of Cs divided by Gs\n";
+  print $outFh "# An expected ratio of randomly called nucleotides would be close to 1\n";
   close $outFh;
 
   mv("$outfile.tmp",$outfile) or die "ERROR: could not move $outfile.tmp to $outfile";
