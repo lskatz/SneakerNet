@@ -17,7 +17,7 @@ our @EXPORT_OK = qw(
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.9';
+our $VERSION = '0.8.10';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -165,6 +165,17 @@ sub samplesheetInfo_tsv{
       fastq => \@fastq,
       sample_id => $sampleName,
     };
+
+    # Find out whether there is an assembly for this sample
+    my $asmDir = "$runDir/SneakerNet/assemblies/$sampleName";
+    $sample{$sampleName}{asm} = "";
+    if(-d $asmDir){
+      my @asm = glob("$asmDir/*.fasta");
+      if(@asm){
+        $sample{$sampleName}{asm} = $asm[0];
+      }
+    }
+
     for my $rule(split(/;/, $rules)){
       my($key,$value)=split(/=/,$rule);
       $key=lc($key); # ensure lowercase keys
