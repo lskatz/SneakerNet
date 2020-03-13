@@ -1,5 +1,4 @@
 ---
-
 name: Plugin contribution
 about: Contribute a new plugin
 title: "[PLUGIN CONTRIBUTION]"
