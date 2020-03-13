@@ -64,5 +64,7 @@ For more details, see the [plugins readme](docs/PLUGINS.md).
 
 ### Plugins for developers
 
-Please look at the [readme for plugins](docs/PLUGINSDEV.md).
+You too can develop for SneakerNet!  For more information, 
+please look at the [readme for plugins](docs/PLUGINSDEV.md)
+and the [contributing](CONTRIBUTING.md) doc.
 
