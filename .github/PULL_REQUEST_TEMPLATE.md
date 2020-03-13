@@ -5,7 +5,7 @@
 * Other feature
 * Other
 
-**Describe the change **
+**Describe the change**
 
 **Does it change the usage of SneakerNetPlugins.pl?**
 
