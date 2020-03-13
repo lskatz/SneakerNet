@@ -16,7 +16,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "2.2";
+our $VERSION = "2.3";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -126,25 +126,6 @@ sub makeSummaryTable{
   # Gather some information
   my $sample   = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
   my $passfail = passfail($dir, $settings);
-  # Also add in contamination detection
-  if(-e "$dir/SneakerNet/forEmail/kraken.tsv"){
-    open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
-    my $header = <$krakenFh>;
-    chomp($header);
-    my @header = split(/\t/, $header);
-    while(<$krakenFh>){
-      chomp;
-      my @F = split(/\t/, $_);
-      my %F;
-      @F{@header} = @F;
-      $F{PERCENTAGE_CONTAMINANT} //= 0;
-
-      if($F{PERCENTAGE_CONTAMINANT} > 10){
-        $$passfail{$F{NAME}}{kraken}=1;
-      }
-    }
-    close $krakenFh;
-  }
   
   # Read the readMetrics file into %readMetrics
   my %readMetrics = ();

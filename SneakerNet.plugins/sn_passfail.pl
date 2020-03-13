@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.5";
+our $VERSION = "3.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -65,6 +65,7 @@ sub passfail{
     print $failFh "\n";
   }
   print $failFh "#1: fail\n#0: pass\n#-1: unknown\n";
+  print $failFh "#Failure by Kraken is when the number of contaminant reads is > 10%\n";
   close $failFh;
 
   return $failFile;
@@ -75,6 +76,7 @@ sub identifyBadRuns{
 
   my %whatFailed=();  # reasons why it failed
 
+  # Read metrics
   my %readMetrics = ();
   # If the readMetrics.tsv file exists, read it.
   if(-e "$dir/readMetrics.tsv"){
@@ -95,6 +97,26 @@ sub identifyBadRuns{
     logmsg "WARNING: readMetrics.tsv was not found. Unknown whether samples pass or fail by coverage and quality.";
   }
 
+  # Kraken results
+  my %kraken;
+  if(-e "$dir/SneakerNet/forEmail/kraken.tsv"){
+    open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
+    my $header = <$krakenFh>;
+    chomp($header);
+    my @header = split(/\t/, $header);
+    while(<$krakenFh>){
+      chomp;
+      next if(/^\s*#/);
+      my @F = split(/\t/, $_);
+      my %F;
+      @F{@header} = @F;
+      $F{PERCENTAGE_CONTAMINANT} //= 0;
+
+      $kraken{$F{NAME}} = \%F;
+    }
+    close $krakenFh;
+  }
+
   # Understand for each sample whether it passed or failed
   # on each category
   for my $samplename(keys(%$sampleInfo)){
@@ -106,6 +128,7 @@ sub identifyBadRuns{
     my %fail=(
       coverage=>-1,
       quality => 0, # by default passes
+      kraken  => -1,
     );
 
     # Skip anything that says undetermined.
@@ -172,6 +195,17 @@ sub identifyBadRuns{
         $fail{quality} = -1;
         last;
       }
+    }
+
+    # Did it pass by kraken / read classification
+    if(defined($kraken{$samplename})){
+      if($kraken{$samplename}{PERCENTAGE_CONTAMINANT} > 10){
+        $fail{kraken} = 1;
+      } else {
+        $fail{kraken} = 0;
+      }
+    } else {
+      $fail{kraken} = -1;
     }
 
     $whatFailed{$samplename} = \%fail;
