@@ -6,7 +6,7 @@ Runs antimicrobial resistance analysis
 
 # Software requirements
 
-* StarAMR >= 0.2.2
+* StarAMR >= 0.7.0
 * StarAMR database
 
 ## StarAMR database
