@@ -20,7 +20,7 @@ is system("sn_passfail.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Runnin
 my $passfail= "$run/SneakerNet/forEmail/passfail.tsv";
 
 diag "Reading from $passfail";
-diag `cat $passfail`;
+diag `grep -v '^#' $passfail | column -t`;
 
 # Double check results
 subtest "Expected passfail results from $passfail" => sub {
@@ -41,6 +41,10 @@ subtest "Expected passfail results from $passfail" => sub {
     my $expectedContamination = 0;
     if($sample =~ /contamin/i){
       $expectedContamination = 1;
+    }
+    # Kraken is undefined if we never ran the test so...
+    if(!-e "$run/SneakerNet/forEmail/kraken.tsv"){
+      $expectedContamination = -1;
     }
 
     is $F{coverage}, 1, "Check if $sample failed coverage";
