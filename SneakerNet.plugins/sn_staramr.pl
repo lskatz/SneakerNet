@@ -8,15 +8,17 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
+use Cwd qw/realpath/;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.3";
 our $CITATION = "StarAMR plugin by Lee Katz and Jess Chen";
 
-local $0=fileparse $0;
+my($basename, $thisDir) = fileparse $0;
+local $0=$basename;
 exit(main());
 
 sub main{
@@ -122,23 +124,52 @@ sub staramr{
     # ... and the final directory
     my $outdir = "$dir/SneakerNet/staramr/$sampleName";
 
-    if(-d $outdir){
+    if(!$$settings{force} && -d $outdir){
       logmsg "Already found $outdir. Skipping";
       next;
     }
+    system("rm -rf $outdir");
 
     # Get the genome assembly
     my @asm = glob("$dir/SneakerNet/assemblies/$sampleName/*.fasta");
     my $asm = $asm[0];
 
-    if(-s $asm < 30000){
+    if(!defined($asm) || !-e $asm || -s $asm < 30000){
       logmsg "Assembly for $sampleName is too small. Skipping.";
       next;
     }
 
     # Run staramr
     logmsg "staramr on $sampleName";
-    command("staramr search --pid-threshold 90 --percent-length-overlap-resfinder 50 --output-dir $tempdir $asm 2>&1");
+    my $staramrXopts = "";
+    if(my $pointfinderOrganism = $$s{taxonRules}{pointfinder}){
+      logmsg "Pointfinder organism found for $sampleName: $pointfinderOrganism";
+      $staramrXopts .= "--pointfinder-organism $pointfinderOrganism ";
+      
+      # But what if the installation directory doesn't have the right
+      # database? See if we have the database locally in
+      # Sneakernet/db/staramr
+      my @possibleDir = ("$thisDir/../db/staramr/pointfinder/$pointfinderOrganism",
+                         "$thisDir/../db/staramr/update/pointfinder/$pointfinderOrganism",
+                        );
+
+      for my $possibleDir(@possibleDir){
+        if(-e $possibleDir){
+          $possibleDir =~ s/staramr.*/staramr/;
+          my $path = realpath("$possibleDir");
+          logmsg "Using pointfinder database $possibleDir";
+          $staramrXopts .= "--database $path";
+          last;
+        } 
+        #else {logmsg "NOT FOUND $possibleDir";}
+      }
+    }
+    my $staramrLog = "$$settings{tempdir}/$sampleName.staramr.log";
+    my $command = "staramr search $staramrXopts --pid-threshold 90 --percent-length-overlap-resfinder 50 --output-dir $tempdir $asm 2>$staramrLog";
+    system($command);
+    if($?){
+      die "ERROR running\n  $command\nERROR was\n".`cat $staramrLog`;
+    }
 
     system("mv $tempdir $outdir");
   }
