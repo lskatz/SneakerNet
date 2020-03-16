@@ -24,19 +24,28 @@ diag `cat $passfail`;
 
 # Double check results
 subtest "Expected passfail results from $passfail" => sub {
-  plan tests => 8;
-
   open(my $fh, $passfail) or die "ERROR reading passfail file at $passfail: $!";
+  my $header = <$fh>;
+  chomp($header);
+  my @header = split(/\t/, $header);
   while(<$fh>){
+    chomp;
     next if(/^#/);
     next if(/^Sample/);
 
-    chomp;
-    my ($file, $coverage, $quality)
-        = split(/\t/, $_);
-    
-    is $coverage, 1, "Check if $file failed coverage";
-    is $quality , 0, "Check if $file passed quality";
+    my @F = split(/\t/, $_);
+    my %F;
+    @F{@header} = @F;
+    my $sample = $F{Sample};
+
+    my $expectedContamination = 0;
+    if($sample =~ /contamin/i){
+      $expectedContamination = 1;
+    }
+
+    is $F{coverage}, 1, "Check if $sample failed coverage";
+    is $F{quality} , 0, "Check if $sample passed quality";
+    is $F{kraken}  , $expectedContamination, "Check if $sample passed read classification (kraken)";
   }
   close $fh;
 };
