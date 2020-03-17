@@ -29,7 +29,7 @@ TODO
 
 =cut
 
-our $VERSION = '0.8.12';
+our $VERSION = '0.8.13';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -388,7 +388,12 @@ sub samplesheetInfo{
       if(!$F{sample_id}){
         $F{sample_id}=$F{sampleid};
       }
-      croak "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
+      # This usually just skips blank lines
+      if(!$F{sample_id}){
+        carp "SKIP: could not find sample id for this line in the sample sheet: ".Dumper \%F;
+        carp "If you think this SKIP was in error, please fill in the sample_id under SampleSheet.csv and run this script again with --force.";
+        next;
+      }
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
