@@ -25,7 +25,7 @@ note $readMetricsLog;
 # 3 Mb chromosome and so the coverage calculation
 # will be off.
 subtest "Expected coverage" => sub {
-  plan tests => 6;
+  plan tests => 8;
   my %expected = (
     "FA1090_1.fastq.gz"           => 5,
     "FA1090_2.fastq.gz"           => 5,
@@ -33,9 +33,11 @@ subtest "Expected coverage" => sub {
     "2010EL-1786_2.fastq.gz"      => 3.8,
     "Philadelphia_CDC_1.fastq.gz" => 5,
     "Philadelphia_CDC_2.fastq.gz" => 5,
+    "LT2_1.fastq.gz"              => 5,
+    "LT2_2.fastq.gz"              => 5,
   );
   open(my $fh, "$run/readMetrics.tsv") or die "ERROR reading $run/readMetrics.tsv: $!";
-  system("wc -l $run/readMetrics.tsv");
+  #system("wc -l $run/readMetrics.tsv");
   while(<$fh>){
     chomp;
     my ($file, $avgReadLength, $totalBases, $minReadLength, $maxReadLength, $avgQuality, $numReads, $PE, $coverage) 
@@ -43,8 +45,12 @@ subtest "Expected coverage" => sub {
 
     $file = basename($file);
     
-    if(!$expected{$file}){ # avoid header
-      note "Skipping $file";
+    # Skip header
+    if($file =~ /File/i){
+      next;
+    }
+    if(!$expected{$file}){ 
+      note "Skipping fastq file $file";
       next;
     }
     subtest "Coverage for $file" => sub{

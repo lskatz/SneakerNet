@@ -87,6 +87,6 @@ subtest 'Make a contaminated genome' => sub{
 
   my $numSamples = `grep -A 100 Sample_ID $run/SampleSheet.csv | tail -n +2 | wc -l`; 
   chomp($numSamples);
-  is($numSamples, 4, "Added contaminant sample");
+  is($numSamples, 5, "Added contaminant sample");
 };
 
