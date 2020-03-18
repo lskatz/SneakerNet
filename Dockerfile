@@ -1,7 +1,7 @@
 FROM ubuntu:xenial
 
 LABEL base.image="ubuntu:xenial"
-LABEL container.version="1.0.0"
+LABEL container.version="1"
 LABEL software="SneakerNet"
 LABEL software.version="0.8.8"
 LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
@@ -24,19 +24,38 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  libjson-perl \
  gzip \
  file \
+ zlib1g-dev \
+ g++ \ 
+ gawk && \
+ apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 
- && apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/* 
-
-# install perl modules
+### install perl modules as root w cpanm ###
 # MLST:
-# 
-RUN cpanm .....
+# kraken1: Getopt::Std 
+RUN cpanm Getopt::Std
 
 # CG-Pipeline
-RUN
+#RUN
+
+# Jellyfish - kraken dep
+# apt deps: gawk
+RUN wget --no-check-certificate https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz && \
+  tar -zxf jellyfish-1.1.12.tar.gz && \
+  rm -rf jellyfish-1.1.12.tar.gz && \
+  cd jellyfish-1.1.12 && \
+  ./configure --prefix=/opt/ && \
+  make -j 4 && \
+  make install
 
 # Kraken1
-RUN
+# apt deps: wget zlib1g-dev make g++ rsync cpanminus
+# cpan deps: Getopt::Std
+RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz && \
+  tar -xzf v1.1.1.tar.gz && \
+  rm -rf v1.1.1.tar.gz && \
+  cd kraken-1.1.1 && \
+  mkdir /opt/kraken && \
+  ./install_kraken.sh /opt/kraken/
 
 # Krona
 
@@ -44,49 +63,56 @@ RUN
 # Skesa 2.3.0 - DL binary and rename as 'skesa'
 RUN mkdir skesa && \
   cd skesa && \
-  wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+  wget --no-check-certificate https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
   mv skesa.centos6.10 skesa && \
   chmod +x skesa
 
 # Prodigal - 2.6.2 via apt
 
 # Shovill
+# only used in crypto
 
-
-# mlst
+# mlst 2.16.2 (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
 # dependencies in apt: libmoo-perl liblist-moreutils-perl libjson-perl gzip file
 # other dependencies: any2fasta ncbi-blast+
-RUN wget https://github.com/tseemann/mlst/archive/v2.19.0.tar.gz && \
- tar -xzf v2.19.0.tar.gz && \
- rm v2.19.0.tar.gz
+RUN wget --no-check-certificate https://github.com/tseemann/mlst/archive/v2.16.2.tar.gz &&\
+ tar -xzf v2.16.2.tar.gz &&\
+ rm v2.16.2.tar.gz
 
 # any2fasta
 RUN cd /usr/local/bin && \
-  wget https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
+  wget --no-check-certificate https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
   chmod +x any2fasta
 
-# ncbi-blast+
-RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
+# ncbi-blast+ 2.9.0
+RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  tar -xzf ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  rm ncbi-blast-2.9.0+-x64-linux.tar.gz
 
 # ColorID
-
+# precompiled binary here https://github.com/hcdenbakker/colorid/releases
 
 # Get SneakerNet 0.8.8 and make /data
-RUN wget https://github.com/lskatz/SneakerNet/archive/v0.8.8.tar.gz && \
+RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.8.tar.gz && \
   tar -zxf v0.8.8.tar.gz && \
   rm v0.8.8.tar.gz && \
   mkdir /data
 
-# download minikraken db
-RUN 
+#### TEMP COMMENTED OUT TO SAVE BUILD TIME ####
+# minikraken db
+#RUN mkdir /kraken-database && \
+#  cd /kraken-database && \
+#  wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz && \
+#  tar -zxf minikraken_20171019_4GB.tgz && \
+#  rm -rf minikraken_20171019_4GB.tgz 
 
 # set PATH and perl local settings
 ENV PATH="${PATH}:\
-/mlst-2.19.0/bin:\
+/mlst-2.16.2/bin:\
 /ncbi-blast-2.9.0+/bin:\
 /skesa:\
+/opt/kraken:\
+/opt/bin \
 " \
     LC_ALL=C
 
