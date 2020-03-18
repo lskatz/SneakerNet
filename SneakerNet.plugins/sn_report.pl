@@ -63,15 +63,27 @@ sub main{
 
   $html .= htmlHeaders();
   $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
-  $html .= "<p class='genericInfo'><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
+  $html .= "<div class='genericInfo'>\n";
+  $html .= "<p><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
+  #$html .= "<div class='genericInfo'><table style='align:right;'>\n";
+  #$html .= "<tr><th colspan='2'>For each plugin</th></tr>\n";
+  #$html .= "<tr><td><span class='footerIcon'>&#128196;</td><td>documentation</td></tr>\n";
+  #$html .= "<tr><td><span class='footerIcon'>1011</td><td>code</td></tr>\n";
+  #$html .= "</table></div>\n";
+  # TODO if there are any values of 'warning', send a rotating siren warning
+  #$html .= "<p>&#128680;</p>\n";
+  $html .= "</div>\n";
 
+  # Sort plugins
   my @sortedPluginName = sort{
+                        # Ensure that this plugin's results show first
                         if($a eq basename($0)){
                           return -1;
                         }
                         elsif($b eq basename($0)){
                           return 1;
                         }
+                        # Sort by name
                         $a cmp $b;
                         } keys(%$properties);
 
@@ -99,11 +111,11 @@ sub main{
     $html .= "<div class='pluginContent'>\n";
     $html .= report($dir, $plugin, $properties, $settings);
     $html .= "  <a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>\n";
-    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>&#128196;</span>\n"; # UTF-8 for page facing up
+    $html .= "     <span class='footerIcon'>&#128196;</span>\n"; # UTF-8 for page facing up
     #$html .= "    <img style='width:16px;height:16px;' alt='documentation' src='$documentationBase64' />\n";
     $html .= "  </a>";
     $html .= "  <a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'>\n";
-    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>1011</span>\n";
+    $html .= "     <span class='footerIcon'>1011</span>\n";
     #$html .= "    <img style='width:16px;height:16px;' alt='github' src='$githubBase64' />\n";
     $html .= "  </a>";
     $html .= "</div>\n"; # end div pluginContent
@@ -373,6 +385,7 @@ sub htmlHeaders{
   $html .= "a:hover { 
     color:blue;
   }\n";
+  $html .= ".footerIcon { font-family:monospace; border:solid pink 1px;margin:3px; }\n";
   $html .= "</style>\n";
 
   $html .= "</head>\n";
