@@ -16,7 +16,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 use Text::Fuzzy;
 use Email::Stuffer;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -28,7 +28,7 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'sendmail -d0.4 -bv root | grep -m 1 Version',
+      sendmail  => 'sendmail -d0.4 -bv root 2>&1 | grep -m 1 Version',
     }, $settings,
   );
 

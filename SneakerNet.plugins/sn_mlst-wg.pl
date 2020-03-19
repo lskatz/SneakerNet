@@ -15,7 +15,7 @@ use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "wgMLST plugin by Lee Katz.  Uses chewBBACA for wgMLST.";
 
 # wget --recursive http://enterobase.warwick.ac.uk/schemes/SALwgMLST.cgMLSTv1/
@@ -30,8 +30,8 @@ sub main{
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
       zip       => 'zip --version | grep "This is Zip"',
-      python3   => 'python --version',
-      'chewBBACA.py' => 'chewBBACA.py -h 2>&1 | grep -m 1 -i version',
+      'python3 (Python3)'   => 'python3 --version',
+      'chewBBACA.py (chewBBACA)' => 'chewBBACA.py -h 2>&1 | grep -m 1 -i version',
     }, $settings,
   );
 

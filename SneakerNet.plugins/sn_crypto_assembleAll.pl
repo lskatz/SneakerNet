@@ -30,9 +30,9 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_filterContigs.pl' => "echo CG Pipeline version unknown",
-      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
-      'run_assembly_metrics.pl'       => "echo CG Pipeline version unknown",
+      'run_assembly_filterContigs.pl (CG-Pipeline)' => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
+      'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
       cat                             => 'cat --version | head -n 1',
       sort                            => 'sort --version | head -n 1',
       head                            => 'head --version | head -n 1',

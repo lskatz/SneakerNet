@@ -26,8 +26,8 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      mlst      => 'mlst --version',
-      colorid   => 'colorid --version',
+      'mlst (tseemann mlst)'      => 'mlst --version',
+      'colorid (ColorID)'   => 'colorid --version',
     }, $settings,
   );
 

@@ -31,7 +31,7 @@ sub main{
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
       mlst      => 'mlst --version',
-      blastn    => 'blastn -version | head -n 1',
+      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
       rm        => 'rm --version | head -n 1',
     }, $settings,
   );

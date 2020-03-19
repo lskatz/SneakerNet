@@ -14,7 +14,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 use Bio::Kmer;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "Detect contamination by Lee Katz. Uses Bio::Kmer module for kmer counting.";
 
 # http://perldoc.perl.org/perlop.html#Symbolic-Unary-Operators
@@ -86,7 +86,8 @@ sub kmerContaminationDetection{
       my $histTable="$dir/SneakerNet/kmerHistogram/$sample/".basename($fastq).".tsv";
       next if(!$$settings{force} && -e $histGraph);
 
-      my $kmer=Bio::Kmer->new($fastq, {numcpus=>$$settings{numcpus}});
+      my $numcpus = 1; # single threaded is somehow faster. Need to look into this.
+      my $kmer=Bio::Kmer->new($fastq, {numcpus=>$numcpus});
       my $hist=$kmer->histogram();
 
       # Write the histogram to disk

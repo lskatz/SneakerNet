@@ -31,8 +31,8 @@ sub main{
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
       'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
-      'run_assembly_metrics.pl'       => "echo CG Pipeline version unknown",
-      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
+      'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
     }, $settings,
   );
 

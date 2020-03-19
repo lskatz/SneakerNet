@@ -14,7 +14,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.3";
+our $VERSION = "1.4";
 our $CITATION = "StarAMR plugin by Lee Katz and Jess Chen";
 
 my($basename, $thisDir) = fileparse $0;
@@ -28,7 +28,7 @@ sub main{
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
       staramr   => 'staramr --version',
-      blastn    => 'blastn -version 2>&1',
+      'blastn (BLAST+)'    => 'blastn -version 2>&1',
     }, $settings,
   );
 

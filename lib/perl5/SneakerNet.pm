@@ -29,7 +29,7 @@ TODO
 
 =cut
 
-our $VERSION = '0.8.13';
+our $VERSION = '0.8.14';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -86,7 +86,7 @@ underscore at the beginning.
 Arguments: 
 
   $properties (hash ref)
-    executable         => string (command that lets you check a version)
+    executable         => string (command that lets you check a version. Can be in the format of 'executable ...' where anything after a space is ignored for determining the viability of the executable)
     _CITATION          => bool   (prints $$settings{citation} and exits 0)
     _VERSION           => bool   (prints $$settings{version} and exits 0)
   $settings   (hash ref)
@@ -127,7 +127,10 @@ sub exitOnSomeSneakernetOptions{
     # Run through all execs but die if not present.
     # Prints on stderr
     my $numNotFound = 0;
-    for my $exe(@exe){
+    for(my $i=0;$i<@exe;$i++){
+      my $desc = $exe[$i]; # avoid changing by ref
+      my $exe  = $desc;
+         $exe =~ s/\s+.*//; # remove anything after a whitespace
       my $path = eval{fullPathToExec($exe);};
       if(!defined($path) || !-e $path){
         logmsg "ERROR: could not find path to $exe";
@@ -139,7 +142,7 @@ sub exitOnSomeSneakernetOptions{
       if(my $vcmd = $$properties{$exe}){
         ($ver) = qx($vcmd);
         if(!$ver){
-          logmsg "ERROR: could not determine version of '$exe' via '$vcmd'";
+          logmsg "ERROR: could not determine version of '$desc' via '$vcmd'";
           $numNotFound++;
         } else {
           chomp($ver);

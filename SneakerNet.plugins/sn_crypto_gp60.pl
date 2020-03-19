@@ -30,9 +30,9 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      blastn    => 'blastn -version | head -n 1',
+      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
       rm        => 'rm --version | head -n 1',
-      'countGP60repeats.pl' => 'echo GP60 counter unknown version',
+      'countGP60repeats.pl (GP60_Counter - private repo)' => 'echo GP60 counter unknown version',
     }, $settings,
   );
 

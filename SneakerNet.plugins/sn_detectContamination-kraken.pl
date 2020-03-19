@@ -32,9 +32,9 @@ sub main{
       _VERSION  => $VERSION,
       zip       => 'zip --version | grep "This is Zip"',
       kraken    => 'kraken --version | grep -m 1 version',
-      'kraken-translate' => 'kraken-translate --version | grep -m 1 version',
-      'kraken-report'    => 'kraken-report --version | grep -m 1 version',
-      'ktImportText'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+      'kraken-translate (Kraken)' => 'kraken-translate --version | grep -m 1 version',
+      'kraken-report (Kraken)'    => 'kraken-report --version | grep -m 1 version',
+      'ktImportText (Krona)'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
     }, $settings,
   );
 
