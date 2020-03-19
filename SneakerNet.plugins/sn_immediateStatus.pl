@@ -45,6 +45,7 @@ sub main{
 
   # Record all warnings/errors into a file
   my $numErrors = 0;
+  my $numWarnings = 0;
   my $outfile = "$dir/SneakerNet/forEmail/immediateReaction.tsv";
   open(my $fh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
   print $fh join("\t", qw(ErrType Sample ErrKeyword Error))."\n";
@@ -57,7 +58,13 @@ sub main{
         );
         print $fh "\n";
 
-        $numErrors++;
+        if($errType eq 'fastq'){
+          $numWarnings++;
+        }
+        elsif($errType eq 'sample'){
+          $numErrors++;
+        }
+
       }
     }
   }
@@ -67,8 +74,12 @@ sub main{
   # If no errors occured, use bool "0" and if some
   # errors, then make a message.
   my $errorMsg  = "0";
+  my $warningMsg= "0";
   if($numErrors > 0){
     $errorMsg = "$numErrors errors";
+  }
+  if($numWarnings > 0){
+    $warningMsg = "$numWarnings errors";
   }
 
   my @to = ();
@@ -107,7 +118,7 @@ sub main{
     die "ERROR: email was not sent to $to!";
   }
 
-  recordProperties($dir,{version=>$VERSION, reportTo=>$to, errors=>$errorMsg});
+  recordProperties($dir,{version=>$VERSION, reportTo=>$to, warnings=>$warningMsg, errors=>$errorMsg});
 
   return 0;
 }
