@@ -16,7 +16,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 use Text::Fuzzy;
 use Email::Stuffer;
 
-our $VERSION = "1.3";
+our $VERSION = "1.4";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -79,7 +79,7 @@ sub main{
     $errorMsg = "$numErrors errors";
   }
   if($numWarnings > 0){
-    $warningMsg = "$numWarnings errors";
+    $warningMsg = "$numWarnings warnings";
   }
 
   my @to = ();
@@ -118,7 +118,11 @@ sub main{
     die "ERROR: email was not sent to $to!";
   }
 
-  recordProperties($dir,{version=>$VERSION, reportTo=>$to, warnings=>$warningMsg, errors=>$errorMsg});
+  recordProperties($dir,{
+      version=>$VERSION, reportTo=>$to, 
+      warnings=>$warningMsg, errors=>$errorMsg,
+      table=>"$dir/SneakerNet/forEmail/immediateReaction.tsv",
+    });
 
   return 0;
 }

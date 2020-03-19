@@ -16,7 +16,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "2.3";
+our $VERSION = "2.5";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -59,20 +59,6 @@ sub main{
 
   my $properties = readProperties($dir);
 
-  my $html="";
-
-  $html .= htmlHeaders();
-  $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
-  $html .= "<div class='genericInfo'>\n";
-  $html .= "<p><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
-  #$html .= "<div class='genericInfo'><table style='align:right;'>\n";
-  #$html .= "<tr><th colspan='2'>For each plugin</th></tr>\n";
-  #$html .= "<tr><td><span class='footerIcon'>&#128196;</td><td>documentation</td></tr>\n";
-  #$html .= "<tr><td><span class='footerIcon'>1011</td><td>code</td></tr>\n";
-  #$html .= "</table></div>\n";
-  # TODO if there are any values of 'warning', send a rotating siren warning
-  #$html .= "<p>&#128680;</p>\n";
-  $html .= "</div>\n";
 
   # Sort plugins
   my @sortedPluginName = sort{
@@ -86,6 +72,36 @@ sub main{
                         # Sort by name
                         $a cmp $b;
                         } keys(%$properties);
+
+  # Let's start off the HTML
+  my $html="";
+  $html .= htmlHeaders();
+  $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
+
+  # Up front information in this div
+  $html .= "<div class='genericInfo'>\n";
+  $html .= "<p><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
+
+  # Warnings and errors get printed up front
+  $html .= "<p style='font-weight:bold'>\n";
+  for my $plugin(@sortedPluginName){
+    if(my $error = $$properties{$plugin}{errors}){
+      $html .= "&#128680; ($plugin) $error <br />\n";
+    }
+    if(my $warning = $$properties{$plugin}{warnings}){
+      $html .= "&#9888; ($plugin) $warning <br />\n";
+    }
+  }
+  $html .= "</p>\n";
+  #$html .= "<div class='genericInfo'><table style='align:right;'>\n";
+  #$html .= "<tr><th colspan='2'>For each plugin</th></tr>\n";
+  #$html .= "<tr><td><span class='footerIcon'>&#128196;</td><td>documentation</td></tr>\n";
+  #$html .= "<tr><td><span class='footerIcon'>1011</td><td>code</td></tr>\n";
+  #$html .= "</table></div>\n";
+  # TODO if there are any values of 'warning', send a rotating siren warning
+  #$html .= "<p>&#128680;</p>\n";
+  $html .= "</div>\n";
+  # END up front information
 
   for my $plugin(@sortedPluginName){
     my $inputID = "menu-$plugin";
