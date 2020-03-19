@@ -1,6 +1,6 @@
 # SneakerNet Output
 
-SneakerNet creates a subdirectory `SneakerNet` in the input folder.
+SneakerNet creates a subdirectory `SneakerNet/` in the input folder.
 In this document, this subfolder will be referred to as `SneakerNet/`.
 This document describes those files.
 
@@ -18,8 +18,11 @@ There are some special keys that are treated differently:
 
 * table - the relative path to a `.tsv` file from the main folder that describes a summary table from a plugin, e.g., `SneakerNet/forEmail/kraken.tsv`
 * version - the version number of the plugin that was run in the format of simple integers separated by periods, e.g., `2.3.1`
-* warnings - a summary of warnings from the plugin, e.g., `5 samples do not have fastq files`
-* errors - a summary of errors from the plugin, e.g., `Error reading summary table`
+* warnings - a summary of warnings from the plugin, e.g., `5 samples do not have fastq files`. Use "0" for no warnings.
+* errors - a summary of errors from the plugin, e.g., `Error reading summary table`. Use "0" for no errors.
+* date - date of analysis in YYYY-MM-DD format
+* time - time of analysis in HH:MM:SS format
+* other - other keys are allowed but not not specifically described here, e.g., `resfinder_gene_drug_version` for the staramr plugin. For other special keys, please see the individual plugin documentation pages.
 
 ### forEmail/passfail.tsv
 
