@@ -49,7 +49,9 @@ And then run SneakerNet like so (optionally following the log with `tail -f`):
 
 ## Output
 
-SneakerNet produces a subfolder `SneakerNet` in your run directory.
+_For more information, please see [docs/SneakerNetOutput.md](docs/SneakerNetOutput.md)_
+
+SneakerNet produces a subfolder `SneakerNet/` in your run directory.
 It also emails a report. To view a sample report, please go to 
 t/report.html
 in this repository.
