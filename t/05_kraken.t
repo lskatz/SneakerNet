@@ -26,9 +26,10 @@ subtest 'kraken results' => sub{
     plan skip_all => 'kraken executable not found';
   }
 
-  plan tests => 37;
+  plan tests => 46;
 
   diag `sn_detectContamination-kraken.pl --numcpus 2 --force $run 2>&1`;
+  #diag `sn_detectContamination-kraken.pl --numcpus 2 $run 2>&1`;
   is $?, 0, "Running Kraken plugin";
 
   my $spreadsheet = "$run/SneakerNet/forEmail/kraken.tsv";
@@ -62,10 +63,18 @@ subtest 'kraken results' => sub{
       PERCENTAGE_CONTAMINANT             => 0,
     },
     '2010EL-1786'    => {
-      NAME                               => "contaminated",
+      NAME                               => "2010EL-1786",
       LABELED_TAXON                      => "Vibrio",
       BEST_GUESS                         => "Vibrio cholerae",
       PERCENTAGE_OF_GENOME_IS_BEST_GUESS => 82.47,
+      MAJOR_CONTAMINANT                  => ".",
+      PERCENTAGE_CONTAMINANT             => 0,
+    },
+    'LT2'            => {
+      NAME                               => "LT2",
+      LABELED_TAXON                      => "Salmonella",
+      BEST_GUESS                         => "Salmonella enterica",
+      PERCENTAGE_OF_GENOME_IS_BEST_GUESS => 86.28,
       MAJOR_CONTAMINANT                  => ".",
       PERCENTAGE_CONTAMINANT             => 0,
     },

@@ -63,3 +63,21 @@ To run all unit tests:
     perl Makefile.PL
     make
     make test
+
+## language-specific tips
+
+There are three Hello World example plugins. For perl, there is
+an API. However, I would kindly take any help in other languages.
+
+### perl
+
+Please see the perl hello world plugin. Also, please run `perldoc lib/perl5/SneakerNet.pm`
+for help on the library API.
+
+### python
+
+Please see the python hello world plugin
+
+### shell
+
+Please see the hello world shell plugin

@@ -16,7 +16,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 use Text::Fuzzy;
 use Email::Stuffer;
 
-our $VERSION = "1.3";
+our $VERSION = "1.5";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -43,6 +43,9 @@ sub main{
 
   my $errHash = doubleCheckRun($dir,$settings);
 
+  # Record all warnings/errors into a file
+  my $numErrors = 0;
+  my $numWarnings = 0;
   my $outfile = "$dir/SneakerNet/forEmail/immediateReaction.tsv";
   open(my $fh, ">", $outfile) or die "ERROR: could not write to $outfile: $!";
   print $fh join("\t", qw(ErrType Sample ErrKeyword Error))."\n";
@@ -54,12 +57,37 @@ sub main{
           $$errHash{$errType}{$sample}{$errKeyword}
         );
         print $fh "\n";
+
+        if($errType eq 'fastq'){
+          $numWarnings++;
+        }
+        elsif($errType eq 'sample'){
+          $numErrors++;
+        }
+
       }
     }
   }
   close $fh;
 
-  my @to = @{ $$settings{'default.emails'} };
+  # Record any errors that might have happened.
+  # If no errors occured, use bool "0" and if some
+  # errors, then make a message.
+  my $errorMsg  = "0";
+  my $warningMsg= "0";
+  if($numErrors > 0){
+    $errorMsg = "$numErrors errors";
+  }
+  if($numWarnings > 0){
+    $warningMsg = "$numWarnings warnings";
+  }
+
+  my @to = ();
+  if(ref($$settings{'default.emails'}) eq 'ARRAY'){
+    push(@to, @{ $$settings{'default.emails'} });
+  } else {
+    push(@to, $$settings{'default.emails'})
+  }
   # append any snok.txt emails
   # Read the run's snok.txt for any emails
   if(-e "$dir/snok.txt"){
@@ -90,7 +118,11 @@ sub main{
     die "ERROR: email was not sent to $to!";
   }
 
-  recordProperties($dir,{version=>$VERSION, reportTo=>$to});
+  recordProperties($dir,{
+      version=>$VERSION, reportTo=>$to, 
+      warnings=>$warningMsg, errors=>$errorMsg,
+      table=>"$dir/SneakerNet/forEmail/immediateReaction.tsv",
+    });
 
   return 0;
 }
@@ -142,6 +174,7 @@ sub doubleCheckRun{
       $errHash{fastq}{$filename}{sampleNotFound} = "Found fastq $filename but no entry in the sample sheet matching $basename.  Did you mean $nearest?";
     }
   }
+
   return \%errHash;
 }
 
