@@ -3,7 +3,7 @@ FROM ubuntu:xenial
 LABEL base.image="ubuntu:xenial"
 LABEL container.version="1"
 LABEL software="SneakerNet"
-LABEL software.version="0.8.8"
+LABEL software.version="0.8.14"
 LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
 LABEL website="https://github.com/lskatz/SneakerNet"
 LABEL license="https://github.com/lskatz/SneakerNet/blob/master/LICENSE"
@@ -11,7 +11,6 @@ LABEL maintainer="Curtis Kapsak"
 LABEL maintainer.email="pjx8@cdc.gov"
 
 ### install dependencies ###
-# vim installed temporarily for debugging
 # libexpat1-dev needed for cpanm to install XML::Parser and other modules
 RUN apt-get update && apt-get -y --no-install-recommends install \
  perl \
@@ -39,21 +38,31 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  python3 \
  python3-pip \
  python3-setuptools \
- vim && \
+ pigz \
+ gcc \
+ libpthread-stubs0-dev \
+ openjdk-9-jre \
+ unzip \
+ bzip2 \
+ libncurses5-dev \
+ libbz2-dev \
+ liblzma-dev \
+ libcurl4-gnutls-dev \
+ libssl-dev \
+ libfindbin-libs-perl && \
  apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 
 ### install perl modules as root w cpanm ###
-# MLST:
 # kraken1: Getopt::Std
 # SN: Config::Simple local::lib version::vpp Bio::FeatureIO XML::DOM XML::Parser XML::DOM::XPath
 RUN cpanm --notest --force Getopt::Std \
-  Config::Simple \
-  local::lib \
-  version::vpp \
-  XML::DOM \
-  XML::Parser \
-  XML::DOM::XPath \
-  Bio::FeatureIO 
+ Config::Simple \
+ local::lib \
+ version::vpp \
+ XML::DOM \
+ XML::Parser \
+ XML::DOM::XPath \
+ Bio::FeatureIO 
 
 # CG-Pipeline 
 # again can't download because CDC spoofs security certificates which causes errors...GRRRRR
@@ -62,50 +71,135 @@ RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/lskatz/CG-Pipeline.git
 # Jellyfish - kraken dep
 # apt deps: gawk
 RUN wget --no-check-certificate https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz && \
-  tar -zxf jellyfish-1.1.12.tar.gz && \
-  rm -rf jellyfish-1.1.12.tar.gz && \
-  cd jellyfish-1.1.12 && \
-  ./configure --prefix=/opt/ && \
-  make -j 4 && \
-  make install
+ tar -zxf jellyfish-1.1.12.tar.gz && \
+ rm -rf jellyfish-1.1.12.tar.gz && \
+ cd jellyfish-1.1.12 && \
+ ./configure --prefix=/opt/ && \
+ make -j 4 && \
+ make install
 
 # Kraken1
 # apt deps: wget zlib1g-dev make g++ rsync cpanminus
 # cpan deps: Getopt::Std
 RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz && \
-  tar -xzf v1.1.1.tar.gz && \
-  rm -rf v1.1.1.tar.gz && \
-  cd kraken-1.1.1 && \
-  mkdir /opt/kraken && \
-  ./install_kraken.sh /opt/kraken/
+ tar -xzf v1.1.1.tar.gz && \
+ rm -rf v1.1.1.tar.gz && \
+ cd kraken-1.1.1 && \
+ mkdir /opt/kraken && \
+ ./install_kraken.sh /opt/kraken/
 
 # Krona
 # apt deps: curl
 RUN wget --no-check-certificate https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar && \
-    tar -xf KronaTools-2.7.1.tar && \
-    rm KronaTools-2.7.1.tar && \
-    cd KronaTools-2.7.1 && \
-    ./install.pl --prefix . && \
-    ./updateTaxonomy.sh
+ tar -xf KronaTools-2.7.1.tar && \
+ rm KronaTools-2.7.1.tar && \
+ cd KronaTools-2.7.1 && \
+ ./install.pl --prefix . && \
+ ./updateTaxonomy.sh
 
 # Skesa 2.3.0 - DL binary and rename as 'skesa'
 RUN mkdir skesa && \
-  cd skesa && \
-  wget --no-check-certificate https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
-  mv skesa.centos6.10 skesa && \
-  chmod +x skesa
+ cd skesa && \
+ wget --no-check-certificate https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+ mv skesa.centos6.10 skesa && \
+ chmod +x skesa
 
 # Prodigal - 2.6.2 via apt
 
-# Shovill
-# only used in crypto
-
+# Seqtk 1.3 (shovill dep)
+RUN wget --no-check-certificate https://github.com/lh3/seqtk/archive/v1.3.tar.gz && \
+ tar -zxf v1.3.tar.gz && \
+ rm v1.3.tar.gz && \
+ cd seqtk-1.3/ && \
+ make && \
+ make install
 
 # SPAdes 3.14.0 (needed for shovill and metagenomics workflow)
 # apt deps: python
-RUN wget http://cab.spbu.ru/files/release3.14.0/SPAdes-3.14.0-Linux.tar.gz && \
-  tar -xzf SPAdes-3.14.0-Linux.tar.gz && \
-  rm -r SPAdes-3.14.0-Linux.tar.gz
+RUN wget --no-check-certificate http://cab.spbu.ru/files/release3.14.0/SPAdes-3.14.0-Linux.tar.gz && \
+ tar -xzf SPAdes-3.14.0-Linux.tar.gz && \
+ rm -r SPAdes-3.14.0-Linux.tar.gz
+
+# Mash 2.2 (shovill dep)
+RUN wget --no-check-certificate https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar && \
+ tar -xvf mash-Linux64-v2.2.tar && \
+ rm -rf mash-Linux64-v2.2.tar
+
+# lighter 1.1.1 (shovill dep)
+RUN wget --no-check-certificate https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz && \
+ tar -zxf v1.1.1.tar.gz && \
+ rm -rf v1.1.1.tar.gz && \
+ cd Lighter-1.1.1 && \
+ make
+
+# trimmomatic 0.38 (shovill dep)
+RUN mkdir trimmomatic && \
+ cd trimmomatic && \
+ wget --no-check-certificate http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip && \
+ unzip Trimmomatic-0.38.zip && \
+ rm -rf Trimmomatic-0.38.zip && \
+ chmod +x Trimmomatic-0.38/trimmomatic-0.38.jar && \
+ echo "#!/bin/bash" >> trimmomatic && \
+ echo "exec java -jar /trimmomatic/Trimmomatic-0.38/trimmomatic-0.38.jar """"$""@"""" " >> trimmomatic && \
+ chmod +x trimmomatic
+
+# BWA 0.7.17 (shovill dep)
+RUN wget --no-check-certificate https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2 && \
+ tar -xjf bwa-0.7.17.tar.bz2 && \
+ rm bwa-0.7.17.tar.bz2 && \
+ cd bwa-0.7.17 && \
+ make
+
+# Samtools 1.9 (shovill dep)
+RUN wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
+ tar -xjf samtools-1.9.tar.bz2 && \
+ rm samtools-1.9.tar.bz2 && \
+ cd samtools-1.9 && \
+ ./configure && \
+ make && \
+ make install
+
+# MEGAHIT 1.1.4 (shovill dep)
+RUN mkdir megahit && \
+ cd megahit && \
+ wget --no-check-certificate https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+ tar -xzf megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+ rm megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
+
+# Velvet 1.2.10 (shovill dep)
+RUN wget --no-check-certificate https://github.com/dzerbino/velvet/archive/v1.2.10.tar.gz && \
+ tar -xzf v1.2.10.tar.gz && \
+ rm -rf v1.2.10.tar.gz && \
+ cd velvet-1.2.10 && \
+ make
+
+# Flash 1.2.11 (shovill dep)
+RUN wget --no-check-certificate https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz && \
+ tar -zxf FLASH-1.2.11.tar.gz && \
+ rm -rf FLASH-1.2.11.tar.gz && \
+ cd FLASH-1.2.11 && \
+ make
+
+# Pilon 1.22 (shovill dep)
+RUN mkdir pilon && \
+ cd pilon && \
+ wget --no-check-certificate https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar && \
+ chmod +x pilon-1.22.jar && \
+ echo "#!/bin/bash" >> pilon && \
+ echo "exec java -jar /pilon/pilon-1.22.jar """"$""@"""" " >> pilon && \
+ chmod +x pilon
+
+# Samclip
+RUN mkdir samclip && \
+ cd samclip && \
+ wget --no-check-certificate https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
+ chmod +x samclip
+
+# Shovill
+# apt deps: pigz zlib1g-dev make gcc g++ libpthread-stubs0-dev openjdk-9-jre unzip bzip2 libncurses5-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libfindbin-libs-perl
+RUN wget --no-check-certificate https://github.com/tseemann/shovill/archive/v1.0.4.tar.gz && \
+ tar -xzf v1.0.4.tar.gz && \
+ rm v1.0.4.tar.gz
 
 # mlst 2.16.2 (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
 # dependencies in apt: libmoo-perl liblist-moreutils-perl libjson-perl gzip file
@@ -116,8 +210,8 @@ RUN wget --no-check-certificate https://github.com/tseemann/mlst/archive/v2.16.2
 
 # any2fasta
 RUN cd /usr/local/bin && \
-  wget --no-check-certificate https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
-  chmod +x any2fasta
+ wget --no-check-certificate https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
+ chmod +x any2fasta
 
 # ncbi-blast+ 2.9.0
 RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
@@ -137,11 +231,11 @@ RUN python3 -m pip install -U pip && \
 # apt deps: sendmail-base zip 
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
 RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
-  tar -zxf v0.8.14.tar.gz && \
-  rm v0.8.14.tar.gz && \
-  cd /SneakerNet-0.8.14 && \
-  cpanm --installdeps --notest --force . && \
-  mkdir /data
+ tar -zxf v0.8.14.tar.gz && \
+ rm v0.8.14.tar.gz && \
+ cd /SneakerNet-0.8.14 && \
+ cpanm --installdeps --notest --force . && \
+ mkdir /data
 
 #### TEMP COMMENTED OUT TO SAVE BUILD TIME ####
 # minikraken db
@@ -160,12 +254,25 @@ ENV PATH="${PATH}:\
 /opt/bin:\
 /CG-Pipeline/scripts:\
 /KronaTools-2.7.1/bin:\
-/SPAdes-3.14.0-Linux/bin\
+/SPAdes-3.14.0-Linux/bin:\
+/mash-Linux64-v2.2:\
+/Lighter-1.1.1:\
+/trimmomatic:\
+/bwa-0.7.17:\
+/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin:\
+/velvet-1.2.10:\
+/FLASH-1.2.11:\
+/pilon:\
+/samclip:\
+/shovill-1.0.4/bin\
 " \
-    LC_ALL=C \
-    ls='ls --color=auto'
+ LC_ALL=C \
+ ls='ls --color=auto'
 
 # check SN dependencies
-RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default
+RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default && \
+ ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl metagenomics && \
+ ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
+ ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl iontorrent
 
 WORKDIR /data
