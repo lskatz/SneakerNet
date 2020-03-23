@@ -11,6 +11,8 @@ LABEL maintainer="Curtis Kapsak"
 LABEL maintainer.email="pjx8@cdc.gov"
 
 ### install dependencies ###
+# vim installed temporarily for debugging
+# libexpat1-dev needed for cpanm to install XML::Parser and other modules
 RUN apt-get update && apt-get -y --no-install-recommends install \
  perl \
  rsync \
@@ -26,13 +28,26 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  file \
  zlib1g-dev \
  g++ \ 
- gawk && \
+ gawk \
+ bioperl \
+ libexpat1-dev \
+ sendmail \ 
+ zip \
+ vim && \
  apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 
 ### install perl modules as root w cpanm ###
 # MLST:
-# kraken1: Getopt::Std 
-RUN cpanm Getopt::Std
+# kraken1: Getopt::Std
+# SN: Config::Simple local::lib version::vpp Bio::FeatureIO XML::DOM XML::Parser XML::DOM::XPath
+RUN cpanm --notest --force Getopt::Std \
+  Config::Simple \
+  local::lib \
+  version::vpp \
+  XML::DOM \
+  XML::Parser \
+  XML::DOM::XPath \
+  Bio::FeatureIO 
 
 # CG-Pipeline
 #RUN
@@ -92,10 +107,14 @@ RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/bla
 # ColorID
 # precompiled binary here https://github.com/hcdenbakker/colorid/releases
 
-# Get SneakerNet 0.8.8 and make /data
-RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.8.tar.gz && \
-  tar -zxf v0.8.8.tar.gz && \
-  rm v0.8.8.tar.gz && \
+# Get SneakerNet 0.8.14 and make /data
+# apt deps: sendmail zip 
+# perl modules listed in cpanm comments above (some installed there, some installed w cpanm command below)
+RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
+  tar -zxf v0.8.14.tar.gz && \
+  rm v0.8.14.tar.gz && \
+  cd /SneakerNet-0.8.14 && \
+  cpanm --installdeps --notest --force . && \
   mkdir /data
 
 #### TEMP COMMENTED OUT TO SAVE BUILD TIME ####
@@ -114,6 +133,7 @@ ENV PATH="${PATH}:\
 /opt/kraken:\
 /opt/bin \
 " \
-    LC_ALL=C
+    LC_ALL=C \
+    ls='ls --color=auto'
 
 WORKDIR /data
