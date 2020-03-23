@@ -15,9 +15,11 @@ LABEL maintainer.email="pjx8@cdc.gov"
 # libexpat1-dev needed for cpanm to install XML::Parser and other modules
 RUN apt-get update && apt-get -y --no-install-recommends install \
  perl \
+ git \
  rsync \
  ssh \
  wget \
+ curl \
  cpanminus \
  make \
  prodigal \
@@ -33,6 +35,10 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  libexpat1-dev \
  sendmail \ 
  zip \
+ python \
+ python3 \
+ python3-pip \
+ python3-setuptools \
  vim && \
  apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 
@@ -49,8 +55,9 @@ RUN cpanm --notest --force Getopt::Std \
   XML::DOM::XPath \
   Bio::FeatureIO 
 
-# CG-Pipeline
-#RUN
+# CG-Pipeline 
+# again can't download because CDC spoofs security certificates which causes errors...GRRRRR
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/lskatz/CG-Pipeline.git
 
 # Jellyfish - kraken dep
 # apt deps: gawk
@@ -73,7 +80,13 @@ RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1
   ./install_kraken.sh /opt/kraken/
 
 # Krona
-
+# apt deps: curl
+RUN wget --no-check-certificate https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar && \
+    tar -xf KronaTools-2.7.1.tar && \
+    rm KronaTools-2.7.1.tar && \
+    cd KronaTools-2.7.1 && \
+    ./install.pl --prefix . && \
+    ./updateTaxonomy.sh
 
 # Skesa 2.3.0 - DL binary and rename as 'skesa'
 RUN mkdir skesa && \
@@ -86,6 +99,13 @@ RUN mkdir skesa && \
 
 # Shovill
 # only used in crypto
+
+
+# SPAdes 3.14.0 (needed for shovill and metagenomics workflow)
+# apt deps: python
+RUN wget http://cab.spbu.ru/files/release3.14.0/SPAdes-3.14.0-Linux.tar.gz && \
+  tar -xzf SPAdes-3.14.0-Linux.tar.gz && \
+  rm -r SPAdes-3.14.0-Linux.tar.gz
 
 # mlst 2.16.2 (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
 # dependencies in apt: libmoo-perl liblist-moreutils-perl libjson-perl gzip file
@@ -104,12 +124,18 @@ RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/bla
  tar -xzf ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  rm ncbi-blast-2.9.0+-x64-linux.tar.gz
 
+# staramr
+# apt deps: python3 python3-pip python3-setuptools git ncbi-blast+ (blast installed manually)
+# update pip3 and install staramr 0.5.1
+RUN python3 -m pip install -U pip && \
+ pip3 install staramr==0.5.1
+
 # ColorID
 # precompiled binary here https://github.com/hcdenbakker/colorid/releases
 
 # Get SneakerNet 0.8.14 and make /data
-# apt deps: sendmail zip 
-# perl modules listed in cpanm comments above (some installed there, some installed w cpanm command below)
+# apt deps: sendmail-base zip 
+# perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
 RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
   tar -zxf v0.8.14.tar.gz && \
   rm v0.8.14.tar.gz && \
@@ -131,9 +157,15 @@ ENV PATH="${PATH}:\
 /ncbi-blast-2.9.0+/bin:\
 /skesa:\
 /opt/kraken:\
-/opt/bin \
+/opt/bin:\
+/CG-Pipeline/scripts:\
+/KronaTools-2.7.1/bin:\
+/SPAdes-3.14.0-Linux/bin\
 " \
     LC_ALL=C \
     ls='ls --color=auto'
+
+# check SN dependencies
+RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default
 
 WORKDIR /data
