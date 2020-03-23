@@ -16,7 +16,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 use Text::Fuzzy;
 use Email::Stuffer;
 
-our $VERSION = "1.5";
+our $VERSION = "1.6";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -108,7 +108,8 @@ sub main{
 
   my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
   my $subject="Initial SneakerNet status for ".basename(File::Spec->rel2abs($dir));
-  my $body = "If you see errors below, please contact the bioinformatics team with your run number and when you deposited the run. Include this file in your message.\n";
+  my $body = "If you see errors below, please contact the bioinformatics team with your run number and when you deposited the run. Include this file in your message.\nRun can be found at ".File::Spec->abs2rel($dir)."\n";
+     $body.= "\nDocumentation can be found at https://github.com/lskatz/SneakerNet/blob/master/docs/plugins/sn_immediateStatus.pl.md\n";
   my $email=Email::Stuffer->from($from)
                           ->subject($subject)
                           ->to($to)
