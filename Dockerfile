@@ -11,7 +11,7 @@ LABEL maintainer="Curtis Kapsak"
 LABEL maintainer.email="pjx8@cdc.gov"
 
 ### install dependencies ###
-# libexpat1-dev needed for cpanm to install XML::Parser and other modules
+# libexpat1-dev needed for cpanm to install XML::Parser and other perl modules
 RUN apt-get update && apt-get -y --no-install-recommends install \
  perl \
  git \
@@ -19,6 +19,7 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  ssh \
  wget \
  curl \
+ bsdmainutils \
  cpanminus \
  make \
  prodigal \
@@ -224,26 +225,30 @@ RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/bla
 RUN python3 -m pip install -U pip && \
  pip3 install staramr==0.5.1
 
-# ColorID
-# precompiled binary here https://github.com/hcdenbakker/colorid/releases
+# ColorID 1.4.3
+RUN mkdir colorid && \
+ cd colorid && \
+ wget --no-check-certificate https://github.com/hcdenbakker/colorid/releases/download/v0.1.4.3/colorid_Linux64v0.1.4.3 && \
+ mv colorid_Linux64v0.1.4.3 colorid && \
+ chmod +x colorid
 
 # Get SneakerNet 0.8.14 and make /data
-# apt deps: sendmail-base zip 
+# apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
 RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
  tar -zxf v0.8.14.tar.gz && \
  rm v0.8.14.tar.gz && \
  cd /SneakerNet-0.8.14 && \
  cpanm --installdeps --notest --force . && \
+ sed -i 's+/opt/kraken/full-20140723+/kraken-database/minikraken_20171013_4GB+g' config/settings.conf && \
  mkdir /data
 
-#### TEMP COMMENTED OUT TO SAVE BUILD TIME ####
 # minikraken db
-#RUN mkdir /kraken-database && \
-#  cd /kraken-database && \
-#  wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz && \
-#  tar -zxf minikraken_20171019_4GB.tgz && \
-#  rm -rf minikraken_20171019_4GB.tgz 
+RUN mkdir /kraken-database && \
+ cd /kraken-database && \
+ wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz && \
+ tar -zxf minikraken_20171019_4GB.tgz && \
+ rm -rf minikraken_20171019_4GB.tgz 
 
 # set PATH and perl local settings
 ENV PATH="${PATH}:\
@@ -264,10 +269,10 @@ ENV PATH="${PATH}:\
 /FLASH-1.2.11:\
 /pilon:\
 /samclip:\
-/shovill-1.0.4/bin\
+/shovill-1.0.4/bin:\
+/colorid\
 " \
- LC_ALL=C \
- ls='ls --color=auto'
+ LC_ALL=C
 
 # check SN dependencies
 RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default && \
