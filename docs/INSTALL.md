@@ -36,20 +36,63 @@ To find the right dependencies for you, run the following
 
 ### Comprehensive list
 
-This list was created using `SneakerNet.checkdeps.pl iontorrent metagenomics cryptosporidium default`
+This list was created using `SneakerNet.checkdeps.pl [iontorrent metagenomics cryptosporidium default]`
+on version 0.8.14.
+Dependencies may or may not have changed since then but they can still be checked using this script.
 
-* Multithreaded Perl (already installed on most computers)
+All workflows require perl v5.12 or higher, compiled with multithreading.
+This version of perl is already installed in most modern Linux operating systems.
+
+#### Default workflow
+
+* blastn (BLAST+)
 * GNU utilities (`cp`, `cat`, ...)
-* `rsync`
-* `ssh`
-* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
 * Kraken1: http://ccb.jhu.edu/software/kraken/
 * Krona: https://github.com/marbl/Krona/
-* Skesa
+* `mlst`: https://github.com/tseemann/mlst
 * Prodigal
+* Python3
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* sendmail
+* Skesa
+* staramr
+* `zip`
+
+#### metagenomics
+
+* Kraken1: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* `zip`
+
+#### cryptosporidium
+
+* blastn (BLAST+)
+* GNU utilities (`cp`, `cat`, ...)
+* Kraken1: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
+* `mlst`: https://github.com/tseemann/mlst
+* Prodigal
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
 * Shovill
-* `mlst`
-* ColorID
+* `countGP60repeats.pl`: currently in development in a private repo. To exclude, remove `sn_crypto_gp60.pl` from `config/plugins.conf` (already not included by default)
+* `zip`
+
+#### iontorrent
+
+* Shovill
+* SPAdes
+* blastn (BLAST+)
+* GNU utilities (`cp`, `cat`, ...)
+* Kraken1: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
+* `mlst`: https://github.com/tseemann/mlst
+* Prodigal
+* Python3
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* sendmail
+* Skesa
+* staramr
 * `zip`
 
 ## Configuration
@@ -58,6 +101,9 @@ You will need to edit some files for configuration before using SneakerNet.
 
     $ cp -r config.bak config
     $ cd config
+
+Some settings are necessary to change in the config/\*.conf files.
+Please edit these files accordingly.
 
 ### emails
 
