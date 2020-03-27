@@ -36,9 +36,12 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  sendmail \ 
  zip \
  python \
+ python-setuptools \
+ build-essential \
  python3 \
  python3-pip \
  python3-setuptools \
+ python3-venv \
  pigz \
  gcc \
  libpthread-stubs0-dev \
@@ -232,14 +235,34 @@ RUN mkdir colorid && \
  mv colorid_Linux64v0.1.4.3 colorid && \
  chmod +x colorid
 
+# SalmID 0.1.23
+# apt deps: python-setuptools python3 python3-pip curl build-essential file git python3-venv
+RUN pip3 install poetry && \
+ git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
+ cd SalmID && \
+ poetry build -vvv && \
+ pip3 install dist/salmid*.whl
+
+# chewBBACA 
+# apt deps: prodigal
+# BLAST 2.5.0+ or above required
+# python deps (installed via pip3 cmd below) numpy scipy biopython plotly SPARQLWrapper
+RUN pip3 install chewbbaca==2.1.0
+
 # Get SneakerNet 0.8.14 and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
-RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
- tar -zxf v0.8.14.tar.gz && \
- rm v0.8.14.tar.gz && \
- cd /SneakerNet-0.8.14 && \
+
+## TEMPORARILY COMMENTING OUT TO CLONE FROM HEAD OF REPO
+#RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
+# tar -zxf v0.8.14.tar.gz && \
+# rm v0.8.14.tar.gz && \
+# cd /SneakerNet-0.8.14 && \
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/lskatz/SneakerNet.git && \
+ cd SneakerNet && \ 
  cpanm --installdeps --notest --force . && \
+ perl Makefile.PL && \
+ make && \
  sed -i 's+/opt/kraken/full-20140723+/kraken-database/minikraken_20171013_4GB+g' config/settings.conf && \
  mkdir /data
 
@@ -274,10 +297,15 @@ ENV PATH="${PATH}:\
 " \
  LC_ALL=C
 
-# check SN dependencies
-RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default && \
- ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl metagenomics && \
- ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
- ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl iontorrent
+# check SN dependencies 
+#RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default && \
+# ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl metagenomics && \
+# ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
+# ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl iontorrent
+
+RUN ./SneakerNet/scripts/SneakerNet.checkdeps.pl default && \
+ ./SneakerNet/scripts/SneakerNet.checkdeps.pl metagenomics && \
+ ./SneakerNet/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
+ ./SneakerNet/scripts/SneakerNet.checkdeps.pl iontorrent
 
 WORKDIR /data
