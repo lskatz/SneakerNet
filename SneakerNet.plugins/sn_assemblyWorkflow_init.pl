@@ -73,7 +73,9 @@ sub evaluateAssemblies{
     if(!-e $outassembly){
       mkdir $outdir;
 
-      my $inassembly = $$info{fastq}[0] or die "ERROR: no assembly was defined for $sample";
+      $$info{fastq}[0] or die "ERROR: no assembly was defined for $sample";
+      my $inassembly = File::Spec->rel2abs($$info{fastq}[0], $dir);
+      logmsg "Copying $inassembly => $outassembly";
       cp($inassembly, $outassembly) or die "ERROR copying $inassembly => $outassembly : $!";
     }
 
@@ -268,7 +270,7 @@ sub annotateFasta{
 }
 
 sub usage{
-  print "Assemble all genomes
+  print "Initiates the assembly-only workflow by placing the files in the right places and running gene prediction. Also creates assembly/annotation metrics.
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --version

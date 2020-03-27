@@ -29,7 +29,7 @@ TODO
 
 =cut
 
-our $VERSION = '0.8.14';
+our $VERSION = '0.8.15';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -280,7 +280,8 @@ sub samplesheetInfo_tsv{
       }
     }
 
-    for my $rule(split(/;/, $rules)){
+    my @rule = grep{$_ ne '.'} split(/;/, $rules);
+    for my $rule(@rule){
       my($key,$value)=split(/=/,$rule);
       $key=lc($key); # ensure lowercase keys
       my @values = split(/,/,$value);
@@ -296,7 +297,7 @@ sub samplesheetInfo_tsv{
     # Get a few options for the taxon: explicit from the samplesheet or guessed
     my $explicitTaxon = $sample{$sampleName}{taxon};
     my $guessedTaxons = $speciesSuggestion{$sampleName} || [];
-    my @taxonGuess = ($explicitTaxon, @$guessedTaxons);
+    my @taxonGuess = grep {defined($_)} ($explicitTaxon, @$guessedTaxons);
     @taxonGuess    = ((grep {!/^unknown$/i} @taxonGuess), 'UNKNOWN');
     # Loop through the different taxa guesses, starting with
     # what was explicitly given
