@@ -58,7 +58,7 @@ sub main{
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},table=>"$dir/SneakerNet/forEmail/kraken.tsv"});
+  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}});
 
   return 0;
 }
