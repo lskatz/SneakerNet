@@ -32,6 +32,7 @@ sub main{
       zip       => 'zip --version | grep "This is Zip"',
       'python3 (Python3)'   => 'python3 --version',
       'chewBBACA.py (chewBBACA)' => 'chewBBACA.py -h 2>&1 | grep -m 1 -i version',
+      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
     }, $settings,
   );
 
