@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "3.0";
+our $VERSION = "4.0";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
@@ -80,12 +80,6 @@ sub runKrakenOnDir{
     system("mkdir -p $sampledir");
     logmsg "Running Kraken on $sampleName";
     logmsg "  Database: $$settings{KRAKEN_DEFAULT_DB}";
-    my $krakenWorked=runKraken($s,$sampledir,$settings);
-
-    if(!$krakenWorked){
-      logmsg "Kraken was not completed successfully on $sampleName. I will not output results for $sampleName";
-      next;
-    }
 
     my $expectedSpecies=$$s{species} || $$s{taxon} || "UNKNOWN";
     #my($percentTaxon,$html,$bestGuess)=guessTaxon($sampledir,$settings);
@@ -126,232 +120,6 @@ sub runKrakenOnDir{
   return $outdir;
 }
 
-sub runKraken{
-  my($sample,$sampledir,$settings)=@_;
-  my $sampleName = $$sample{sample_id};
-
-  my $html="$sampledir/report.html";
-  if(-e $html && !$$settings{force}){
-    return 1;
-  }
-  
-  # Skip any samples without reads or assemblies, ie, samples that are misnamed or not sequenced.
-  # There is no way to predict how a sample is misnamed and so it does not fall under
-  # this script's purview.
-  my $inputType = "READS";
-  if(!defined($$sample{fastq}) || !@{ $$sample{fastq} }){
-    logmsg "WARNING: I could not find the reads for $sampleName .";
-    $inputType = "";
-    if(!defined($$sample{asm}) || !@{ $$sample{asm} }){
-      logmsg "WARNING: I could not find the assembly for $sampleName .";
-      return 0; # no reads or asm -- give up and return 0
-    } else {
-      $inputType = "ASM";
-    }
-  }
-
-  # Force an array
-  if(ref($$sample{fastq}) ne 'ARRAY'){
-    $$sample{fastq} = [$$sample{fastq}];
-  }
-  my @fastq = @{$$sample{fastq}};
-
-  my $asm = $$sample{asm};
-
-  if(@fastq < 2 && -e $asm){
-    return runKrakenAsm(@_);
-  }
-  if(@fastq == 1){
-    return runKrakenSE(@_);
-  }
-  elsif(@fastq == 2){
-    return runKrakenPE(@_);
-  } else {
-    my %sampleCopy = %$sample;
-    splice(@{ $sampleCopy{fastq} }, 2);
-    return runKrakenPE(\%sampleCopy, $sampledir, $settings);
-  }
-
-  logmsg "INTERNAL ERROR";
-  return 0;
-}
-sub runKrakenAsm{
-  my($sample,$sampledir,$settings)=@_;
-
-  my $sampleName = $$sample{sample_id};
-  my $asm = $$sample{asm};
-
-  # Skip small file sizes.
-  # TODO: use something better like readMetrics.pl 
-  if(-s $asm < 1000){
-    logmsg "The assembly is too small for $sampleName. Skipping";
-    return 0;
-  }
-
-  my $html="$sampledir/report.html";
-
-  # Run basic kraken command
-  command("kraken --fasta-input $asm --db=$$settings{KRAKEN_DEFAULT_DB} --threads $$settings{numcpus} --output $sampledir/kraken.out.tmp ");
-  mv("$sampledir/kraken.out.tmp", "$sampledir/kraken.out");
-
-  # Create the taxonomy but normalize for contig length
-  # I stole my own code from https://github.com/lskatz/lskScripts/blob/master/scripts/translate-kraken-contigs.pl
-  my %length;     # Contig lengths
-  my %percentage; # Percentage of all nucleotides
-  open(my $fh, '<', "$sampledir/kraken.out") or die "ERROR: could not read $sampledir/kraken.out: $!";
-  while(<$fh>){
-    chomp;
-    my($classified,$seqname,$taxid,$length,$kmerTaxid)=split(/\t/,$_);
-    if($classified eq 'U'){
-      $percentage{'unclassified'}+=$length;
-    } else {
-      $length{$seqname} = $length;
-    }
-  }
-  close $fh;
-
-  # kraken-translate but tally all the sequence lengths
-  open(my $translateFh, "kraken-translate $sampledir/kraken.out | ") or die "ERROR: could not run kraken-translate on $sampledir/kraken.out: $!";
-  while(<$translateFh>){
-    chomp;
-    my($seqname,$taxonomyString)=split(/\t/,$_);
-    $taxonomyString=~s/\s+/_/g;
-    $taxonomyString=~s/;/\t/g;
-    $percentage{$taxonomyString}+=$length{$seqname};
-  }
-  close $translateFh;
-
-  # Create the kraken-translate file
-  my $taxonomyFile = "$sampledir/kraken.taxonomy";
-  open(my $taxonomyFh, '>', "$taxonomyFile.tmp") or die "ERROR: could not write to $taxonomyFile.tmp: $!";
-  while(my($taxonomyString,$sliceOfPie)=each(%percentage)){
-    print $taxonomyFh join("\t",$sliceOfPie,$taxonomyString)."\n";
-  }
-  close $taxonomyFh;
-  mv("$taxonomyFile.tmp", $taxonomyFile) or die $!;
-
-  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
-
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
-
-  unlink("$sampledir/kraken.out");
-  
-  return 1;
-}
-
-
-sub runKrakenSE{
-  my($sample,$sampledir,$settings)=@_;
-
-  my $sampleName = $$sample{sample_id};
-  
-  # Skip small file sizes.
-  # TODO: use something better like readMetrics.pl 
-  for(@{ $$sample{fastq} }){
-    if(-s $_ < 10000){
-      logmsg "There are few reads in $sampleName. Skipping.";
-      return 0;
-    }
-  }
-  
-  my $html="$sampledir/report.html";
-
-  my $reads = $$sample{fastq}[0];
-
-  return 0 if(!$reads);
-
-  command("kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
-
-  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
-    s/^ +//;   # remove leading spaces
-    s/ +/\t/;  # change first set of spaces from uniq -c to a tab
-    s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
-    print;
-    ' | sort -k1,1nr > $sampledir/kraken.taxonomy
-  ");
-
-  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
-
-  # To capture unclassified reads, we can get the third
-  # column of the first row of the report file. This
-  # information can be appended to the taxonomy file
-  # on the last line.
-  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not read $sampledir/kraken.report: $!";
-  my $firstLine=<$reportFh>;
-  close $reportFh;
-  my $unclassifiedReadsCount=(split(/\t/, $firstLine))[2];
-  open(my $taxFh, ">>", "$sampledir/kraken.taxonomy") or die "ERROR: could not append to $sampledir/kraken.taxonomy: $!";
-  print $taxFh $unclassifiedReadsCount."\n";
-  close $taxFh;
-
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
-
-  # Go ahead and remove kraken.out which is a huge file
-  unlink("$sampledir/kraken.out");
-
-  if(! -e "$sampledir/kraken.taxonomy"){
-    return 0;
-  }
-
-  return 1;
-}
-
-sub runKrakenPE{
-  my($sample,$sampledir,$settings)=@_;
-
-  my $sampleName = $$sample{sample_id};
-  
-  # Skip small file sizes.
-  # TODO: use something better like readMetrics.pl 
-  for(@{ $$sample{fastq} }){
-    if(-s $_ < 10000){
-      logmsg "There are few reads in $sampleName. Skipping.";
-      return 0;
-    }
-  }
-  
-  my $html="$sampledir/report.html";
-
-  my @twoReads = (@{$$sample{fastq}})[0,1];
-  my $reads="'".join("' '", @twoReads)."'";
-  return 0 if(!$reads);
-  
-  command("kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
-
-  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
-    s/^ +//;   # remove leading spaces
-    s/ +/\t/;  # change first set of spaces from uniq -c to a tab
-    s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
-    print;
-    ' | sort -k1,1nr > $sampledir/kraken.taxonomy
-  ");
-
-  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
-
-  # To capture unclassified reads, we can get the third
-  # column of the first row of the report file. This
-  # information can be appended to the taxonomy file
-  # on the last line.
-  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not read $sampledir/kraken.report: $!";
-  my $firstLine=<$reportFh>;
-  close $reportFh;
-  my $unclassifiedReadsCount=(split(/\t/, $firstLine))[2];
-  open(my $taxFh, ">>", "$sampledir/kraken.taxonomy") or die "ERROR: could not append to $sampledir/kraken.taxonomy: $!";
-  print $taxFh $unclassifiedReadsCount."\n";
-  close $taxFh;
-
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
-
-  # Go ahead and remove kraken.out which is a huge file
-  unlink("$sampledir/kraken.out");
-
-  if(! -e "$sampledir/kraken.taxonomy"){
-    return 0;
-  }
-
-  return 1;
-}
-
 sub guessTaxon{
   my($sampledir,$settings)=@_;
   logmsg $sampledir;
@@ -387,6 +155,7 @@ sub guessTaxon{
   my %guessedTaxon;
   RANK:
   for my $rank(@sortedRank){
+    $bestGuess{$rank} //= [];
     for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
       if($$taxHash{percent} > $$settings{minpercent}){
         %guessedTaxon = %$taxHash;
@@ -399,6 +168,7 @@ sub guessTaxon{
   # Are there any competing taxa at that rank?
   # Initialize the competing taxon to boolean false numbers
   my %majorConflictingTaxon = (rank=>"", percent => 0, taxid=>0, taxname=>".", specificClassifiedReads=>0, classifiedReads=>0);
+  $bestGuess{$rank} //= [];
   for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
     # Skip comparing against self, by comparing taxids
     next if($$taxHash{taxid} == $guessedTaxon{taxid});

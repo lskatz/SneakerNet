@@ -13,6 +13,7 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo samplesheetInfo_tsv passfail
+  readTsv
   command logmsg fullPathToExec version recordProperties readProperties
   exitOnSomeSneakernetOptions
 );
@@ -29,7 +30,7 @@ TODO
 
 =cut
 
-our $VERSION = '0.8.15';
+our $VERSION = '0.9.1';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -199,6 +200,61 @@ sub readConfig{
 
 =pod
 
+=head3 readTsv
+
+Reads a generic TSV (tab separated values) file
+
+Arguments:
+
+  filename:  path to tsv-formatted file
+  settings:  hash of settings with keys:
+    headers:   Whether or not the first line is headers (bool, default: true)
+    keyIndex:  Which column is the key for each row (int, default: 0)
+
+  Returns:   reference to a hash of values
+
+=cut
+
+sub readTsv{
+  my($filename, $settings) = @_;
+
+  my %TSV;
+
+  my $keyIndex = $$settings{keyIndex} || 0;
+  my $headers  = 1;
+  if(defined($$settings{headers}) && $$settings{headers}==0){
+    $headers = 0;
+  }
+  
+  open(my $fh, '<', $filename) or croak("ERROR: could not read from TSV file $filename: $!");
+  my @header;
+  if($headers){
+    my $header = <$fh>;
+    chomp($header);
+    @header = split(/\t/, $header);
+  }
+  while(<$fh>){
+    chomp;
+    my @F = split /\t/;
+
+    # If the header isn't set, then it is a range of ints
+    if(!$headers){
+      @header = (0 .. scalar(@F)-1);
+    }
+
+    # Map keys=>values
+    my %F;
+    @F{@header} = @F;
+
+    my $rowKey = $F[$keyIndex];
+    $TSV{$rowKey} = \%F;
+  }
+  close $fh;
+
+  return \%TSV;
+}
+
+
 =head3 samplesheetInfo_tsv
 
 Reads a samples.tsv file in a SneakerNet run directory.
@@ -229,7 +285,7 @@ Returns:
 sub samplesheetInfo_tsv{
   my($samplesheet,$settings)=@_;
 
-  my $runDir = dirname($samplesheet);
+  my $runDir = realpath(dirname($samplesheet));
 
   # Get possible taxon rules.
   my $config = readConfig();
@@ -265,6 +321,10 @@ sub samplesheetInfo_tsv{
     my($sampleName,$rules,$fastq)=@F;
     $fastq ||= "";
     my @fastq = split(/;/, $fastq);
+    # get the abs path to each fastq file
+    for(@fastq){
+      $_ = File::Spec->rel2abs($_, $runDir);
+    }
     $sample{$sampleName}={
       fastq => \@fastq,
       sample_id => $sampleName,
