@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 2;
+use Test::More tests => 3;
 use Data::Dumper;
 
 use FindBin qw/$RealBin/;
@@ -21,8 +21,14 @@ subtest 'sn_immediateStatus.pl' => sub{
   is($exit_code, 0, "Exit code");
 };
 
+subtest 'sn_report.pl' => sub{
+  diag `sn_report.pl $run 2>&1`;
+  my $exit_code = $? >> 8;
+  is($exit_code, 0, "Exit code");
+};
+
 subtest 'emailWhoever.pl' => sub{
-  system("sn_immediateStatus.pl $run");
+  system("emailWhoever.pl $run");
   my $exit_code = $? >> 8;
   is($exit_code, 0, "Exit code");
 };
