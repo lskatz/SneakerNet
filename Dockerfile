@@ -3,7 +3,7 @@ FROM ubuntu:xenial
 LABEL base.image="ubuntu:xenial"
 LABEL container.version="1"
 LABEL software="SneakerNet"
-LABEL software.version="0.8.14"
+LABEL software.version="0.9.1"
 LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
 LABEL website="https://github.com/lskatz/SneakerNet"
 LABEL license="https://github.com/lskatz/SneakerNet/blob/master/LICENSE"
@@ -70,9 +70,10 @@ RUN cpanm --notest --force Getopt::Std \
 
 # CG-Pipeline 
 # again can't download because CDC spoofs security certificates which causes errors...GRRRRR
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/lskatz/CG-Pipeline.git
+# let's try without the prefix: GIT_SSL_NO_VERIFY=true
+RUN git clone https://github.com/lskatz/CG-Pipeline.git
 
-# Jellyfish - kraken dep
+# Jellyfish 1.1.12 (kraken dep)
 # apt deps: gawk
 RUN wget --no-check-certificate https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz && \
  tar -zxf jellyfish-1.1.12.tar.gz && \
@@ -82,7 +83,7 @@ RUN wget --no-check-certificate https://github.com/gmarcais/Jellyfish/releases/d
  make -j 4 && \
  make install
 
-# Kraken1
+# Kraken 1.1.1
 # apt deps: wget zlib1g-dev make g++ rsync cpanminus
 # cpan deps: Getopt::Std
 RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz && \
@@ -92,7 +93,7 @@ RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1
  mkdir /opt/kraken && \
  ./install_kraken.sh /opt/kraken/
 
-# Krona
+# Krona 2.7.1
 # apt deps: curl
 RUN wget --no-check-certificate https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar && \
  tar -xf KronaTools-2.7.1.tar && \
@@ -199,13 +200,14 @@ RUN mkdir samclip && \
  wget --no-check-certificate https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
  chmod +x samclip
 
-# Shovill
+# Shovill 1.0.4
 # apt deps: pigz zlib1g-dev make gcc g++ libpthread-stubs0-dev openjdk-9-jre unzip bzip2 libncurses5-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libfindbin-libs-perl
 RUN wget --no-check-certificate https://github.com/tseemann/shovill/archive/v1.0.4.tar.gz && \
  tar -xzf v1.0.4.tar.gz && \
  rm v1.0.4.tar.gz
 
-# mlst 2.16.2 (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
+# mlst 2.16.2 
+# (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
 # dependencies in apt: libmoo-perl liblist-moreutils-perl libjson-perl gzip file
 # other dependencies: any2fasta ncbi-blast+
 RUN wget --no-check-certificate https://github.com/tseemann/mlst/archive/v2.16.2.tar.gz &&\
@@ -218,11 +220,12 @@ RUN cd /usr/local/bin && \
  chmod +x any2fasta
 
 # ncbi-blast+ 2.9.0
+# blast version in apt for ubuntu:xenial is 2.2.31 (from 2014?)
 RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  tar -xzf ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  rm ncbi-blast-2.9.0+-x64-linux.tar.gz
 
-# staramr
+# staramr 0.5.1
 # apt deps: python3 python3-pip python3-setuptools git ncbi-blast+ (blast installed manually)
 # update pip3 and install staramr 0.5.1
 RUN python3 -m pip install -U pip && \
@@ -243,7 +246,7 @@ RUN pip3 install poetry && \
  poetry build -vvv && \
  pip3 install dist/salmid*.whl
 
-# chewBBACA 
+# chewBBACA 2.1.0
 # apt deps: prodigal
 # BLAST 2.5.0+ or above required
 # python deps (installed via pip3 cmd below) numpy scipy biopython plotly SPARQLWrapper
@@ -252,14 +255,11 @@ RUN pip3 install chewbbaca==2.1.0
 # Get SneakerNet 0.8.14 and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
-
-## TEMPORARILY COMMENTING OUT TO CLONE FROM HEAD OF REPO
-#RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v0.8.14.tar.gz && \
-# tar -zxf v0.8.14.tar.gz && \
-# rm v0.8.14.tar.gz && \
-# cd /SneakerNet-0.8.14 && \
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/lskatz/SneakerNet.git && \
- cd SneakerNet && \ 
+ENV SNVER=0.9.1
+RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
+ tar -zxf v${SNVER}.tar.gz && \
+ rm v${SNVER}.tar.gz && \
+ cd /SneakerNet-${SNVER} && \
  cpanm --installdeps --notest --force . && \
  perl Makefile.PL && \
  make && \
@@ -293,19 +293,16 @@ ENV PATH="${PATH}:\
 /pilon:\
 /samclip:\
 /shovill-1.0.4/bin:\
-/colorid\
+/colorid:\
+/SneakerNet-${SNVER}/scripts:\
+/SneakerNet-${SNVER}/SneakerNet.plugins\
 " \
  LC_ALL=C
 
-# check SN dependencies 
-#RUN ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl default && \
-# ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl metagenomics && \
-# ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
-# ./SneakerNet-0.8.14/scripts/SneakerNet.checkdeps.pl iontorrent
-
-RUN ./SneakerNet/scripts/SneakerNet.checkdeps.pl default && \
- ./SneakerNet/scripts/SneakerNet.checkdeps.pl metagenomics && \
- ./SneakerNet/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
- ./SneakerNet/scripts/SneakerNet.checkdeps.pl iontorrent
+# check SN dependencies for each workflow
+RUN ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl default && \
+ ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl metagenomics && \
+ ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
+ ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl iontorrent
 
 WORKDIR /data
