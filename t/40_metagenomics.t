@@ -4,13 +4,14 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname/;
+use File::Copy qw/cp/;
 
 use Test::More tests => 1;
 
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
-use_ok 'SneakerNet';
+use SneakerNet;
 
 use Bio::SeqIO;
 use IO::Compress::Gzip;
@@ -25,8 +26,11 @@ mkdir "$run/SneakerNet";
 mkdir "$run/SneakerNet/forEmail";
 
 # Create a mock community
+# Also create a "second" mock community that only has the first 200k reads of mock1
 my $metagenomicsR1 = "$run/mock_1.fastq.gz";
 my $metagenomicsR2 = "$run/mock_2.fastq.gz";
+my $metagenomics2R1= "$run/mock2_1.fastq.gz";
+my $metagenomics2R2= "$run/mock2_2.fastq.gz";
 open(my $R1fh, ">", $metagenomicsR1) or die "ERROR: could not write to metagenomics R1 $metagenomicsR1: $!";
 open(my $R2fh, ">", $metagenomicsR2) or die "ERROR: could not write to metagenomics R2 $metagenomicsR2: $!";
 # R1 files
@@ -51,6 +55,28 @@ for my $fastq(glob("$RealBin/M00123-18-001-test/*_2.fastq.gz")){
 close $R1fh;
 close $R2fh;
 
+# Make the second mock community of only 200k reads
+my $readCounter = 0;
+open($R1fh, "zcat $metagenomicsR1 | ") or die "ERROR: could not read $metagenomicsR1: $!";
+open(my $R1fh2, " | gzip -c > $metagenomics2R1") or die "ERROR: could not write to metagenomics R1 $metagenomics2R1: $!";
+while(my $line = <$R1fh>){
+  last if(++$readCounter > 800000);
+  print $R1fh2 $line;
+}
+close $R1fh;
+close $R1fh2;
+
+$readCounter = 0;
+open($R2fh, "zcat $metagenomicsR2 | ") or die "ERROR: could not read $metagenomicsR2: $!";
+open(my $R2fh2, " | gzip -c > $metagenomics2R2") or die "ERROR: could not write to metagenomics R2 $metagenomics2R2: $!";
+while(my $line = <$R2fh>){
+  last if(++$readCounter > 800000);
+  print $R2fh2 $line;
+}
+close $R2fh;
+close $R2fh2;
+
+# Add a commensal E. coli to mock1
 my $commensalEcoliFasta = "$run/ecoli_MGY.fasta";
 if( ! -e $commensalEcoliFasta ){
   diag `wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=CP019629&rettype=fasta' -O $commensalEcoliFasta 2>&1`;
@@ -106,6 +132,58 @@ print $snokFh "workflow = metagenomics\n";
 close $snokFh;
 
 open(my $samplesFh, ">", "$run/samples.tsv") or die "ERROR writing to samples.tsv: $!";
-print $samplesFh "mock\tTaxon=\tmock_1.fastq.gz;mock_2.fastq.gz\n";
+print $samplesFh "mock1\tTaxon=\tmock_1.fastq.gz;mock_2.fastq.gz\n";
+print $samplesFh "mock2\tTaxon=\tmock2_1.fastq.gz;mock2_2.fastq.gz\n";
 close $samplesFh;
+
+subtest 'integrity of new run' => sub{
+  my $r1LineCounter = 0;
+  my $r2LineCounter = 0;
+
+  # mock1
+  open(my $fh1, "zcat $metagenomicsR1 |") or BAIL_OUT("ERROR: could not read $metagenomicsR1: $!");
+  while(<$fh1>){
+    $r1LineCounter++;
+  }
+  close $fh1;
+  open(my $fh2, "zcat $metagenomicsR2 |") or BAIL_OUT("ERROR: could not read $metagenomicsR2: $!");
+  while(<$fh2>){
+    $r2LineCounter++;
+  }
+  close $fh2;
+  
+  my $expectedReads = 1634788;
+  is($r1LineCounter, $expectedReads, "Num metagenomics R1 reads");
+  is($r2LineCounter, $expectedReads, "Num metagenomics R2 reads");
+
+  # mock2
+  $r1LineCounter = 0;
+  $r2LineCounter = 0;
+  open($fh1, "zcat $metagenomics2R1 |") or BAIL_OUT("ERROR: could not read $metagenomics2R1: $!");
+  while(<$fh1>){
+    $r1LineCounter++;
+  }
+  close $fh1;
+  open($fh2, "zcat $metagenomics2R2 |") or BAIL_OUT("ERROR: could not read $metagenomics2R2: $!");
+  while(<$fh2>){
+    $r2LineCounter++;
+  }
+  close $fh2;
+  
+  $expectedReads = 800000;
+  is($r1LineCounter, $expectedReads, "Num metagenomics R1 reads");
+  is($r2LineCounter, $expectedReads, "Num metagenomics R2 reads");
+
+  open(my $snokFh, '<', "$run/snok.txt") or BAIL_OUT("ERROR: could not read $run/snok.txt: $!");
+  while(<$snokFh>){
+    chomp;
+    my($key, $value) = split(/\s*=\s*/, $_);
+    if($key =~ /workflow/){
+      is($value, 'metagenomics', "Workflow");
+      last;
+    }
+  }
+  close $snokFh;
+
+};
 
