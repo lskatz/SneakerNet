@@ -75,7 +75,7 @@ RUN git clone https://github.com/lskatz/CG-Pipeline.git
 
 # Jellyfish 1.1.12 (kraken dep)
 # apt deps: gawk
-RUN wget --no-check-certificate https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz && \
+RUN wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz && \
  tar -zxf jellyfish-1.1.12.tar.gz && \
  rm -rf jellyfish-1.1.12.tar.gz && \
  cd jellyfish-1.1.12 && \
@@ -86,7 +86,7 @@ RUN wget --no-check-certificate https://github.com/gmarcais/Jellyfish/releases/d
 # Kraken 1.1.1
 # apt deps: wget zlib1g-dev make g++ rsync cpanminus
 # cpan deps: Getopt::Std
-RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz && \
+RUN wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz && \
  tar -xzf v1.1.1.tar.gz && \
  rm -rf v1.1.1.tar.gz && \
  cd kraken-1.1.1 && \
@@ -95,7 +95,7 @@ RUN wget --no-check-certificate https://github.com/DerrickWood/kraken/archive/v1
 
 # Krona 2.7.1
 # apt deps: curl
-RUN wget --no-check-certificate https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar && \
+RUN wget https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar && \
  tar -xf KronaTools-2.7.1.tar && \
  rm KronaTools-2.7.1.tar && \
  cd KronaTools-2.7.1 && \
@@ -105,14 +105,14 @@ RUN wget --no-check-certificate https://github.com/marbl/Krona/releases/download
 # Skesa 2.3.0 - DL binary and rename as 'skesa'
 RUN mkdir skesa && \
  cd skesa && \
- wget --no-check-certificate https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+ wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
  mv skesa.centos6.10 skesa && \
  chmod +x skesa
 
 # Prodigal - 2.6.2 via apt
 
 # Seqtk 1.3 (shovill dep)
-RUN wget --no-check-certificate https://github.com/lh3/seqtk/archive/v1.3.tar.gz && \
+RUN wget https://github.com/lh3/seqtk/archive/v1.3.tar.gz && \
  tar -zxf v1.3.tar.gz && \
  rm v1.3.tar.gz && \
  cd seqtk-1.3/ && \
@@ -121,17 +121,17 @@ RUN wget --no-check-certificate https://github.com/lh3/seqtk/archive/v1.3.tar.gz
 
 # SPAdes 3.14.0 (needed for shovill and metagenomics workflow)
 # apt deps: python
-RUN wget --no-check-certificate http://cab.spbu.ru/files/release3.14.0/SPAdes-3.14.0-Linux.tar.gz && \
+RUN wget http://cab.spbu.ru/files/release3.14.0/SPAdes-3.14.0-Linux.tar.gz && \
  tar -xzf SPAdes-3.14.0-Linux.tar.gz && \
  rm -r SPAdes-3.14.0-Linux.tar.gz
 
 # Mash 2.2 (shovill dep)
-RUN wget --no-check-certificate https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar && \
+RUN wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar && \
  tar -xvf mash-Linux64-v2.2.tar && \
  rm -rf mash-Linux64-v2.2.tar
 
 # lighter 1.1.1 (shovill dep)
-RUN wget --no-check-certificate https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz && \
+RUN wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz && \
  tar -zxf v1.1.1.tar.gz && \
  rm -rf v1.1.1.tar.gz && \
  cd Lighter-1.1.1 && \
@@ -140,7 +140,7 @@ RUN wget --no-check-certificate https://github.com/mourisl/Lighter/archive/v1.1.
 # trimmomatic 0.38 (shovill dep)
 RUN mkdir trimmomatic && \
  cd trimmomatic && \
- wget --no-check-certificate http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip && \
+ wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip && \
  unzip Trimmomatic-0.38.zip && \
  rm -rf Trimmomatic-0.38.zip && \
  chmod +x Trimmomatic-0.38/trimmomatic-0.38.jar && \
@@ -149,14 +149,14 @@ RUN mkdir trimmomatic && \
  chmod +x trimmomatic
 
 # BWA 0.7.17 (shovill dep)
-RUN wget --no-check-certificate https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2 && \
+RUN wget https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2 && \
  tar -xjf bwa-0.7.17.tar.bz2 && \
  rm bwa-0.7.17.tar.bz2 && \
  cd bwa-0.7.17 && \
  make
 
 # Samtools 1.9 (shovill dep)
-RUN wget --no-check-certificate https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
+RUN wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
  tar -xjf samtools-1.9.tar.bz2 && \
  rm samtools-1.9.tar.bz2 && \
  cd samtools-1.9 && \
@@ -167,19 +167,19 @@ RUN wget --no-check-certificate https://github.com/samtools/samtools/releases/do
 # MEGAHIT 1.1.4 (shovill dep)
 RUN mkdir megahit && \
  cd megahit && \
- wget --no-check-certificate https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+ wget https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
  tar -xzf megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
  rm megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
 
 # Velvet 1.2.10 (shovill dep)
-RUN wget --no-check-certificate https://github.com/dzerbino/velvet/archive/v1.2.10.tar.gz && \
+RUN wget https://github.com/dzerbino/velvet/archive/v1.2.10.tar.gz && \
  tar -xzf v1.2.10.tar.gz && \
  rm -rf v1.2.10.tar.gz && \
  cd velvet-1.2.10 && \
  make
 
 # Flash 1.2.11 (shovill dep)
-RUN wget --no-check-certificate https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz && \
+RUN wget https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz && \
  tar -zxf FLASH-1.2.11.tar.gz && \
  rm -rf FLASH-1.2.11.tar.gz && \
  cd FLASH-1.2.11 && \
@@ -188,7 +188,7 @@ RUN wget --no-check-certificate https://sourceforge.net/projects/flashpage/files
 # Pilon 1.22 (shovill dep)
 RUN mkdir pilon && \
  cd pilon && \
- wget --no-check-certificate https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar && \
+ wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar && \
  chmod +x pilon-1.22.jar && \
  echo "#!/bin/bash" >> pilon && \
  echo "exec java -jar /pilon/pilon-1.22.jar """"$""@"""" " >> pilon && \
@@ -197,12 +197,12 @@ RUN mkdir pilon && \
 # Samclip
 RUN mkdir samclip && \
  cd samclip && \
- wget --no-check-certificate https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
+ wget https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
  chmod +x samclip
 
 # Shovill 1.0.4
 # apt deps: pigz zlib1g-dev make gcc g++ libpthread-stubs0-dev openjdk-9-jre unzip bzip2 libncurses5-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libfindbin-libs-perl
-RUN wget --no-check-certificate https://github.com/tseemann/shovill/archive/v1.0.4.tar.gz && \
+RUN wget https://github.com/tseemann/shovill/archive/v1.0.4.tar.gz && \
  tar -xzf v1.0.4.tar.gz && \
  rm v1.0.4.tar.gz
 
@@ -210,18 +210,18 @@ RUN wget --no-check-certificate https://github.com/tseemann/shovill/archive/v1.0
 # (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
 # dependencies in apt: libmoo-perl liblist-moreutils-perl libjson-perl gzip file
 # other dependencies: any2fasta ncbi-blast+
-RUN wget --no-check-certificate https://github.com/tseemann/mlst/archive/v2.16.2.tar.gz &&\
+RUN wget https://github.com/tseemann/mlst/archive/v2.16.2.tar.gz &&\
  tar -xzf v2.16.2.tar.gz &&\
  rm v2.16.2.tar.gz
 
 # any2fasta
 RUN cd /usr/local/bin && \
- wget --no-check-certificate https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
+ wget https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
  chmod +x any2fasta
 
 # ncbi-blast+ 2.9.0
 # blast version in apt for ubuntu:xenial is 2.2.31 (from 2014?)
-RUN wget --no-check-certificate ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
+RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  tar -xzf ncbi-blast-2.9.0+-x64-linux.tar.gz && \
  rm ncbi-blast-2.9.0+-x64-linux.tar.gz
 
@@ -234,7 +234,7 @@ RUN python3 -m pip install -U pip && \
 # ColorID 1.4.3
 RUN mkdir colorid && \
  cd colorid && \
- wget --no-check-certificate https://github.com/hcdenbakker/colorid/releases/download/v0.1.4.3/colorid_Linux64v0.1.4.3 && \
+ wget https://github.com/hcdenbakker/colorid/releases/download/v0.1.4.3/colorid_Linux64v0.1.4.3 && \
  mv colorid_Linux64v0.1.4.3 colorid && \
  chmod +x colorid
 
@@ -252,11 +252,11 @@ RUN pip3 install poetry && \
 # python deps (installed via pip3 cmd below) numpy scipy biopython plotly SPARQLWrapper
 RUN pip3 install chewbbaca==2.1.0
 
-# Get SneakerNet 0.8.14 and make /data
+# Get SneakerNet 0.9.1 and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
 ENV SNVER=0.9.1
-RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
+RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  tar -zxf v${SNVER}.tar.gz && \
  rm v${SNVER}.tar.gz && \
  cd /SneakerNet-${SNVER} && \
@@ -269,7 +269,7 @@ RUN wget --no-check-certificate https://github.com/lskatz/SneakerNet/archive/v${
 # minikraken db
 RUN mkdir /kraken-database && \
  cd /kraken-database && \
- wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz && \
+ wget  https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz && \
  tar -zxf minikraken_20171019_4GB.tgz && \
  rm -rf minikraken_20171019_4GB.tgz 
 
