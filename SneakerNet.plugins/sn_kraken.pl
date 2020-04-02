@@ -202,7 +202,7 @@ sub runKrakenAsm{
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy,$sampleName");
 
   unlink("$sampledir/kraken.out");
   
@@ -254,7 +254,7 @@ sub runKrakenSE{
   print $taxFh $unclassifiedReadsCount."\n";
   close $taxFh;
 
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy,$sampleName");
 
   # Go ahead and remove kraken.out which is a huge file
   unlink("$sampledir/kraken.out");
@@ -311,7 +311,7 @@ sub runKrakenPE{
   print $taxFh $unclassifiedReadsCount."\n";
   close $taxFh;
 
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
+  command("ktImportText -o $html $sampledir/kraken.taxonomy,$sampleName");
 
   # Go ahead and remove kraken.out which is a huge file
   unlink("$sampledir/kraken.out");

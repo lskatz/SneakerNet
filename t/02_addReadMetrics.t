@@ -15,6 +15,11 @@ use_ok 'SneakerNet';
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
+diag `addReadMetrics.pl --check-dependencies 2>&1`;
+if($?){
+  BAIL_OUT("Plugin addReadMetrics.pl does not have all dependencies met");
+}
+
 my $readMetricsLog = `addReadMetrics.pl --force $run 2>&1`;
 is $?, 0, "Adding read metrics";
 
@@ -50,7 +55,7 @@ subtest "Expected coverage" => sub {
       next;
     }
     if(!$expected{$file}){ 
-      note "Skipping fastq file $file";
+      note "Skipping fastq file $file: not found in list of results to check against";
       next;
     }
     subtest "Coverage for $file" => sub{
@@ -67,3 +72,4 @@ subtest "Expected coverage" => sub {
   }
   close $fh;
 };
+

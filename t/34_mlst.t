@@ -19,14 +19,10 @@ my $run = "$RealBin/M00123-18-001-test";
 
 
 subtest 'Classic MLST' => sub{
-  my $mlst = eval{fullPathToExec('mlst');};
-  ok(defined($mlst), "mlst in path");
-
   diag `sn_mlst.pl --check-dependencies 2>&1`;
   if($?){
-    fail("sn_mlst.pl dependencies check");
-    return;
-  } 
+    plan 'skip_all' => "sn_mlst.pl dependency check failed";
+  }
 
   open(my $fh, "sn_mlst.pl $run --numcpus 2 --force 2>&1 | ") or BAIL_OUT("ERROR: could not run mlst on $run: $!");
   while(my $msg = <$fh>){
@@ -40,8 +36,7 @@ subtest 'Classic MLST' => sub{
 subtest 'wgMLST' => sub{
   diag `sn_mlst-wg.pl --check-dependencies 2>&1`;
   if($?){
-    fail("sn_mlst-wg.pl dependency check failed");
-    return;
+    plan 'skip_all' => "sn_mlst-wg.pl dependency check failed";
   }
 
   open(my $fh, "sn_mlst-wg.pl $run --numcpus 2 --force 2>&1 | ") or BAIL_OUT("ERROR: could not run wgMLST on $run: $!");

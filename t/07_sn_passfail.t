@@ -5,15 +5,20 @@ use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname/;
 
-use Test::More tests => 3;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
-use_ok 'SneakerNet';
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
+
+diag `sn_passfail.pl --check-dependencies 2>&1`;
+if($?){
+  plan skip_all=>"Dependencies not met for sn_passfail.pl";
+}
+plan tests => 2;
 
 is system("sn_passfail.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Running sn_passfail.pl";
 

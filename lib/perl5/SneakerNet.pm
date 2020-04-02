@@ -30,7 +30,7 @@ TODO
 
 =cut
 
-our $VERSION = '0.9.1';
+our $VERSION = '0.9.3';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
@@ -151,9 +151,9 @@ sub exitOnSomeSneakernetOptions{
         }
       }
 
-      if($numNotFound > 0){
-        croak "$numNotFound dependencies were not found.";
-      }
+    }
+    if($numNotFound > 0){
+      croak "$numNotFound dependencies were not found.";
     }
 
     exit(0);

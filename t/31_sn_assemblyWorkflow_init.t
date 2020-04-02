@@ -7,7 +7,7 @@ use File::Basename qw/dirname basename/;
 use File::Path qw/remove_tree/;
 use File::Copy qw/cp/;
 
-use Test::More tests => 2;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
@@ -16,6 +16,12 @@ use SneakerNet;
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $dir         = "$RealBin/M00123-18-001-asm";
+
+diag `sn_assemblyWorkflow_init.pl --check-dependencies 2>&1`;
+if($?){
+  plan 'skip_all' => "Dependencies not met for sn_assemblyWorkflow_init.pl";
+}
+plan tests => 2;
 
 # Run the plugin
 END{unlink("sn_assemblyWorkflow_init.pl.log");} # TODO just use tempdir

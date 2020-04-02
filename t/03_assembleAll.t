@@ -7,22 +7,20 @@ use File::Basename qw/dirname/;
 
 use threads;
 
-use Test::More tests => 3;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
-use_ok 'SneakerNet';
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-my $skesa = `which skesa 2>/dev/null`; chomp($skesa);
-if(! $skesa){
-  diag "Skesa is not installed and so this whole unit test will be skipped";
-  pass("assembly1");
-  pass("assembly2");
-  exit 0;
+diag `assembleAll.pl --check-dependencies 2>&1`;
+if($?){
+  plan 'skip_all' => "Plugin assembleAll.pl dependencies not met";
+} else {
+  plan tests=>3;
 }
 
 is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
