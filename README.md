@@ -49,7 +49,9 @@ And then run SneakerNet like so (optionally following the log with `tail -f`):
 
 ## Output
 
-SneakerNet produces a subfolder `SneakerNet` in your run directory.
+_For more information, please see [docs/SneakerNetOutput.md](docs/SneakerNetOutput.md)_
+
+SneakerNet produces a subfolder `SneakerNet/` in your run directory.
 It also emails a report. To view a sample report, please go to 
 t/report.html
 in this repository.
@@ -64,5 +66,7 @@ For more details, see the [plugins readme](docs/PLUGINS.md).
 
 ### Plugins for developers
 
-Please look at the [readme for plugins](docs/PLUGINSDEV.md).
+You too can develop for SneakerNet!  For more information, 
+please look at the [readme for plugins](docs/PLUGINSDEV.md)
+and the [contributing](CONTRIBUTING.md) doc.
 

@@ -7,7 +7,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use File::Copy qw/cp/;
+use File::Copy qw/cp mv/;
 use File::Temp qw/tempdir/;
 use File::Spec::Functions qw/abs2rel rel2abs/;
 use FindBin;
@@ -15,14 +15,11 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "2.2";
+our $VERSION = "4.0";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
 my $tmpSettings=readConfig();
-#my $KRAKENDIR=$$tmpSettings{KRAKENDIR} || die "ERROR: could not find KRAKENDIR in config";
-#my $KRONADIR=$$tmpSettings{KRONADIR} || die "ERROR: could not find KRONADIR in config";
-#$ENV{PATH}="$ENV{PATH}:$KRAKENDIR:$KRONADIR";
 
 local $0=fileparse $0;
 exit(main());
@@ -35,9 +32,9 @@ sub main{
       _VERSION  => $VERSION,
       zip       => 'zip --version | grep "This is Zip"',
       kraken    => 'kraken --version | grep -m 1 version',
-      'kraken-translate' => 'kraken-translate --version | grep -m 1 version',
-      'kraken-report'    => 'kraken-report --version | grep -m 1 version',
-      'ktImportText'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+      'kraken-translate (Kraken)' => 'kraken-translate --version | grep -m 1 version',
+      'kraken-report (Kraken)'    => 'kraken-report --version | grep -m 1 version',
+      'ktImportText (Krona)'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
     }, $settings,
   );
 
@@ -78,26 +75,11 @@ sub runKrakenOnDir{
     MAJOR_CONTAMINANT PERCENTAGE_CONTAMINANT
   )));
   while(my($sampleName,$s)=each(%$sampleInfo)){
-    next if(ref($s) ne 'HASH'); # avoid file=>name aliases
-
-    # Skip any samples without reads, ie, samples that are misnamed or not sequenced.
-    # There is no way to predict how a sample is misnamed and so it does not fall under
-    # this script's purview.
-    if(!defined($$s{fastq}) || !@{ $$s{fastq} }){
-      logmsg "WARNING: I could not find the reads for $sampleName. Skipping.";
-      next;
-    }
 
     my $sampledir="$outdir/$sampleName";
     system("mkdir -p $sampledir");
     logmsg "Running Kraken on $sampleName";
     logmsg "  Database: $$settings{KRAKEN_DEFAULT_DB}";
-    my $krakenWorked=runKraken($s,$sampledir,$settings);
-
-    if(!$krakenWorked){
-      logmsg "Kraken was not completed successfully on $sampleName. I will not output results for $sampleName";
-      next;
-    }
 
     my $expectedSpecies=$$s{species} || $$s{taxon} || "UNKNOWN";
     #my($percentTaxon,$html,$bestGuess)=guessTaxon($sampledir,$settings);
@@ -138,136 +120,6 @@ sub runKrakenOnDir{
   return $outdir;
 }
 
-sub runKraken{
-  my($sample,$sampledir,$settings)=@_;
-
-  my $html="$sampledir/report.html";
-  if(-e $html && !$$settings{force}){
-    return 1;
-  }
-
-  if(!defined($$sample{fastq})){
-    logmsg "ERROR: no reads found for $sampledir";
-    return 0;
-  }
-  
-  # Skip small file sizes.
-  # TODO: use something better like readMetrics.pl 
-  for(@{ $$sample{fastq} }){
-    if(-s $_ < 10000){
-      logmsg "There are few reads in $$sample{sample_id}. Skipping.";
-      return 0;
-    }
-  }
-  
-  # Force an array
-  if(ref($$sample{fastq}) ne 'ARRAY'){
-    $$sample{fastq} = [$$sample{fastq}];
-  }
-  my @fastq = @{$$sample{fastq}};
-
-  if(@fastq == 1){
-    return runKrakenSE(@_);
-  }
-  elsif(@fastq == 2){
-    return runKrakenPE(@_);
-  } else {
-    my %sampleCopy = %$sample;
-    splice(@{ $sampleCopy{fastq} }, 2);
-    return runKrakenPE(\%sampleCopy, $sampledir, $settings);
-  }
-
-  logmsg "INTERNAL ERROR";
-  return 0;
-}
-sub runKrakenSE{
-  my($sample,$sampledir,$settings)=@_;
-  my $html="$sampledir/report.html";
-
-  my $reads = $$sample{fastq}[0];
-
-  return 0 if(!$reads);
-
-  command("kraken --fastq-input $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
-
-  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
-    s/^ +//;   # remove leading spaces
-    s/ +/\t/;  # change first set of spaces from uniq -c to a tab
-    s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
-    print;
-    ' | sort -k1,1nr > $sampledir/kraken.taxonomy
-  ");
-
-  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
-
-  # To capture unclassified reads, we can get the third
-  # column of the first row of the report file. This
-  # information can be appended to the taxonomy file
-  # on the last line.
-  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not read $sampledir/kraken.report: $!";
-  my $firstLine=<$reportFh>;
-  close $reportFh;
-  my $unclassifiedReadsCount=(split(/\t/, $firstLine))[2];
-  open(my $taxFh, ">>", "$sampledir/kraken.taxonomy") or die "ERROR: could not append to $sampledir/kraken.taxonomy: $!";
-  print $taxFh $unclassifiedReadsCount."\n";
-  close $taxFh;
-
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
-
-  # Go ahead and remove kraken.out which is a huge file
-  unlink("$sampledir/kraken.out");
-
-  if(! -e "$sampledir/kraken.taxonomy"){
-    return 0;
-  }
-
-  return 1;
-}
-
-sub runKrakenPE{
-  my($sample,$sampledir,$settings)=@_;
-  my $html="$sampledir/report.html";
-
-  my @twoReads = (@{$$sample{fastq}})[0,1];
-  my $reads="'".join("' '", @twoReads)."'";
-  return 0 if(!$reads);
-  
-  command("kraken --fastq-input --paired $reads --db=$$settings{KRAKEN_DEFAULT_DB} --gzip-compressed --quick --threads $$settings{numcpus} --output $sampledir/kraken.out ");
-
-  command("kraken-translate --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out | cut -f 2- | sort | uniq -c | perl -lane '
-    s/^ +//;   # remove leading spaces
-    s/ +/\t/;  # change first set of spaces from uniq -c to a tab
-    s/;/\t/g;  # change the semicolon-delimited taxonomy to tab-delimited
-    print;
-    ' | sort -k1,1nr > $sampledir/kraken.taxonomy
-  ");
-
-  command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
-
-  # To capture unclassified reads, we can get the third
-  # column of the first row of the report file. This
-  # information can be appended to the taxonomy file
-  # on the last line.
-  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not read $sampledir/kraken.report: $!";
-  my $firstLine=<$reportFh>;
-  close $reportFh;
-  my $unclassifiedReadsCount=(split(/\t/, $firstLine))[2];
-  open(my $taxFh, ">>", "$sampledir/kraken.taxonomy") or die "ERROR: could not append to $sampledir/kraken.taxonomy: $!";
-  print $taxFh $unclassifiedReadsCount."\n";
-  close $taxFh;
-
-  command("ktImportText -o $html $sampledir/kraken.taxonomy");
-
-  # Go ahead and remove kraken.out which is a huge file
-  unlink("$sampledir/kraken.out");
-
-  if(! -e "$sampledir/kraken.taxonomy"){
-    return 0;
-  }
-
-  return 1;
-}
-
 sub guessTaxon{
   my($sampledir,$settings)=@_;
   logmsg $sampledir;
@@ -303,6 +155,7 @@ sub guessTaxon{
   my %guessedTaxon;
   RANK:
   for my $rank(@sortedRank){
+    $bestGuess{$rank} //= [];
     for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
       if($$taxHash{percent} > $$settings{minpercent}){
         %guessedTaxon = %$taxHash;
@@ -315,6 +168,7 @@ sub guessTaxon{
   # Are there any competing taxa at that rank?
   # Initialize the competing taxon to boolean false numbers
   my %majorConflictingTaxon = (rank=>"", percent => 0, taxid=>0, taxname=>".", specificClassifiedReads=>0, classifiedReads=>0);
+  $bestGuess{$rank} //= [];
   for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
     # Skip comparing against self, by comparing taxids
     next if($$taxHash{taxid} == $guessedTaxon{taxid});

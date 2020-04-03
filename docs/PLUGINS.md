@@ -28,6 +28,10 @@ This workflow runs plugins designed for ion torrent.
 
 For metagenomics runs. 
 
+## Assembly
+
+For assembly-only runs (ie, only assemblies and not raw reads in the folder).
+
 # Command line
 
 Each plugin can accept the following options. The first positional
@@ -74,8 +78,11 @@ Some links might not be valid at this time.
 |[sn_iontorrent_parseSampleSheet.pl](plugins/sn_iontorrent_parseSampleSheet.pl.md)|Turns the sample sheet for ion torrent into SneakerNet format |
 |[sn_immediateStatus.pl](plugins/sn_immediateStatus.pl.md)           | Emails an immediate report           |
 |[guessTaxon.pl](plugins/guessTaxon.pl.md)                   | Runs metagenomics classifier to guess the taxon for a sample |
+|[sn_kraken.pl](plugins/sn_kraken.pl.md)                   | Runs metagenomics classifier on raw reads, or on assemblies if reads are not present. No secondary analysis is performed by this exact plugin. E.g., `sn_detectContamination-kraken.pl`. |
 |[sn_detectContamination-kraken.pl](plugins/sn_detectContamination-kraken.pl.md)                   | Runs metagenomics classifier to guess the taxon for a sample and list at most a single major contaminant |
+|[sn_kraken-metagenomics.pl](plugins/sn_kraken-metagenomics.pl.md)                   | Analyzes kraken results for a metagenomics sample |
 |[assembleAll.pl](plugins/assembleAll.pl.md)                  | Assembles Illumina data              |
+|[sn_assemblyWorkflow_init.pl](plugins/sn_assemblyWorkflow_init.pl.md)                  | For workflows that only have assembly data. Initializes the workflow so that other plugins can function properly. |
 |[sn_crypto_assembleAll.pl](plugins/sn_crypto_assembleAll.pl.md)                  | Assembles Illumina data for Cryptosporidium        |
 |[sn_crypto_gp60.pl](plugins/sn_crypto_gp60.pl.md)                  | Provides the gp60 profile for Cryptosporidium        |
 |[sn_parseSampleSheet.pl](plugins/sn_parseSampleSheet.pl.md)          | Turns the sample sheet for Illumina into SneakerNet format |

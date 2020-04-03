@@ -7,22 +7,20 @@ use File::Basename qw/dirname/;
 
 use threads;
 
-use Test::More tests => 3;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
-use_ok 'SneakerNet';
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-my $skesa = `which skesa 2>/dev/null`; chomp($skesa);
-if(! $skesa){
-  diag "Skesa is not installed and so this whole unit test will be skipped";
-  pass("assembly1");
-  pass("assembly2");
-  exit 0;
+diag `assembleAll.pl --check-dependencies 2>&1`;
+if($?){
+  plan 'skip_all' => "Plugin assembleAll.pl dependencies not met";
+} else {
+  plan tests=>3;
 }
 
 is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
@@ -31,18 +29,20 @@ is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
 # Let the checks be loose though because of different
 # versions of assemblers.
 subtest "Expected assembly stats" => sub {
-  plan tests => 8;
+  plan tests => 10;
   my %genomeLength = (
     "2010EL-1786.skesa"      => 2955394,
     "Philadelphia_CDC.skesa" => 3328163,
     "FA1090.skesa"           => 1918813,
     "contaminated.skesa"     => 5782258,
+    "LT2.skesa"              => 4820055,
   );
   my %CDS = (
     "2010EL-1786.skesa"      => 2714,
     "Philadelphia_CDC.skesa" => 3096,
     "FA1090.skesa"           => 2017,
     "contaminated.skesa"     => 8949,
+    "LT2.skesa"              => 4802,
   );
   diag `echo;column -t $run/SneakerNet/forEmail/assemblyMetrics.tsv`;
   open(my $fh, "$run/SneakerNet/forEmail/assemblyMetrics.tsv") or die "ERROR reading $run/SneakerNet/forEmail/assemblyMetrics.tsv: $!";

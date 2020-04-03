@@ -12,7 +12,9 @@ use ExtUtils::MakeMaker;
 # Copy the config.bak directory
 mkdir "config";
 for my $file(glob("config.bak/*")){
-  cp($file, "config/".basename($file)) or die $!;
+  my $target = "config/".basename($file);
+  next if(-e $target);
+  cp($file, $target) or die $!;
 }
 
 # Some help from

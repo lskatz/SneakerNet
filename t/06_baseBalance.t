@@ -5,15 +5,20 @@ use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname/;
 
-use Test::More tests => 3;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
-use_ok 'SneakerNet';
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
+
+diag `baseBalance.pl --check-dependencies 2>&1`;
+if($?){
+  plan skip_all=>"Dependencies not met for baseBalance.pl";
+}
+plan tests=>2;
 
 is system("baseBalance.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Running baseBalance.pl";
 
@@ -21,7 +26,7 @@ my $basebalance = "$run/SneakerNet/forEmail/basebalance.tsv";
 
 # Double check results
 subtest "Expected base balance results from $basebalance" => sub {
-  plan tests => 16;
+  plan tests => 20;
   my %AT = (
     "Philadelphia_CDC_1.fastq.gz" => 0.94,
     "Philadelphia_CDC_2.fastq.gz" => 0.94,
@@ -31,6 +36,8 @@ subtest "Expected base balance results from $basebalance" => sub {
     "FA1090_2.fastq.gz"           => 0.91,
     "contaminated_1.fastq.gz"     => 1.15,
     "contaminated_2.fastq.gz"     => 1.15,
+    "LT2_1.fastq.gz"              => 0.95,
+    "LT2_2.fastq.gz"              => 0.93,
   );
   my %GC = (
     "Philadelphia_CDC_1.fastq.gz" => 1.12,
@@ -41,6 +48,8 @@ subtest "Expected base balance results from $basebalance" => sub {
     "FA1090_2.fastq.gz"           => 1.06,
     "contaminated_1.fastq.gz"     => 1.07,
     "contaminated_2.fastq.gz"     => 1.09,
+    "LT2_1.fastq.gz"              => 0.97,
+    "LT2_2.fastq.gz"              => 0.96,
   );
 
   open(my $fh, $basebalance) or die "ERROR reading base balance file $basebalance: $!";

@@ -22,3 +22,4 @@ FA1090,,M947-16-035,A01,N705,GGACTCCT,S510,CGTCTAAT,,Species=Neisseria_gonorrhoe
 2010EL-1786,,M947-16-035,B01,N706,TAGGCATG,S510,CGTCTAAT,,Species=Vibrio_cholerae;ExpectedGenomeSize=3;Route=CalcEngine
 Philadelphia_CDC,,M947-16-035,C01,N707,CTCTCTAC,S510,CGTCTAAT,,Species=Legionella_pneumophila;ExpectedGenomeSize=3.4;Route=CalcEngine
 contaminated,,M947-16-035,C01,N707,CTCTCTAC,S510,CGTCTAAT,,Species=Legionella_pneumophila;ExpectedGenomeSize=3.4;Route=CalcEngine
+LT2,,M947-16-035,C01,N707,CTCTCTAC,S510,CGTCTAAT,,Species=Salmonella_enterica;ExpectedGenomeSize=4.7;Route=CalcEngine

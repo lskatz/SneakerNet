@@ -31,7 +31,7 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_readMetrics.pl'   => 'echo CG-Pipeline version unknown',
+      'run_assembly_readMetrics.pl (CG-Pipeline)'   => 'echo CG-Pipeline version unknown',
     }, $settings,
   );
 

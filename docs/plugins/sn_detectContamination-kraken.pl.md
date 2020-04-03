@@ -14,8 +14,7 @@ at most one major contaminant for the sample.
 
 ## species ID
 
-Runs sample raw reads through Kraken1. Quantifies percentage of
-reads that match each taxon.
+Reads Kraken results from raw reads or from assemblies.
 Starting with species, if at least 25% of the reads correspond
 with one species taxon, then records the majority species for
 the sample.  If 25% are not captured at species, then it moves

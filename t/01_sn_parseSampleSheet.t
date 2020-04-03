@@ -19,6 +19,11 @@ my $run = "$RealBin/M00123-18-001-test";
 mkdir "$run/SneakerNet";
 mkdir "$run/SneakerNet/forEmail";
 
+diag `sn_parseSampleSheet.pl --check-dependencies 2>&1`;
+if($?){
+  BAIL_OUT("Dependencies for sn_parseSampleSheet not found! This is too core to the rest of the unit tests.");
+}
+
 system("sn_parseSampleSheet.pl --force $run >/dev/null 2>&1");
 is $?, 0, "Parsing the sample sheet with sn_parseSampleSheet.pl";
 

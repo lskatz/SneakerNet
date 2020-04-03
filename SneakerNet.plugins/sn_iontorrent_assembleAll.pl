@@ -30,9 +30,9 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_filterContigs.pl' => "echo CG Pipeline version unknown",
-      'run_prediction_metrics.pl'     => "echo CG Pipeline version unknown",
-      'spades.py'                     => 'spades.py --version 2>&1',
+      'run_assembly_filterContigs.pl (CG-Pipeline)' => "echo CG Pipeline version unknown",
+      'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
+      'spades.py (SPAdes)'                     => 'spades.py --version 2>&1',
       'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
       cat                             => 'cat --version | head -n 1',
       sort                            => 'sort --version | head -n 1',

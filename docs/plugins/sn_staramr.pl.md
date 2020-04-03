@@ -6,7 +6,7 @@ Runs antimicrobial resistance analysis
 
 # Software requirements
 
-* StarAMR >= 0.2.2
+* StarAMR >= 0.7.0
 * StarAMR database
 
 ## StarAMR database
@@ -15,6 +15,12 @@ Build the database into the correct folder under SneakerNet
 like so
 
     staramr db build --dir SneakerNet/db/staramr
+
+Under taxonProperties.conf, add the following line under each taxon for pointfinder (SNP)
+resistance detection. Most taxa are not supported right now. At the time of this documentation,
+only these are supported: salmonella, campylobacter, enterococcus faecalis and enterococcus faecium.
+
+    pointfinder=salmonella
 
 # Algorithm
 

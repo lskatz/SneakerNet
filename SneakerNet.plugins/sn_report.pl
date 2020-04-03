@@ -16,7 +16,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "2.1";
+our $VERSION = "2.5";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -59,21 +59,49 @@ sub main{
 
   my $properties = readProperties($dir);
 
-  my $html="";
 
-  $html .= htmlHeaders();
-  $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
-  $html .= "<p class='genericInfo'><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
-
+  # Sort plugins
   my @sortedPluginName = sort{
+                        # Ensure that this plugin's results show first
                         if($a eq basename($0)){
                           return -1;
                         }
                         elsif($b eq basename($0)){
                           return 1;
                         }
+                        # Sort by name
                         $a cmp $b;
                         } keys(%$properties);
+
+  # Let's start off the HTML
+  my $html="";
+  $html .= htmlHeaders();
+  $html .= "<H1>QC report for ".basename(realpath($dir))."</H1>\n";
+
+  # Up front information in this div
+  $html .= "<div class='genericInfo'>\n";
+  $html .= "<p><a href='https://github.com/lskatz/SneakerNet'>SneakerNet</a> version $SneakerNet::VERSION</p>\n";
+
+  # Warnings and errors get printed up front
+  $html .= "<p style='font-weight:bold'>\n";
+  for my $plugin(@sortedPluginName){
+    if(my $error = $$properties{$plugin}{errors}){
+      $html .= "&#128680; ($plugin) $error <br />\n";
+    }
+    if(my $warning = $$properties{$plugin}{warnings}){
+      $html .= "&#9888; ($plugin) $warning <br />\n";
+    }
+  }
+  $html .= "</p>\n";
+  #$html .= "<div class='genericInfo'><table style='align:right;'>\n";
+  #$html .= "<tr><th colspan='2'>For each plugin</th></tr>\n";
+  #$html .= "<tr><td><span class='footerIcon'>&#128196;</td><td>documentation</td></tr>\n";
+  #$html .= "<tr><td><span class='footerIcon'>1011</td><td>code</td></tr>\n";
+  #$html .= "</table></div>\n";
+  # TODO if there are any values of 'warning', send a rotating siren warning
+  #$html .= "<p>&#128680;</p>\n";
+  $html .= "</div>\n";
+  # END up front information
 
   for my $plugin(@sortedPluginName){
     my $inputID = "menu-$plugin";
@@ -99,11 +127,11 @@ sub main{
     $html .= "<div class='pluginContent'>\n";
     $html .= report($dir, $plugin, $properties, $settings);
     $html .= "  <a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>\n";
-    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>&#128196;</span>\n"; # UTF-8 for page facing up
+    $html .= "     <span class='footerIcon'>&#128196;</span>\n"; # UTF-8 for page facing up
     #$html .= "    <img style='width:16px;height:16px;' alt='documentation' src='$documentationBase64' />\n";
     $html .= "  </a>";
     $html .= "  <a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'>\n";
-    $html .= "     <span style='font-family:monospace; border:solid pink 1px;margin:3px;'>1011</span>\n";
+    $html .= "     <span class='footerIcon'>1011</span>\n";
     #$html .= "    <img style='width:16px;height:16px;' alt='github' src='$githubBase64' />\n";
     $html .= "  </a>";
     $html .= "</div>\n"; # end div pluginContent
@@ -126,36 +154,21 @@ sub makeSummaryTable{
   # Gather some information
   my $sample   = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
   my $passfail = passfail($dir, $settings);
-  # Also add in contamination detection
-  open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
-  my $header = <$krakenFh>;
-  chomp($header);
-  my @header = split(/\t/, $header);
-  while(<$krakenFh>){
-    chomp;
-    my @F = split(/\t/, $_);
-    my %F;
-    @F{@header} = @F;
-    $F{PERCENTAGE_CONTAMINANT} //= 0;
-
-    if($F{PERCENTAGE_CONTAMINANT} > 10){
-      $$passfail{$F{NAME}}{kraken}=1;
-    }
-  }
-  close $krakenFh;
   
   # Read the readMetrics file into %readMetrics
   my %readMetrics = ();
-  open(my $readMetricsFh,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
-  my @rmHeader=split(/\t/,<$readMetricsFh>); chomp(@rmHeader);
-  while(<$readMetricsFh>){
-    chomp;
-    my %F;
-    @F{@rmHeader}=split(/\t/,$_);
-    $F{File} = basename($F{File});
-    $readMetrics{$F{File}} = \%F;
+  if(-e "$dir/readMetrics.tsv"){
+    open(my $readMetricsFh,"$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv: $!";
+    my @rmHeader=split(/\t/,<$readMetricsFh>); chomp(@rmHeader);
+    while(<$readMetricsFh>){
+      chomp;
+      my %F;
+      @F{@rmHeader}=split(/\t/,$_);
+      $F{File} = basename($F{File});
+      $readMetrics{$F{File}} = \%F;
+    }
+    close $readMetricsFh;
   }
-  close $readMetricsFh;
 
   my $happiness = $$settings{happiness_range} || [];
   if(ref($happiness) ne 'ARRAY' || !@$happiness){
@@ -174,7 +187,7 @@ sub makeSummaryTable{
     my $failures = $$passfail{$sampleName};
     die "ERROR: sn_passfail.pl was not run on sample $sampleName" if(!$failures);
     while(my($failure_code, $is_failure) = each(%$failures)){
-      if($is_failure){
+      if($is_failure==1){
         $score = $score - $penalty;
         $emojiIdx++;
         push(@failure_code, $failure_code);
@@ -193,6 +206,8 @@ sub makeSummaryTable{
     my $qual= "";
     for my $fastq(@{ $$s{fastq} }){
       my $f = basename($fastq);
+      $readMetrics{$f}{coverage}   //= -1;
+      $readMetrics{$f}{avgQuality} //= -1;
       $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
       $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
     }
@@ -386,6 +401,7 @@ sub htmlHeaders{
   $html .= "a:hover { 
     color:blue;
   }\n";
+  $html .= ".footerIcon { font-family:monospace; border:solid pink 1px;margin:3px; }\n";
   $html .= "</style>\n";
 
   $html .= "</head>\n";

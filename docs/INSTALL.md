@@ -8,11 +8,12 @@
     cd SneakerNet
     
     # the following two lines are for local installations
-    cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
+    cpanm --local-lib=$HOME local::lib && eval $(perl -I $HOME/lib/perl5/ -Mlocal::lib)
     export PERL5LIB=$PERL5LIB:$HOME/lib/perl5:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi/auto
     
     # The following lines are regardless of local or global installation
-    cpanm --installdeps --notest .
+    cpanm version::vpp
+    cpanm --installdeps --notest . -l .
     perl Makefile.PL
     make
 
@@ -35,20 +36,63 @@ To find the right dependencies for you, run the following
 
 ### Comprehensive list
 
-This list was created using `SneakerNet.checkdeps.pl iontorrent metagenomics cryptosporidium default`
+This list was created using `SneakerNet.checkdeps.pl [iontorrent metagenomics cryptosporidium default]`
+on version 0.8.14.
+Dependencies may or may not have changed since then but they can still be checked using this script.
 
-* Multithreaded Perl (already installed on most computers)
+All workflows require perl v5.12 or higher, compiled with multithreading.
+This version of perl is already installed in most modern Linux operating systems.
+
+#### Default workflow
+
+* blastn (BLAST+)
 * GNU utilities (`cp`, `cat`, ...)
-* `rsync`
-* `ssh`
-* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
 * Kraken1: http://ccb.jhu.edu/software/kraken/
 * Krona: https://github.com/marbl/Krona/
-* Skesa
+* `mlst`: https://github.com/tseemann/mlst
 * Prodigal
+* Python3
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* sendmail
+* Skesa
+* staramr
+* `zip`
+
+#### metagenomics
+
+* Kraken1: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* `zip`
+
+#### cryptosporidium
+
+* blastn (BLAST+)
+* GNU utilities (`cp`, `cat`, ...)
+* Kraken1: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
+* `mlst`: https://github.com/tseemann/mlst
+* Prodigal
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
 * Shovill
-* `mlst`
-* ColorID
+* `countGP60repeats.pl`: currently in development in a private repo. To exclude, remove `sn_crypto_gp60.pl` from `config/plugins.conf` (already not included by default)
+* `zip`
+
+#### iontorrent
+
+* Shovill
+* SPAdes
+* blastn (BLAST+)
+* GNU utilities (`cp`, `cat`, ...)
+* Kraken1: http://ccb.jhu.edu/software/kraken/
+* Krona: https://github.com/marbl/Krona/
+* `mlst`: https://github.com/tseemann/mlst
+* Prodigal
+* Python3
+* CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
+* sendmail
+* Skesa
+* staramr
 * `zip`
 
 ## Configuration
@@ -57,6 +101,9 @@ You will need to edit some files for configuration before using SneakerNet.
 
     $ cp -r config.bak config
     $ cd config
+
+Some settings are necessary to change in the config/\*.conf files.
+Please edit these files accordingly.
 
 ### emails
 
@@ -72,7 +119,8 @@ folder on the remote computer.
 
 ### settings
 
-This file has certain key/values and should be left alone, unless you are a developer.
+This file has certain key/values and should be carefully edited.
+Some individual plugin settings are found here.
 
 ### plugins
 

@@ -13,18 +13,54 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo samplesheetInfo_tsv passfail
+  readTsv
   command logmsg fullPathToExec version recordProperties readProperties
   exitOnSomeSneakernetOptions
 );
 
-our $VERSION = '0.8.9';
+=pod
+
+=head1 NAME
+
+SneakerNet is a QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent/assembly-only run
+
+=head1 SYNOPSIS
+
+TODO
+
+=cut
+
+our $VERSION = '0.9.3';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
+=pod
+
+=head2 METHODS
+
+=head3 logmsg
+
+This function prints a string to STDERR in the format of
+
+    script: $arg1 $arg2 ...\n;
+
+=cut
+
 sub logmsg{print STDERR "$0: @_\n";}
 
-# If argument is an executable in the current path, returns 
-# the full path to it, otherwise dies.
+=pod
+
+=head3 fullPathToExec
+
+fullPathToExec is a function that returns the full path
+to an executable.
+Croaks if the path does not exist.
+
+Arguments:  executable (string)
+returns:    absolute path (string)
+
+=cut
+
 sub fullPathToExec($;$) {
 	my ($executable,$settings) = @_;
 	my $fullpath="";
@@ -40,10 +76,29 @@ sub fullPathToExec($;$) {
 	return $fullpath;
 }
 
-# Takes a hash of executables => `way to check version`
-# Some keys in the hash however are special and have an
-# underscore at the beginning: _CITATION and _VERSION.
-# Exits with 0 if any uses are invoked.
+=pod
+
+=head3 exitOnSomeSneakernetOptions
+
+exitOnSomeSneakernetOptions Takes a hash in the form of {executables => `way to check version`}
+Some keys in the hash however are special and have an
+underscore at the beginning.
+
+Arguments: 
+
+  $properties (hash ref)
+    executable         => string (command that lets you check a version. Can be in the format of 'executable ...' where anything after a space is ignored for determining the viability of the executable)
+    _CITATION          => bool   (prints $$settings{citation} and exits 0)
+    _VERSION           => bool   (prints $$settings{version} and exits 0)
+  $settings   (hash ref)
+    version            => int
+    citation           => string
+    check-dependencies => bool
+
+Returns: 0
+
+=cut
+
 sub exitOnSomeSneakernetOptions{
   my($properties, $settings) = @_;
 
@@ -73,7 +128,10 @@ sub exitOnSomeSneakernetOptions{
     # Run through all execs but die if not present.
     # Prints on stderr
     my $numNotFound = 0;
-    for my $exe(@exe){
+    for(my $i=0;$i<@exe;$i++){
+      my $desc = $exe[$i]; # avoid changing by ref
+      my $exe  = $desc;
+         $exe =~ s/\s+.*//; # remove anything after a whitespace
       my $path = eval{fullPathToExec($exe);};
       if(!defined($path) || !-e $path){
         logmsg "ERROR: could not find path to $exe";
@@ -85,7 +143,7 @@ sub exitOnSomeSneakernetOptions{
       if(my $vcmd = $$properties{$exe}){
         ($ver) = qx($vcmd);
         if(!$ver){
-          logmsg "ERROR: could not determine version of '$exe' via '$vcmd'";
+          logmsg "ERROR: could not determine version of '$desc' via '$vcmd'";
           $numNotFound++;
         } else {
           chomp($ver);
@@ -93,9 +151,9 @@ sub exitOnSomeSneakernetOptions{
         }
       }
 
-      if($numNotFound > 0){
-        croak "$numNotFound dependencies were not found.";
-      }
+    }
+    if($numNotFound > 0){
+      croak "$numNotFound dependencies were not found.";
     }
 
     exit(0);
@@ -103,6 +161,25 @@ sub exitOnSomeSneakernetOptions{
 
   return 0;
 }
+
+=pod
+
+=head3 readConfig
+
+readConfig reads all files ending with .conf in the installation folder
+under config/ (ie, SneakerNet/config/*.conf) using L<Config::Simple>.
+
+Arguments: none
+
+Returns: 
+  
+  hash reference with
+    key=>value from all key/values in conf files
+    Config::Simple objects under the obj key. Each key under obj is a basename of the config file.
+      For example, this key/value will exist: $$hash{obj}{settings}{KRAKEN_DEFAULT_DB} = "/path/to/kraken/db"
+      Example of comma-separated list in a conf file: $$hash{obj}{settings}{happiness_range} = ["&#128515;", "&#128556;", "&#128561;"]
+
+=cut
 
 sub readConfig{
   my $settings={};
@@ -121,11 +198,94 @@ sub readConfig{
   return $settings;
 }
 
-# Read the sneakernet-style spreadsheet
+=pod
+
+=head3 readTsv
+
+Reads a generic TSV (tab separated values) file
+
+Arguments:
+
+  filename:  path to tsv-formatted file
+  settings:  hash of settings with keys:
+    headers:   Whether or not the first line is headers (bool, default: true)
+    keyIndex:  Which column is the key for each row (int, default: 0)
+
+  Returns:   reference to a hash of values
+
+=cut
+
+sub readTsv{
+  my($filename, $settings) = @_;
+
+  my %TSV;
+
+  my $keyIndex = $$settings{keyIndex} || 0;
+  my $headers  = 1;
+  if(defined($$settings{headers}) && $$settings{headers}==0){
+    $headers = 0;
+  }
+  
+  open(my $fh, '<', $filename) or croak("ERROR: could not read from TSV file $filename: $!");
+  my @header;
+  if($headers){
+    my $header = <$fh>;
+    chomp($header);
+    @header = split(/\t/, $header);
+  }
+  while(<$fh>){
+    chomp;
+    my @F = split /\t/;
+
+    # If the header isn't set, then it is a range of ints
+    if(!$headers){
+      @header = (0 .. scalar(@F)-1);
+    }
+
+    # Map keys=>values
+    my %F;
+    @F{@header} = @F;
+
+    my $rowKey = $F[$keyIndex];
+    $TSV{$rowKey} = \%F;
+  }
+  close $fh;
+
+  return \%TSV;
+}
+
+
+=head3 samplesheetInfo_tsv
+
+Reads a samples.tsv file in a SneakerNet run directory.
+
+Arguments:
+
+  Samples file: path/to/samples.tsv (string)
+
+Returns:
+
+  $samples: information on each sample (hash ref)
+    sampleName  => {
+      taxonProperties=>{
+        coverage => 20,
+        ...
+      },
+      taxon => "Listeria",
+      fastq => [
+        path/to/R1,
+        path/to/R2,
+      ],
+      ...
+    }, 
+    sampleName2 => { ... },
+
+=cut
+
 sub samplesheetInfo_tsv{
   my($samplesheet,$settings)=@_;
 
-  my $runDir = dirname($samplesheet);
+  my $runDir = realpath(dirname($samplesheet));
 
   # Get possible taxon rules.
   my $config = readConfig();
@@ -161,11 +321,27 @@ sub samplesheetInfo_tsv{
     my($sampleName,$rules,$fastq)=@F;
     $fastq ||= "";
     my @fastq = split(/;/, $fastq);
+    # get the abs path to each fastq file
+    for(@fastq){
+      $_ = File::Spec->rel2abs($_, $runDir);
+    }
     $sample{$sampleName}={
       fastq => \@fastq,
       sample_id => $sampleName,
     };
-    for my $rule(split(/;/, $rules)){
+
+    # Find out whether there is an assembly for this sample
+    my $asmDir = "$runDir/SneakerNet/assemblies/$sampleName";
+    $sample{$sampleName}{asm} = "";
+    if(-d $asmDir){
+      my @asm = glob("$asmDir/*.fasta");
+      if(@asm){
+        $sample{$sampleName}{asm} = $asm[0];
+      }
+    }
+
+    my @rule = grep{$_ ne '.'} split(/;/, $rules);
+    for my $rule(@rule){
       my($key,$value)=split(/=/,$rule);
       $key=lc($key); # ensure lowercase keys
       my @values = split(/,/,$value);
@@ -181,7 +357,7 @@ sub samplesheetInfo_tsv{
     # Get a few options for the taxon: explicit from the samplesheet or guessed
     my $explicitTaxon = $sample{$sampleName}{taxon};
     my $guessedTaxons = $speciesSuggestion{$sampleName} || [];
-    my @taxonGuess = ($explicitTaxon, @$guessedTaxons);
+    my @taxonGuess = grep {defined($_)} ($explicitTaxon, @$guessedTaxons);
     @taxonGuess    = ((grep {!/^unknown$/i} @taxonGuess), 'UNKNOWN');
     # Loop through the different taxa guesses, starting with
     # what was explicitly given
@@ -202,6 +378,18 @@ sub samplesheetInfo_tsv{
 
   return \%sample;
 }
+
+=head3 samplesheetInfo
+
+This should be rarely used outside of F<sn_parseSampleSheet.pl>. Parses an
+Illumina-style SampleSheet.csv file. If the file ends in .tsv, runs
+L</samplesheetInfo_tsv>.
+
+Arguments: path/to/SampleSheet.csv
+
+Returns: $sample (hash ref). For more information on $sample: L</samplesheetInfo_tsv>.
+
+=cut
 
 sub samplesheetInfo{
   my($samplesheet,$settings)=@_;
@@ -264,7 +452,12 @@ sub samplesheetInfo{
       if(!$F{sample_id}){
         $F{sample_id}=$F{sampleid};
       }
-      croak "ERROR: could not find sample id for this line in the sample sheet: ".Dumper \%F if(!$F{sample_id});
+      # This usually just skips blank lines
+      if(!$F{sample_id}){
+        carp "SKIP: could not find sample id for this line in the sample sheet: ".Dumper \%F;
+        carp "If you think this SKIP was in error, please fill in the sample_id under SampleSheet.csv and run this script again with --force.";
+        next;
+      }
 
       # What rules under taxonProperties.conf does this
       # genome mostly align with?
@@ -331,6 +524,23 @@ sub samplesheetInfo{
   return \%sample;
 }
 
+=head3 command
+
+Runs a system command. STDERR is not captured and will leak through to be printed.
+If a warning is produced with $?, will croak with the error message.
+
+Arguments:
+
+  $command:  a command that will be used in L</system> (string)
+  $settings: controls for how the command will be run (hash ref)
+    debug  => bool (repeat the command back to the terminal with L</logmsg>)
+
+Returns:
+
+  $stdout:   standard output from command (string)
+
+=cut
+
 sub command{
   my($command,$settings)=@_;
   logmsg "COMMAND\n  $command" if($$settings{debug});
@@ -343,7 +553,30 @@ sub command{
   return $stdout;
 }
 
-# Which files failed?
+=head3 passfail
+
+Reads F<passfail.tsv> in the SneakerNet results directory.
+
+Arguments:  SneakerNet run directory path
+
+Returns:
+
+  $failure (hash ref)
+    # 0 for pass, 1 for fail, -1 for unknown
+    sample1 => {
+      coverage => -1,
+      quality  => 1,
+      kraken   => 0,
+    },
+    sample2 => {
+      coverage => 0,
+      quality  => 0,
+      kraken   => 0,
+    },
+    sample3 => {...},
+
+=cut
+  
 sub passfail{
   my($dir,$settings)=@_;
 
@@ -375,14 +608,44 @@ sub passfail{
   return \%failure;
 }
 
-# Return the version of SneakerNet
+=head3 version
+
+Returns the version of SneakerNet, encoded under $SneakerNet::Version
+
+=over 
+
+=item $SneakerNet::VERSION
+
+$SneakerNet::VERSION is the current version of SneakerNet
+
+=back
+
+=cut
+
 sub version{
   return $VERSION;
 }
 
-# Record the plugin version and any other misc things
-# into a run directory.
-# Returns length of string that was written.
+=head3 recordProperties
+
+Record the plugin version and any other misc things
+into a run directory.
+Returns length of string that was written.
+Writes to F<properties.txt> as a rudimentary local database
+
+Arguments:
+
+  $runDir:    The path to the SneakerNet run directory (string)
+  $writeHash: Hash of properties to record. Any property name is viable. Common properties:
+    version   =>  string (version number)
+    table     =>  string (path to a results file in tsv format)
+    date      =>  string (date of when results finished in YYYY-MM-DD format
+    time      =>  string (time of when results finished in HH:MM:SS format
+
+Returns:  number of characters written to F<properties.txt>
+
+=cut
+
 sub recordProperties{
   my($runDir,$writeHash, $settings)=@_;
 
@@ -406,11 +669,24 @@ sub recordProperties{
   return length($writeString);
 }
 
-# Read properties, the opposite of recordProperties().
-# Returns a properties hash of hash, where the primary
-# key is the plugin, and each plugin has a hash.
-# Each plugin should have a "version" key/value.
-# E.g., $property{"guessTaxon.pl"}{version} = 1.0
+=head3 readProperties
+
+Read properties, the opposite of L</recordProperties>.
+Returns a properties hash of hash, where the primary
+key is the plugin, and each plugin has a hash.
+Each plugin should have a "version" key/value.
+
+Arguments:
+
+  $runDir:    The path to the SneakerNet run directory (string)
+
+Returns
+
+  $properties:  hash ref.  E.g.,
+    $property{"guessTaxon.pl"}{version} = "1.0"
+
+=cut
+
 sub readProperties{
   my($runDir, $settings) = @_;
   my %prop = ();
