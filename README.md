@@ -47,6 +47,11 @@ And then run SneakerNet like so (optionally following the log with `tail -f`):
     SneakerNetPlugins.pl --numcpus 8 t/data/M00123-18-001 > t/data/M00123-18-001/SneakerNet.log 2>&1 &
     tail -f t/data/M00123-18-001/SneakerNet.log
 
+#### Containers
+
+SneakerNet has been containerized and is at [dockerhub](https://hub.docker.com/repository/docker/lskatz/sneakernet).
+For more information, please see our [containers documentation](docs/CONTAINERS.md).
+
 ## Output
 
 _For more information, please see [docs/SneakerNetOutput.md](docs/SneakerNetOutput.md)_
