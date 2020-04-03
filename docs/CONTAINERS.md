@@ -7,7 +7,7 @@ Docker, Singularity,  or another Docker-compatible container software must be in
 
 ## Singularity
 
-### Singularity installation
+### Singularity image installation
 Check to make sure Singularity is installed:
 ```bash
 singularity --help
@@ -41,7 +41,9 @@ An example is below where file transfer and email is disabled.
     singularity exec -B $PWD:/data sneakernet.simg SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
     singularity exec -B $PWD:/data sneakernet.simg SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 
-## Docker image installation
+## Docker
+
+### Docker image installation
 
 Docker CE must first be installed onto your system. Check that it is installed by running:
 ```bash
@@ -55,7 +57,10 @@ Download the docker image using the `latest` docker image tag
 ```bash
 docker pull lskatz/sneakernet:latest
 ```
-Then to run the container, using the same example as above:
+
+### Running SneakerNet using Docker
+
+Run the container, using the same example as above:
 ```bash
 # this assumes that your miseq run directory, and desired SneakerNet input directory are in your PWD.
 # you will need to adjust PATHs depending on where your data is located
