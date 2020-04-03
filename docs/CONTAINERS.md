@@ -72,5 +72,5 @@ export INDIR=my/sneakernet/run/dir
 # --rm flag will remove/delete the container after it exits 
 # make sure output files are written to /data so you don't lose them after the container exits!
 docker run --rm -v $PWD:/data -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-docker run --rm -v $PWD:/data -u $(id -u):$(id -g) SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+docker run --rm -v $PWD:/data -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 ```
