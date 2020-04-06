@@ -95,6 +95,12 @@ This version of perl is already installed in most modern Linux operating systems
 * staramr
 * `zip`
 
+#### Non-workflow
+
+##### SneakerNet.roRun.pl
+
+* bcl2fastq
+
 ## Configuration
 
 You will need to edit some files for configuration before using SneakerNet.
