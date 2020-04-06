@@ -13,7 +13,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg version/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION= "SalmID plugin by Lee Katz. Uses SalmID by Henk den Bakker.";
 
 my @fastqExt=qw(.fastq.gz .fq.gz .fastq .fq);
@@ -29,9 +29,9 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      cat         => 'cat --version | head -n 1',
-      mv          => 'mv --version | head -n 1',
-      'SalmID.py (SalmID)' => 'echo Unknown Version',
+      "cat (GNU coreutils)"   => 'cat --version | head -n 1',
+      "mv  (GNU coreutils)"   => 'mv --version | head -n 1',
+      'SalmID.py (SalmID)'    => 'echo Unknown Version',
     }, $settings,
   );
 
