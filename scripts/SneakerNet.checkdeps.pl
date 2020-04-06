@@ -5,6 +5,7 @@ use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname basename/;
 use Getopt::Long qw/GetOptions/;
+use List::Util qw/uniq/;
 
 use FindBin qw/$RealBin/;
 
@@ -13,7 +14,7 @@ use SneakerNet qw/logmsg readConfig/;
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 
-our $VERSION = 1;
+our $VERSION = 2;
 
 exit(main());
 
@@ -43,13 +44,23 @@ sub main{
   my %dep;
   for my $w(@workflow){
     my $dep = checkWorkflowDependencies($w, $settings);
-    %dep = (%dep, %$dep);
+    while(my($d, $pluginArr) = each(%$dep)){
+      # Remove anything after whitespace in the executable
+      $d=~s/\s.*//;
+      # Keep track of all plugins as a list in the dependencies hash
+      push(@{$dep{$d}}, @$pluginArr);
+    }
   }
 
   # Print dependencies
   print "DEPENDENCIES THAT WERE CHECKED:\n";
   for my $d(sort keys %dep){
-    print "$d\n";
+    # Create a comma-separated list of sorted plugins
+    my @sortedPlugins = sort(uniq(@{$dep{$d}}));
+    my $pluginsString = "Plugins: ";
+    $pluginsString   .= join(", ", @sortedPlugins);
+    $pluginsString   .= "";
+    print "$d $pluginsString\n";
   }
 
   return 0;
@@ -71,10 +82,13 @@ sub checkWorkflowDependencies{
   my %dep;
   for my $plugin(@$pluginArr){
     my $path = "$pluginsDir/$plugin";
+    # Check dependencies in the plugin but let stderr bleed through
     my @dep = `$path --check-dependencies`;
     chomp(@dep);
     for my $d(@dep){
-      $dep{$d} = 1;
+      # Mark that this dependency came from this plugin
+      #$dep{$d} = $plugin;
+      push(@{$dep{$d}}, $plugin);
     }
   }
 
