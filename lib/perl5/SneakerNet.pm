@@ -30,7 +30,7 @@ TODO
 
 =cut
 
-our $VERSION = '0.9.5';
+our $VERSION = '0.9.6';
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
