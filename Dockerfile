@@ -3,7 +3,7 @@ FROM ubuntu:xenial
 LABEL base.image="ubuntu:xenial"
 LABEL container.version="1"
 LABEL software="SneakerNet"
-LABEL software.version="0.9.1"
+LABEL software.version="0.9.5"
 LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
 LABEL website="https://github.com/lskatz/SneakerNet"
 LABEL license="https://github.com/lskatz/SneakerNet/blob/master/LICENSE"
@@ -252,10 +252,10 @@ RUN pip3 install poetry && \
 # python deps (installed via pip3 cmd below) numpy scipy biopython plotly SPARQLWrapper
 RUN pip3 install chewbbaca==2.1.0
 
-# Get SneakerNet 0.9.1 and make /data
+# Get SneakerNet 0.9.5 and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
-ENV SNVER=0.9.1
+ENV SNVER=0.9.5
 RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  tar -zxf v${SNVER}.tar.gz && \
  rm v${SNVER}.tar.gz && \
