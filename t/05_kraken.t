@@ -120,7 +120,8 @@ subtest 'kraken results' => sub{
     for my $h(qw(PERCENTAGE_OF_GENOME_IS_BEST_GUESS PERCENTAGE_CONTAMINANT)){
       my $got = $F{$h};
       my $expected = $expect{$name}{$h};
-      is(looks_like_number($got), 1, "Make sure $h is a number");
+      isnt(looks_like_number($got), 0, "Make sure $h is a number: checking for Bool true");
+      #cmp_ok(looks_like_number($got), '>', 0, "Make sure $h is a number: checking for Bool true");
       cmp_ok($got, '>=', 0, "$name $h (check for number > 0)");
       cmp_ok($got, '<=', 100, "$name $h (check for number <= 100)");
     }
