@@ -19,7 +19,7 @@ If it is not installed, please visit the following link for installing the lates
 This step, including the `SINGULARITY_TMPDIR` variable is optional.
 
     export SINGULARITY_TMPDIR=/scratch/$USER/singularity-tmp
-    mkdir -pv SINGULARITY_TMPDIR
+    mkdir -pv $SINGULARITY_TMPDIR
 
 Navigate into a directory where you would like your Singularity image to be stored.
 Build the image with `singularity build`.
