@@ -21,6 +21,14 @@ my $dir         = "$RealBin/M00123-18-001-asm";
 subtest 'Create assembly-only dataset' => sub{
   remove_tree($dir);
   mkdir($dir);
+
+  my %taxon = (
+    FA1090 => "Neisseria",
+    contaminated => "Legionella",
+    Philadelphia_CDC => "Legionella",
+    "2010EL-1786" => "Vibrio",
+    LT2 => "Salmonella",
+  );
   
   # Create the sample sheet
   my $opened = open(my $fh, '>', "$dir/samples.tsv");
@@ -34,8 +42,10 @@ subtest 'Create assembly-only dataset' => sub{
     my $copied = cp($asm, $target);
     is($copied, 1, "Copying $asm => $target");
 
+    my $sampleName = basename($filename, ".skesa.fasta");
+
     # Add onto the sample sheet
-    print $fh join("\t", basename($filename, ".skesa.fasta"), ".", $filename)."\n";
+    print $fh join("\t", $sampleName, "Taxon=$taxon{$sampleName}", $filename)."\n";
   }
   close $fh;
 
