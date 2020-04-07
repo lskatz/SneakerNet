@@ -15,8 +15,8 @@ use lib "$RealBin/../lib/perl5";
 use SneakerNet qw/fullPathToExec/;
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
-my $run = "$RealBin/M00123-18-001-test";
-
+my $run = "$RealBin/M00123-18-001-asm";
+my $numcpus = 2;
 
 subtest 'Classic MLST' => sub{
   diag `sn_mlst.pl --check-dependencies 2>&1`;
@@ -24,7 +24,7 @@ subtest 'Classic MLST' => sub{
     plan 'skip_all' => "sn_mlst.pl dependency check failed";
   }
 
-  open(my $fh, "sn_mlst.pl $run --numcpus 2 --force 2>&1 | ") or BAIL_OUT("ERROR: could not run mlst on $run: $!");
+  open(my $fh, "sn_mlst.pl $run --numcpus $numcpus --force 2>&1 | ") or BAIL_OUT("ERROR: could not run mlst on $run: $!");
   while(my $msg = <$fh>){
     chomp($msg);
     diag $msg;
@@ -39,7 +39,7 @@ subtest 'wgMLST' => sub{
     plan 'skip_all' => "sn_mlst-wg.pl dependency check failed";
   }
 
-  open(my $fh, "sn_mlst-wg.pl $run --numcpus 2 --force 2>&1 | ") or BAIL_OUT("ERROR: could not run wgMLST on $run: $!");
+  open(my $fh, "sn_mlst-wg.pl $run --numcpus $numcpus --force 2>&1 | ") or BAIL_OUT("ERROR: could not run wgMLST on $run: $!");
   while(my $msg = <$fh>){
     chomp($msg);
     diag $msg;
