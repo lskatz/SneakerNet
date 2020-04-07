@@ -20,9 +20,11 @@ diag `assembleAll.pl --check-dependencies 2>&1`;
 if($?){
   plan 'skip_all' => "Plugin assembleAll.pl dependencies not met";
 } else {
-  plan tests=>3;
+  plan tests=>2;
 }
 
+my $tsv = "$run/SneakerNet/forEmail/assemblyMetrics.tsv";
+unlink($tsv); # ensure that assembleAll.pl doesn't skimp
 is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
@@ -44,8 +46,8 @@ subtest "Expected assembly stats" => sub {
     "contaminated.skesa"     => 8949,
     "LT2.skesa"              => 4802,
   );
-  diag `echo;column -t $run/SneakerNet/forEmail/assemblyMetrics.tsv`;
-  open(my $fh, "$run/SneakerNet/forEmail/assemblyMetrics.tsv") or die "ERROR reading $run/SneakerNet/forEmail/assemblyMetrics.tsv: $!";
+  diag `echo;column -t $tsv`;
+  open(my $fh, "$tsv") or die "ERROR reading $tsv: $!";
   while(<$fh>){
     chomp;
     my ($file,$genomeLength,$CDS,$N50,$longestContig,$numContigs,$avgContigLength,$assemblyScore,$minContigLength,$expectedGenomeLength,$kmer21,$GC)
