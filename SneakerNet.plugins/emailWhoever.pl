@@ -4,18 +4,18 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::RealBin/../lib/perl5";
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use Cwd qw/realpath/;
 use File::Temp;
-use FindBin;
-use Config::Simple;
 use POSIX qw/strftime/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-use lib "$FindBin::RealBin/../lib/perl5";
+use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;

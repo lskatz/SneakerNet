@@ -164,6 +164,8 @@ sub staramr{
         } 
         #else {logmsg "NOT FOUND $possibleDir";}
       }
+    } else {
+      logmsg "Pointfinder organism not found for $sampleName";
     }
     my $staramrLog = "$$settings{tempdir}/$sampleName.staramr.log";
     my $command = "staramr search $staramrXopts --pid-threshold 90 --percent-length-overlap-resfinder 50 --output-dir $tempdir $asm 2>$staramrLog";
