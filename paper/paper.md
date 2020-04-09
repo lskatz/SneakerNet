@@ -3,8 +3,9 @@ title: 'SneakerNet: a modular quality assurance and quality check workflow for r
 authors:
 - affiliation: 1
   name: Taylor Griswold
-- affiliation: 1
+- affiliation: "1, 3"
   name: Curtis Kapsak
+  orcid: 0000-0002-8735-1190
 - affiliation: 1
   name: Jessica C. Chen
 - affiliation: 2
@@ -29,6 +30,9 @@ affiliations:
     Atlanta, GA, USA
 - index: 2
   name: Center for Food Safety, University of Georgia, Griffin, GA, USA
+- index: 3
+  name: Weems Design Studio, Inc., Suwanee, GA, USA
+
 ---
 
 # Summary
