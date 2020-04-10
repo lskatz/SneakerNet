@@ -13,14 +13,14 @@ authors:
   orcid: 0000-0002-4086-1580
 - affiliation: 1
   name: Grant Williams
-- affiliation: 1
+- affiliation: "1, 3"
   name: Alyssa Kelley
-- affiliation: 1
+- affiliation: "1, 4"
   name: Eshaw Vidyaprakash
 - affiliation: "1, 2"
   name: Lee S. Katz
   orcid: 0000-0002-2533-9161
-date: "28 Februrary, 2020"
+date: "10 April, 2020"
 bibliography: paper.bib
 tags:
 - QA/QC
@@ -28,10 +28,12 @@ affiliations:
 - index: 1
   name: Enteric Diseases Laboratory Branch, Centers for Disease Control and Prevention,
     Atlanta, GA, USA
-- index: 2
-  name: Center for Food Safety, University of Georgia, Griffin, GA, USA
 - index: 3
   name: Weems Design Studio, Inc., Suwanee, GA, USA
+- index: 4
+  name: IHRC, Atlanta, GA, USA
+- index: 2
+  name: Center for Food Safety, University of Georgia, Griffin, GA, USA
 
 ---
 
