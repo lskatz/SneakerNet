@@ -15,7 +15,7 @@ authors:
   name: Grant Williams
 - affiliation: "1, 3"
   name: Alyssa Kelley
-- affiliation: "1, 4"
+- affiliation: "1, 5"
   name: Eshaw Vidyaprakash
 - affiliation: "1, 2"
   name: Lee S. Katz
@@ -34,6 +34,9 @@ affiliations:
   name: IHRC, Atlanta, GA, USA
 - index: 2
   name: Center for Food Safety, University of Georgia, Griffin, GA, USA
+- index: 5
+  name: Waterborne Disease Prevention Branch (WDPB), Centers for Disease Control and Prevention,
+    Atlanta, GA, USA
 
 ---
 
