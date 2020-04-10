@@ -13,9 +13,10 @@ use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
 our @EXPORT_OK = qw(
   readConfig samplesheetInfo samplesheetInfo_tsv passfail
-  readTsv
+  readTsv readKrakenDir
   command logmsg fullPathToExec version recordProperties readProperties
   exitOnSomeSneakernetOptions
+  @rankOrder %rankOrder $VERSION
 );
 
 =pod
@@ -30,11 +31,37 @@ TODO
 
 =cut
 
-our $VERSION = '0.9.6';
+our $VERSION  = '0.9.8';
+our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
+our @rankOrder= qw(S G F O C P K D U);
+our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
 
 =pod
+
+=head2 PROPERTIES
+
+=head3 $VERSION
+
+The version of SneakerNet
+
+=head3 %rankName
+
+Taxonomy abbreviations, e.g., S=>species
+
+=head3 @rankOrder
+
+Array of rank abbreviations, sorted: S G F O C P K D U
+
+=head3 %rankOrder
+
+Hash of rank abbreviations and their order, e.g., S=>0, G=>1
+
+Useful for comparing ranks
+  
+  use SneakerNet qw/$rankOrder/;
+  $rankOrder{S} <=> $rankOrder{G};
 
 =head2 METHODS
 
@@ -199,6 +226,109 @@ sub readConfig{
 }
 
 =pod
+
+=head3 readKrakenDir
+
+Read a Kraken directory from sn_kraken.pl
+
+Arguments:
+
+  directory:  Directory of kraken results, e.g., "dir/SneakerNet/kraken/sample1"
+  settings:   Reference of a hash with the following keys:
+    minpercent:  minimum percentage to consider for inclusion (float 0 to 100)
+
+Returns:
+
+  Results hash with keys corresponding to @SneakerNet::rankOrder
+  Each key is an array of hashes, e.g.,
+   C => [
+          {
+            'percent' => '75.31',
+            'taxname' => 'Gammaproteobacteria',
+            'rank' => 'C',
+            'classifiedReads' => '68077',
+            'taxid' => '1236',
+            'specificClassifiedReads' => '40'
+          },
+          {
+            'percent' => '24.49',
+            'taxname' => 'Betaproteobacteria',
+            'rank' => 'C',
+            'classifiedReads' => '22141',
+            'taxid' => '28216',
+            'specificClassifiedReads' => '27'
+          }
+        ];
+
+  On failure, returns empty hash.
+
+=cut
+
+sub readKrakenDir{
+  my($dir, $settings) = @_;
+
+  my $minPercent = $$settings{minpercent};
+  if(!defined($minPercent)){
+    $minPercent = 1e-6;
+    logmsg "WARNING: minpercent was not set for readKrakenDir(). Setting to $minPercent";
+  }
+  
+  my %bestGuess;
+  my $taxfile = "$dir/kraken.report";
+  if(! -e $taxfile){
+    logmsg "WARNING: kraken.report does not exist at $taxfile - returning empty hash.";
+    return {};
+  }
+  my @header = qw(percent classifiedReads specificClassifiedReads rank taxid taxname);
+  open(my $fh, '<', $taxfile) or die "ERROR: could not open $taxfile for reading: $!";
+  while(my $taxline = <$fh>){
+    # trim whitespace
+    $taxline =~ s/^\s+|\s+$//g;
+
+    # Split fields on tab, but also remove whitespace on fields
+    my @F = split(/\s*\t\s*/, $taxline);
+
+    # Name the fields
+    my %field;
+    @field{@header} = @F;
+
+    # We only care about named ranks like phylum, family, genus, or species
+    next if($field{rank} eq '-');
+
+    # Filter for low percentage counts
+    next if($field{percent} < $minPercent);
+
+    push(@{ $bestGuess{$field{rank}} }, \%field);
+
+  }
+  close $fh;
+
+  # Taxonomy ranks in order
+  my @sortedRank = qw(S G F O C P K D U);
+  # Index the ranks so that we can sort, e.g., $rank{S} <=> $rank{F}
+  my %rank;
+  for(my $i=0;$i<@sortedRank;$i++){
+    $rank{$sortedRank[$i]} = $i;
+  }
+
+  # sort %bestGuess within each rank, so that the best guess
+  # is always element zero for each rank.
+  my %raw;
+  while(my($rank, $taxa) = each(%bestGuess)){
+    my @sortedTaxon = sort{$$b{percent} <=> $$a{percent} } @$taxa;
+    $raw{$rank} = \@sortedTaxon;
+  }
+
+  # Ensure that each rank is filled in, even if it has to
+  # be a zero percentage.
+  for my $rank(@sortedRank){
+    if(ref($raw{$rank}) ne 'ARRAY'){
+      $raw{$rank} = [ {percent=>0, taxname=>"UNKNOWN", rank=>$rank, classifiedReads=>0, taxid=>-1, specificClassifiedReads=>0} ];
+    }
+  }
+
+  return \%raw;
+}
 
 =head3 readTsv
 

@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "4.0";
+our $VERSION = "4.1";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
@@ -154,12 +154,11 @@ sub guessTaxon{
   # a taxon, then guess that taxon.
   my %guessedTaxon;
   RANK:
-  for my $rank(@sortedRank){
+  for my $rank(reverse @sortedRank){
     $bestGuess{$rank} //= [];
     for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
       if($$taxHash{percent} > $$settings{minpercent}){
         %guessedTaxon = %$taxHash;
-        last RANK;
       }
     }
   }

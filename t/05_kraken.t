@@ -56,10 +56,10 @@ subtest 'kraken results' => sub{
     contaminated => {
       NAME                               => "contaminated",
       LABELED_TAXON                      => "Legionella",
-      BEST_GUESS                         => "Legionella pneumophila",
+      BEST_GUESS                         => "Neisseria gonorrhoeae",
       PERCENTAGE_OF_GENOME_IS_BEST_GUESS => 75.24,
-      MAJOR_CONTAMINANT                  => "Neisseria gonorrhoeae",
-      PERCENTAGE_CONTAMINANT             => 16.97,
+      MAJOR_CONTAMINANT                  => "Legionella pneumophila",
+      PERCENTAGE_CONTAMINANT             => 61.14,
     },
     FA1090       => {
       NAME                               => "FA1090",
