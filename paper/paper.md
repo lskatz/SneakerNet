@@ -26,7 +26,7 @@ tags:
 - QA/QC
 affiliations:
 - index: 1
-  name: Enteric Diseases Laboratory Branch, Centers for Disease Control and Prevention,
+  name: Enteric Diseases Laboratory Branch (EDLB), Centers for Disease Control and Prevention,
     Atlanta, GA, USA
 - index: 3
   name: Weems Design Studio, Inc., Suwanee, GA, USA
@@ -56,14 +56,21 @@ SneakerNet has a modular plugin design, where the main program calls each plugin
 Each plugin is defined as being able to accept specific flagged and positional parameters, such that
 the main program can call each plugin in a standardized way.
 Workflows are thus defined as a specified order of plugins. One example order might be genome assembly, followed by MLST, followed by report generation.
-At the time of this writing, 25 plugins were available.
+At the time of this writing, 25 plugins are available.
 
 ## Plugin development
 
 The plugin system has drastically lowered the activation energy needed to develop a new step in a
 SneakerNet workflow. Documentation has been provided on how to develop a new plugin,
 and 'Hello World' plugins have been published in three different languages: Perl, Python, and Bash.
-Therefore SneakerNet has the ability to be a very collaborative project.
+Therefore, SneakerNet has the ability to be a very collaborative project.
+
+# Acknowledgements
+
+* EDLB SneakerNet users for useful feedback (TODO add others)
+  * Heather Carleton, Katie Dillon, Yang Gao, Jasmine Hensley, Monica Im, Justin Kim, Charlotte Lane, Angela Poates, Zachary Rigney, Katie Roache, Ashley Sabol, Peyton Smith, Cheryl Tarr, Jenny Truong, Maryann Turnsek
+* Other SneakerNet users for useful feedback
+  * Shatavia Morrison
 
 # References
 
