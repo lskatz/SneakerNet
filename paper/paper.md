@@ -74,6 +74,8 @@ Therefore, SneakerNet has the ability to be a very collaborative project.
   * Heather Carleton, Katie Dillon, Yang Gao, Jasmine Hensley, Monica Im, Justin Kim, Charlotte Lane, Rebecca Lindsey, Angela Poates, Zachary Rigney, Katie Roache, Ashley Sabol, Peyton Smith, Cheryl Tarr, Jenny Truong, Maryann Turnsek
 * Other SneakerNet users for useful feedback
   * Shatavia Morrison
+* Other useful feedback
+  * Aaron Petkau
 
 # References
 
