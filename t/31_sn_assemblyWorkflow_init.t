@@ -21,6 +21,11 @@ diag `sn_assemblyWorkflow_init.pl --check-dependencies 2>&1`;
 if($?){
   plan 'skip_all' => "Dependencies not met for sn_assemblyWorkflow_init.pl";
 }
+
+if(!-e "$dir/SneakerNet/forEmail/assemblyMetrics.tsv"){
+  plan 'skip_all' => "Assemblies not found. Skipping.";
+}
+
 plan tests => 2;
 
 # Run the plugin
