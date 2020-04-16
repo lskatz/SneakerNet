@@ -118,6 +118,8 @@ SneakerNet run.
 
 ### taxonProperties
 
+_see [INSTALL.taxonProperties.md](INSTALL.taxonProperties.md) for more information_
+
 Each taxon that you might have sequences for is defined here. If not defined here, nothing bad
 will happen though.  For each taxon, you can show the minimum quality and coverage thresholds;
 the genome size in bp; the regular expression to match filename to taxon; and the destination

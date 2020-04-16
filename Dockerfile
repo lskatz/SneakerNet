@@ -3,7 +3,7 @@ FROM ubuntu:xenial
 LABEL base.image="ubuntu:xenial"
 LABEL container.version="1"
 LABEL software="SneakerNet"
-LABEL software.version="0.9.8"
+LABEL software.version="0.9.9"
 LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
 LABEL website="https://github.com/lskatz/SneakerNet"
 LABEL license="https://github.com/lskatz/SneakerNet/blob/master/LICENSE"
