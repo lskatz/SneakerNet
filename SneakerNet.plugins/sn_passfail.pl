@@ -205,6 +205,7 @@ sub identifyBadRuns{
       #next if(!$$krakenResults{$rank});
 
       # are there conflicting taxa at this rank?
+      $$krakenResults{$rank} //= []; # Make sure this is defined before testing it in an array context
       my @taxon = @{$$krakenResults{$rank}};
       next if(scalar(@taxon) < 2);
       
