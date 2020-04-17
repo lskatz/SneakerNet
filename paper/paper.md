@@ -3,21 +3,21 @@ title: 'SneakerNet: a modular quality assurance and quality check workflow for r
 authors:
 - affiliation: 1
   name: Taylor Griswold
-- affiliation: "1, 3"
+- affiliation: "1, 2"
   name: Curtis Kapsak
   orcid: 0000-0002-8735-1190
 - affiliation: 1
   name: Jessica C. Chen
-- affiliation: 2
+- affiliation: 3
   name: Henk C. den Bakker
   orcid: 0000-0002-4086-1580
 - affiliation: 1
   name: Grant Williams
-- affiliation: "1, 3"
+- affiliation: "1, 4"
   name: Alyssa Kelley
 - affiliation: "1, 5"
   name: Eshaw Vidyaprakash
-- affiliation: "1, 2"
+- affiliation: "1, 3"
   name: Lee S. Katz
   orcid: 0000-0002-2533-9161
 date: "10 April, 2020"
@@ -28,13 +28,13 @@ affiliations:
 - index: 1
   name: Enteric Diseases Laboratory Branch (EDLB), Centers for Disease Control and Prevention,
     Atlanta, GA, USA
-- index: 3
-  name: Weems Design Studio, Inc., Suwanee, GA, USA
-- index: 4
-  name: IHRC, Atlanta, GA, USA
 - index: 2
-  name: Center for Food Safety, University of Georgia, Griffin, GA, USA
+  name: Weems Design Studio, Inc., Suwanee, GA, USA
 - index: 5
+  name: IHRC, Atlanta, GA, USA
+- index: 3
+  name: Center for Food Safety, University of Georgia, Griffin, GA, USA
+- index: 4
   name: Waterborne Disease Prevention Branch (WDPB), Centers for Disease Control and Prevention,
     Atlanta, GA, USA
 
@@ -66,7 +66,7 @@ At the time of this writing, 25 plugins are available.
 The plugin system has drastically lowered the activation energy needed to develop a new step in a
 SneakerNet workflow. Documentation has been provided on how to develop a new plugin,
 and 'Hello World' plugins have been published in three different languages: Perl, Python, and Bash.
-Therefore, SneakerNet has the ability to be a very collaborative project.
+Because plugins are not tied to any specific language, SneakerNet has the ability to be a very collaborative project.
 
 # Acknowledgements
 
