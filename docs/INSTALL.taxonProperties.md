@@ -50,7 +50,7 @@ Keys and values are separated by equals sign. Whitespace is allowed around the e
 
 Values can be comma separated and the order is retained.
 
-Further documentation on the format can be found in `[Config::Simple](https://metacpan.org/pod/Config::Simple)`.
+Further documentation on the format can be found in [`Config::Simple`](https://metacpan.org/pod/Config::Simple).
 
 ### Specific properties
 
