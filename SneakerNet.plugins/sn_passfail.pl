@@ -213,7 +213,11 @@ sub identifyBadRuns{
       # The elements are sorted by percent and so the first element
       # is the dominant taxon.
       # Therefore we can judge contamination by the second element.
-      next if($$krakenResults{$rank}[1]{percent} < $$settings{kraken_contamination_threshold});
+      # TODO instead, judge contamination by summing all percentages 
+      #      except the zeroth.
+      if($$krakenResults{$rank}[1]{percent} < $$settings{kraken_contamination_threshold}){
+        next;
+      }
       
       # If we made it through all filters, then we have reached
       # the point where we can call it contaminated.
