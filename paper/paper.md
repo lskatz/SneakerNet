@@ -61,6 +61,8 @@ Each plugin accepts specific flagged parameters, such that
 the main program can call each plugin in a standardized way.
 Workflows are thus defined as a specified order of plugins. One example order might be genome assembly, followed by MLST, followed by report generation.
 At the time of this writing, 25 plugins are available.
+These plugins are listed in the documentation in a summary table,
+and each plugin has its own documentation page.
 
 ## Plugin development
 
