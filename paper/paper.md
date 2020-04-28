@@ -71,6 +71,22 @@ SneakerNet workflow. Documentation has been provided on how to develop a new plu
 and 'Hello World' plugins have been published in three different languages: Perl, Python, and Bash.
 Because plugins are not tied to any specific language, SneakerNet has the ability to be a very collaborative project.
 
+## Configuration
+
+SneakerNet is highly configurable as described in the installation documentation.
+For some genera, SneakerNet comes packaged with some recommended configurations (e.g., _Salmonella_ or _Legionella_),
+and an example genus with all options commented.
+These options include the minimum coverage needed for a sample to pass QC
+and even some detailed options to help customize a taxon for a particular plugin such as the antimicrobial resistance plugin.
+Therefore, a user could easily add a taxon to customize the workflow for his or her instance of SneakerNet.
+
+Users can also customize the workflow.
+SneakerNet comes packaged with a default workflow which specifies the order of plugins that are run.
+However, if a certain analysis is not needed, e.g., 7-gene MLST, then it can be removed from the configuration.
+Or, if a new plugin is needed, it can be added into the workflow.
+
+SneakerNet has other customizations that can be explored further in the documentation.
+
 # Acknowledgements
 
 The authors would like to thank the following SneakerNet users in the Enteric Diseases Laboratory Branch for useful feedback: Heather Carleton, Katie Dillon, Blake Dinsmore, Yang Gao, Jessica Halpin, Jasmine Hensley, Monica Im, Justin Kim, Charlotte Lane, Rebecca Lindsey, Angela Poates, Zachary Rigney, Katie Roache, Ashley Sabol, Peyton Smith, Cheryl Tarr, Jenny Truong, Maryann Turnsek; Additionally, SneakerNet users from other branches: Shatavia Morrison. The authors would also like to thank Aaron Petkau for useful feedback for staramr.
