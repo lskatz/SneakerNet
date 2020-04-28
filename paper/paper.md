@@ -74,6 +74,9 @@ Because plugins are not tied to any specific language, SneakerNet has the abilit
 ## Configuration
 
 SneakerNet is highly configurable as described in the installation documentation.
+There are many configurations.
+Two categories of configuration are highlighted here.
+
 For some genera, SneakerNet comes packaged with some recommended configurations (e.g., _Salmonella_ or _Legionella_),
 and an example genus with all options commented.
 These options include the minimum coverage needed for a sample to pass QC
@@ -84,8 +87,6 @@ Users can also customize the workflow.
 SneakerNet comes packaged with a default workflow which specifies the order of plugins that are run.
 However, if a certain analysis is not needed, e.g., 7-gene MLST, then it can be removed from the configuration.
 Or, if a new plugin is needed, it can be added into the workflow.
-
-SneakerNet has other customizations that can be explored further in the documentation.
 
 # Acknowledgements
 
