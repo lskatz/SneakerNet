@@ -1,5 +1,5 @@
 ---
-title: 'SneakerNet: a modular quality assurance and quality check workflow for raw genomic and metagenomic read data'
+title: 'SneakerNet: a modular quality assurance and quality check workflow for primary genomic and metagenomic read data'
 authors:
 - affiliation: 1
   name: Taylor Griswold
@@ -30,26 +30,31 @@ affiliations:
     Atlanta, GA, USA
 - index: 2
   name: Weems Design Studio, Inc., Suwanee, GA, USA
-- index: 5
-  name: IHRC, Atlanta, GA, USA
 - index: 3
   name: Center for Food Safety, University of Georgia, Griffin, GA, USA
 - index: 4
   name: Waterborne Disease Prevention Branch (WDPB), Centers for Disease Control and Prevention,
     Atlanta, GA, USA
-
+- index: 5
+  name: IHRC, Atlanta, GA, USA
+  
 ---
 
 # Summary
 
-Receiving a set of raw reads from whole genome sequencing or metagenomics sequencing has become commonplace and perhaps ubiquitous in bioinformatics.
+Receiving a set of primary data from whole genome sequencing or metagenomics sequencing has become commonplace and perhaps ubiquitous in bioinformatics.
 However, there is a need to standardize the quality assurance and quality control process (QA/QC).
 Therefore, we have created SneakerNet, a pipeline to standardize the QA/QC of a set of genomic or metagenomic reads.
 
-There are very few standardized workflows for performing an initial QA/QC on those data.
+There are very few standardized workflows for performing an initial QA/QC on primary sequence data.
 For example, the Pandoo pipeline can be given a set of genomes to run analyses: species inference, 7-gene multilocus sequence typing (MLST), resistance gene profile, plasmid profile, virulence profile, and raw read QC [@Pandoo].
 The Nullarbor pipeline is similar to Pandoo, but focused on public health datasets [@Nullarbor].
 Another example is the ASA3P pipeline that runs raw read trimming, assembly, annotation, taxonomic classification, MLST, antibiotic resistance detection, virulence factor detection, reference mapping, and single nucleotide polymorphism (SNP) detection [@Schwengers654319].
+However, no existing QA/QC pipelines seem to be focused on a plugins-based architecture for batches of unrelated bacterial sequences or for batches of bacteria from different species.
+To that end, we have created SneakerNet.
+The major design principles are centered around the ability to collaboratively design plugins.
+With the plugins architecture, SneakerNet can dynamically change for current and future needs
+with input from the bioinformatics and public health community.
 
 # Implementation
 
@@ -75,13 +80,14 @@ Because plugins are not tied to any specific language, SneakerNet has the abilit
 
 SneakerNet is highly configurable as described in the installation documentation.
 There are many configurations.
-Two categories of configuration are highlighted here.
+We would like two highlight some ways that SneakerNet can be configured.
 
 For some genera, SneakerNet comes packaged with some recommended configurations (e.g., _Salmonella_ or _Legionella_),
 and an example genus with all options commented.
 These options include the minimum coverage needed for a sample to pass QC
 and even some detailed options to help customize a taxon for a particular plugin such as the antimicrobial resistance plugin.
 Therefore, a user could easily add a taxon to customize the workflow for his or her instance of SneakerNet.
+In fact, SneakerNet has been recently configured to accommodate the protist _Cryptosporidium_ successfully with input from the CDC Waterborne laboratory.
 
 Users can also customize the workflow.
 SneakerNet comes packaged with a default workflow which specifies the order of plugins that are run.
