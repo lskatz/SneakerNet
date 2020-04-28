@@ -73,7 +73,7 @@ Because plugins are not tied to any specific language, SneakerNet has the abilit
 
 # Acknowledgements
 
-The authors would like to thank the following SneakerNet users in the Enteric Diseases Laboratory Branch for useful feedback: Heather Carleton, Katie Dillon, Blake Dinsmore, Yang Gao, Jasmine Hensley, Monica Im, Justin Kim, Charlotte Lane, Rebecca Lindsey, Angela Poates, Zachary Rigney, Katie Roache, Ashley Sabol, Peyton Smith, Cheryl Tarr, Jenny Truong, Maryann Turnsek; Additionally, SneakerNet users from other branches: Shatavia Morrison. The authors would also like to thank Aaron Petkau for useful feedback for staramr.
+The authors would like to thank the following SneakerNet users in the Enteric Diseases Laboratory Branch for useful feedback: Heather Carleton, Katie Dillon, Blake Dinsmore, Yang Gao, Jessica Halpin, Jasmine Hensley, Monica Im, Justin Kim, Charlotte Lane, Rebecca Lindsey, Angela Poates, Zachary Rigney, Katie Roache, Ashley Sabol, Peyton Smith, Cheryl Tarr, Jenny Truong, Maryann Turnsek; Additionally, SneakerNet users from other branches: Shatavia Morrison. The authors would also like to thank Aaron Petkau for useful feedback for staramr.
 
 # References
 
