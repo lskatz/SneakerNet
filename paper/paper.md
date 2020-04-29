@@ -1,5 +1,5 @@
 ---
-title: 'SneakerNet: a modular quality assurance and quality check workflow for primary genomic and metagenomic read data'
+title: 'SneakerNet: A modular quality assurance and quality check workflow for primary genomic and metagenomic read data'
 authors:
 - affiliation: 1
   name: Taylor Griswold
@@ -20,7 +20,7 @@ authors:
 - affiliation: "1, 3"
   name: Lee S. Katz
   orcid: 0000-0002-2533-9161
-date: "10 April, 2020"
+date: "29 April, 2020"
 bibliography: paper.bib
 tags:
 - QA/QC
@@ -46,7 +46,7 @@ Receiving a set of primary data from whole genome sequencing or metagenomics seq
 However, there is a need to standardize the quality assurance and quality control process (QA/QC).
 Therefore, we have created SneakerNet, a pipeline to standardize the QA/QC of a set of genomic or metagenomic reads.
 
-There are very few standardized workflows for performing an initial QA/QC on primary sequence data.
+There are very few published workflows for performing an analysis on primary sequence data that span the breadth of initial and standard QA/QC (e.g., sequence yields, contamination checks, and subtyping).
 For example, the Pandoo pipeline can be given a set of genomes to run analyses: species inference, 7-gene multilocus sequence typing (MLST), resistance gene profile, plasmid profile, virulence profile, and raw read QC [@Pandoo].
 The Nullarbor pipeline is similar to Pandoo, but focused on public health datasets [@Nullarbor].
 Another example is the ASA3P pipeline that runs raw read trimming, assembly, annotation, taxonomic classification, MLST, antibiotic resistance detection, virulence factor detection, reference mapping, and single nucleotide polymorphism (SNP) detection [@Schwengers654319].
@@ -61,10 +61,11 @@ with input from the bioinformatics and public health community.
 ## Plugin design
 
 SneakerNet has a modular plugin design, where the main program calls each plugin in an ordered succession.
-In turn, each plugin reads a set of genomes as input.
+Each plugin, in turn, reads a set of genomes as input.
 Each plugin accepts specific flagged parameters, such that
 the main program can call each plugin in a standardized way.
-Workflows are thus defined as a specified order of plugins. One example order might be genome assembly, followed by MLST, followed by report generation.
+Workflows are thus defined as a specified order of plugins. 
+An example workflow order might be genome assembly, followed by MLST, and finalized with report generation.
 At the time of this writing, 25 plugins are available.
 These plugins are listed in the documentation in a summary table,
 and each plugin has its own documentation page.
