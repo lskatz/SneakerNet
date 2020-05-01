@@ -44,13 +44,12 @@ affiliations:
 
 Receiving a set of primary data from whole genome sequencing or metagenomics sequencing has become commonplace and perhaps ubiquitous in bioinformatics.
 However, there is a need to standardize the quality assurance and quality control process (QA/QC).
-Therefore, we have created SneakerNet, a pipeline to standardize the QA/QC of a set of genomic or metagenomic reads.
 
-There are very few published workflows for performing an analysis on primary sequence data that span the breadth of initial and standard QA/QC (e.g., sequence yields, contamination checks, and subtyping).
+There are very few published workflows for performing an analysis on primary sequence data that span the breadth of initial standardized QA/QC (e.g., sequence yields, contamination checks, and subtyping).
 For example, the Pandoo pipeline can be given a set of genomes to run analyses: species inference, 7-gene multilocus sequence typing (MLST), resistance gene profile, plasmid profile, virulence profile, and raw read QC [@Pandoo].
 The Nullarbor pipeline is similar to Pandoo, but focused on public health datasets [@Nullarbor].
 Another example is the ASA3P pipeline that runs raw read trimming, assembly, annotation, taxonomic classification, MLST, antibiotic resistance detection, virulence factor detection, reference mapping, and single nucleotide polymorphism (SNP) detection [@Schwengers654319].
-However, no existing QA/QC pipelines seem to be focused on a plugins-based architecture for batches of unrelated bacterial sequences or for batches of bacteria from different species.
+However, no existing "broad stroke" QA/QC pipelines seem to be focused on a plugins-based architecture for batches of unrelated bacterial sequences or for batches of bacteria from different species.
 To that end, we have created SneakerNet.
 The major design principles are centered around the ability to collaboratively design plugins.
 With the plugins architecture, SneakerNet can dynamically change for current and future needs
@@ -75,13 +74,13 @@ and each plugin has its own documentation page.
 The plugin system has drastically lowered the activation energy needed to develop a new step in a
 SneakerNet workflow. Documentation has been provided on how to develop a new plugin,
 and 'Hello World' plugins have been published in three different languages: Perl, Python, and Bash.
-Because plugins are not tied to any specific language, SneakerNet has the ability to be a very collaborative project.
+Because plugins are not tied to any specific language, SneakerNet collaborators do not have to be bound by any specific language.
 
 ## Configuration
 
 SneakerNet is highly configurable as described in the installation documentation.
 There are many configurations.
-We would like two highlight some ways that SneakerNet can be configured.
+We would like to highlight some ways that SneakerNet can be configured.
 
 For some genera, SneakerNet comes packaged with some recommended configurations (e.g., _Salmonella_ or _Legionella_),
 and an example genus with all options commented.
@@ -93,7 +92,7 @@ In fact, SneakerNet has been recently configured to accommodate the protist _Cry
 Users can also customize the workflow.
 SneakerNet comes packaged with a default workflow which specifies the order of plugins that are run.
 However, if a certain analysis is not needed, e.g., 7-gene MLST, then it can be removed from the configuration.
-Or, if a new plugin is needed, it can be added into the workflow.
+Likewise, if a new plugin is needed, it can be added into the workflow.
 
 # Acknowledgements
 
