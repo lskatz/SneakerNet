@@ -87,7 +87,7 @@ and an example genus with all options commented.
 These options include the minimum coverage needed for a sample to pass QC
 and even some detailed options to help customize a taxon for a particular plugin such as the antimicrobial resistance plugin.
 Therefore, a user could easily add a taxon to customize the workflow for his or her instance of SneakerNet.
-In fact, SneakerNet has been recently configured to accommodate the protist _Cryptosporidium_ successfully with input from the CDC Waterborne laboratory.
+In fact, SneakerNet has been recently configured to accommodate the protist _Cryptosporidium_ successfully with input from the CDC WDPB Molecular Epidemiology Laboratory.
 
 Users can also customize the workflow.
 SneakerNet comes packaged with a default workflow which specifies the order of plugins that are run.
