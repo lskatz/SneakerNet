@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Transfers files to a remote destination and QCs them beforehand.
+# Assemble genomes for Cryptosporidum
 
 use strict;
 use warnings;
@@ -18,8 +18,8 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.3";
-our $CITATION = "assembleAll.pl by Lee Katz. Uses Skesa and Prodigal for assembly and gene prediction.";
+our $VERSION = "2.0";
+our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
 exit(main());
@@ -30,36 +30,58 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_filterContigs.pl (CG-Pipeline)' => "echo CG Pipeline version unknown",
       'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
-      'skesa'                         => 'skesa --version 2>&1 | grep SKESA',
-      'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+      'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
+      cat                             => 'cat --version | head -n 1',
+      sort                            => 'sort --version | head -n 1',
+      head                            => 'head --version | head -n 1',
+      uniq                            => 'uniq --version | head -n 1',
+      touch                           => 'touch --version | head -n 1',
+      shovill                         => 'shovill --version',
+      prodigal                        => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+
+      # shovill requires a ton of things:
+      'seqtk'       => 'seqtk 2>&1 | grep Version',
+      'pigz'        => 'pigz --version 2>&1',
+      'mash'        => 'mash --version 2>&1',
+      'trimmomatic' => 'trimmomatic -version 2>&1 | grep -v _JAVA',
+      'lighter'     => 'lighter -v 2>&1',
+      'flash'       => 'flash --version 2>&1 | grep FLASH',
+      'spades.py'   => 'spades.py  --version 2>&1',
+      'skesa'       => 'skesa --version 2>&1 | grep SKESA',
+      'bwa'         => 'bwa 2>&1 | grep Version:',
+      'samtools'    => 'samtools 2>&1 | grep Version:',
+      'samclip'     => 'samclip --version 2>&1',
+      'java'        => 'java -version 2>&1 | grep version',
+      'pilon'       => 'pilon --version 2>&1 | grep -v _JAVA',
+
+      # not using megahit or velvet in this instance of shovill
+      'megahit'     => 'megahit --version 2>&1',
+      'megahit_toolkit' => 'megahit_toolkit dumpversion 2>&1',
+      'velveth'     => 'velveth 2>&1 | grep Version',
+      'velvetg'     => 'velvetg 2>&1 | grep Version',
     }, $settings,
   );
 
-  usage() if($$settings{help} || !@ARGV);
+  die usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
 
   my $dir=$ARGV[0];
+  mkdir "$dir/SneakerNet/forEmail";
 
-  # Check for required executables
-  for (qw(skesa prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
-    fullPathToExec($_);
+  if($$settings{force}){
+    logmsg "--force was given; removing any existing assembly results.";
+    system("rm -rf $dir/SneakerNet/assemblies $dir/forEmail/assemblyMetrics.tsv");
   }
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
-  mkdir "$dir/SneakerNet/forEmail";
-
-  my $metricsOut = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
-  if(!-e $metricsOut){
-    assembleAll($dir,$settings);
-    recordProperties($dir,{version=>$VERSION, table=>$metricsOut});
-  }
-
+  my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
+
+  recordProperties($dir,{version=>$VERSION,table=>$metricsOut});
 
   return 0;
 }
@@ -71,37 +93,49 @@ sub assembleAll{
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
+    logmsg "ASSEMBLE SAMPLE $sample";
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
-    my $outassembly="$outdir/$sample.skesa.fasta";
-    my $outgbk="$outdir/$sample.skesa.gbk";
+    my $outassembly="$outdir/$sample.shovill.skesa.fasta";
+    my $outgbk="$outdir/$sample.shovill.skesa.gbk";
+    #my $outassembly="$outdir/$sample.megahit.fasta";
+    #my $outgbk="$outdir/$sample.megahit.gbk";
 
     # Run the assembly
     if(!-e $outassembly){
-      my $assembly=assembleSample($sample,$info,$settings);
-      next if(!$assembly);
+      my $assemblyDir = assembleSample($sample,$info,$settings);
+      my $assembly    = "$assemblyDir/contigs.fa";
+      next if(! -d $assemblyDir);
+      next if(! -e $assembly);
       next if(! -s $assembly);
 
       # Save the assembly
       mkdir $outdir;
+      mkdir "$outdir/shovill";
+      for my $srcFile(glob("$assemblyDir/*")){
+        my $target = "$outdir/shovill/".basename($srcFile);
+        cp($srcFile, $target) or die "ERROR copying $srcFile => $target\n  $!";
+      }
+      cp($assembly, $outassembly) or die "ERROR copying $assembly => $outassembly\n  $!";
+
       mkdir "$outdir/prodigal"; # just make this directory right away
-      command("run_assembly_filterContigs.pl -l 500 $assembly > $outassembly");
     }
 
     # Genome annotation
+    logmsg "PREDICT SAMPLE GENES $sample";
     if(!-e $outgbk){
       my $gbk=annotateFasta($sample,$outassembly,$settings);
       cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
     }
+
   }
   
   # run assembly metrics with min contig size=0.5kb
   my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
-
   logmsg "Running metrics on the genbank files at $metricsOut";
 
   my @thr;
-  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.skesa.gbk"));
+  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.shovill.skesa.gbk"));
   for(0..$$settings{numcpus}-1){
     $thr[$_]=threads->new(\&predictionMetricsWorker,$Q,$settings);
     $Q->enqueue(undef);
@@ -110,9 +144,8 @@ sub assembleAll{
     $_->join;
   }
   
-  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut.tmp"); # header
-  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut.tmp"); # content
-  mv("$metricsOut.tmp", $metricsOut);
+  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
+  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
   
   return $metricsOut;
 }
@@ -189,15 +222,26 @@ sub predictionMetricsWorker{
 sub assembleSample{
   my($sample,$sampleInfo,$settings)=@_;
 
-  my $R1=$$sampleInfo{fastq}[0];
-  my $R2=$$sampleInfo{fastq}[1];
-  if(!$R1){
+  my($R1,$R2) = @{ $$sampleInfo{fastq} };
+
+  if(!$R1 || !-e $R1){
     logmsg "Could not find R1 for $sample. Skipping.";
     return "";
   }
-  if(!$R2){
+  if(!$R2 || !-e $R2){
     logmsg "Could not find R2 for $sample. Skipping.";
     return "";
+  }
+
+  # Dealing with a small file size
+  my $rawReadsFilesize = (stat($R1))[7] + (stat($R2))[7];
+  if($rawReadsFilesize < 1000){
+    if($$settings{force}){
+      logmsg "Fastq files are tiny, but forcing because of --force.";
+    } else {
+      logmsg "Fastq files are too tiny. Skipping. Force with --force.";
+      return "";
+    }
   }
 
   logmsg "Assembling $sample";
@@ -205,23 +249,16 @@ sub assembleSample{
   my $outdir="$$settings{tempdir}/$sample";
   
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
-  my $numcpus=$$settings{numcpus};
 
-  mkdir $outdir; # Skesa will need this container
-  #command("skesa --cores $numcpus --gz --fastq $R1,$R2 > $$settings{tempdir}/$sample.fasta");
-  # faster skesa command taken from 
-  #  https://github.com/ncbi/SKESA/issues/11#issuecomment-429007711
-  system("skesa --fastq $R1,$R2 --steps 1 --kmer 51 --cores $numcpus --vector_percent 1 > $$settings{tempdir}/$sample.fasta");
-  if($?){
-    command("skesa --fastq $R1,$R2 --cores $numcpus > $$settings{tempdir}/$sample.fasta");
+  eval{
+    command("shovill --outdir $outdir --R1 $R1 --R2 $R2 --assembler skesa --cpus $$settings{numcpus} --keepfiles");
+  };
+  if($@){
+    logmsg "shovill failed!\n$@";
+    return "";
   }
-  return "$$settings{tempdir}/$sample.fasta";
 
-  #$numcpus=2 if($numcpus < 2); # megahit requires at least two
-  #command("megahit -1 $R1 -2 $R2 --out-dir '$outdir' -t $numcpus 1>&2");
-  #die "ERROR with running megahit on $sample: $!" if $?;
-
-  #return "$outdir/final.contigs.fa";
+  return $outdir
 }
 
 # I _would_ use prokka, except it depends on having an up to date tbl2asn
@@ -229,10 +266,13 @@ sub assembleSample{
 sub annotateFasta{
   my($sample,$assembly,$settings)=@_;
 
+  # Ensure a clean slate
   my $outdir="$$settings{tempdir}/$sample/prodigal";
   system("rm -rf $outdir");
+
   mkdir "$$settings{tempdir}/$sample";
   mkdir $outdir;
+
   my $outgff="$outdir/prodigal.gff";
   my $outgbk="$outdir/prodigal.gbk";
 
@@ -279,7 +319,7 @@ sub usage{
   Usage: $0 MiSeq_run_dir
   --numcpus 1
   --version
-  ";
+";
   exit(0);
 }
 
