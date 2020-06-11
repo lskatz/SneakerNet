@@ -153,9 +153,10 @@ sub assembleAll{
 sub predictionMetricsWorker{
   my($Q,$settings)=@_;
   my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
-  my $predictionOut="$tempdir/predictionMetrics.tsv";
-  my $assemblyOut  ="$tempdir/assemblyMetrics.tsv";
-  my $metricsOut   ="$tempdir/metrics.tsv";
+  my $predictionOut ="$tempdir/predictionMetrics.tsv";
+  my $assemblyOut   ="$tempdir/assemblyMetrics.tsv";
+  my $metricsOut    ="$tempdir/metrics.tsv";  # Combined metrics
+  my $coverageOut   ="$tempdir/effectiveCoverage.tsv";
   command("touch $predictionOut $assemblyOut");
 
   my $numMetrics=0;
@@ -165,28 +166,49 @@ sub predictionMetricsWorker{
     my $fasta=$gbk;
     $fasta=~s/gbk$/fasta/;
     
+    my $bam = dirname($fasta)."/shovill/shovill.bam";
+    
     logmsg "gbk metrics for $gbk";
     command("run_prediction_metrics.pl $gbk >> $predictionOut");
     logmsg "asm metrics for $fasta";
     command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta >> $assemblyOut");
+    logmsg "Effective coverage for $bam";
+
+    my $total=0;
+    my $numSites=0;
+    for my $line(`samtools depth -aa '$bam'`){
+      chomp($line);
+      my(undef, undef, $depth) = split(/\t/, $line);
+      $total+=$depth;
+      $numSites++;
+    }
+    open(my $tmpFh, ">", $coverageOut) or die "ERROR: could not write to $coverageOut: $!";
+    print $tmpFh join("\t", qw(File effectiveCoverage))."\n";
+    print $tmpFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
+    close $tmpFh;
+    command("samtools depth -aa $bam >> $coverageOut");
     $numMetrics++;
   }
+
   # Don't do any combining if no metrics were performed
   return if($numMetrics==0);
 
   # Combine the files
   open(my $predFh,$predictionOut) or die "ERROR: could not read $predictionOut: $!";
   open(my $assemblyFh, $assemblyOut) or die "ERROR: could not read $assemblyOut: $!";
+  open(my $coverageFh, $coverageOut) or die "ERROR: could not read $coverageOut: $!";
   open(my $metricsFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
 
   # Get and paste the header into the output metrics file
   my $predHeader=<$predFh>;
   my $assemblyHeader=<$assemblyFh>;
-  chomp($predHeader,$assemblyHeader);
+  my $coverageHeader=<$coverageFh>;
+  chomp($predHeader,$assemblyHeader,$coverageHeader);
   my @predHeader=split(/\t/,$predHeader);
   my @assemblyHeader=split(/\t/,$assemblyHeader);
+  my @coverageHeader=split(/\t/, $coverageHeader);
   print $metricsFh "File\tgenomeLength";
-  for(@predHeader, @assemblyHeader){
+  for(@predHeader, @assemblyHeader, @coverageHeader){
     next if($_ =~ /File|genomeLength/);
     print $metricsFh "\t".$_;
   }
@@ -195,27 +217,31 @@ sub predictionMetricsWorker{
   # Get and paste the metrics from asm and pred into the output file
   while(my $predLine=<$predFh>){
     my $assemblyLine=<$assemblyFh>;
-    chomp($predLine,$assemblyLine);
+    my $coverageLine=<$coverageFh>;
+    chomp($predLine,$assemblyLine,$coverageLine);
     
     my %F;
     @F{@predHeader}=split(/\t/,$predLine);
     @F{@assemblyHeader}=split(/\t/,$assemblyLine);
+    @F{@coverageHeader}=split(/\t/,$coverageLine);
     # In case there was no assembly or predictions, add in a default value
-    for(@predHeader,@assemblyHeader){
+    for(@predHeader,@assemblyHeader, @coverageHeader){
       $F{$_} //= 'NA';
     }
     # Also take care of genomeLength specifically
     $F{genomeLength} //= "NA";
-    $F{File}=basename($F{File},qw(.gbk .fasta));
+    $F{File}=basename($F{File},qw(.gbk .fasta .bam));
 
     print $metricsFh $F{File}."\t".$F{genomeLength};
-    for(@predHeader, @assemblyHeader){
+    for(@predHeader, @assemblyHeader, @coverageHeader){
       next if($_ =~ /File|genomeLength/);
       print $metricsFh "\t".$F{$_}
     }
     print $metricsFh "\n";
   }
-  close $_ for($predFh,$assemblyFh,$metricsFh);
+  close $_ for($predFh,$assemblyFh,$coverageFh,$metricsFh);
+
+  system("ls $metricsOut; cat $metricsOut"); die "DJFKDJFKDJ" if $?;
 }
 
 
