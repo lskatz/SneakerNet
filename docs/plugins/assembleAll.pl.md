@@ -14,7 +14,8 @@ In version 2, Shovill was added and many requirements were added
   * Flash
   * Java
   * Lighter
-  * Mash
+  * Mash (before shovill 1.1.0)
+  * KMC (in shovill 1.1.0)
   * Megahit (not used but checked when shovill runs)
   * pigz
   * Pilon

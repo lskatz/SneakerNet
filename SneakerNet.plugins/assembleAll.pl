@@ -44,6 +44,7 @@ sub main{
       'seqtk'       => 'seqtk 2>&1 | grep Version',
       'pigz'        => 'pigz --version 2>&1',
       'mash'        => 'mash --version 2>&1',
+      'pigz'        => 'pigz --version 2>&1',
       'trimmomatic' => 'trimmomatic -version 2>&1 | grep -v _JAVA',
       'lighter'     => 'lighter -v 2>&1',
       'flash'       => 'flash --version 2>&1 | grep FLASH',
@@ -122,7 +123,7 @@ sub assembleAll{
     }
 
     # Genome annotation
-    logmsg "PREDICT SAMPLE GENES $sample";
+    logmsg "PREDICT GENES FOR SAMPLE $sample";
     if(!-e $outgbk){
       my $gbk=annotateFasta($sample,$outassembly,$settings);
       cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
@@ -165,8 +166,15 @@ sub predictionMetricsWorker{
     # base name but with a fasta extension
     my $fasta=$gbk;
     $fasta=~s/gbk$/fasta/;
+    my $bam  =$gbk;
+    $bam  =~s/gbk$/bam/;
     
-    my $bam = dirname($fasta)."/shovill/shovill.bam";
+    # Bring the shovill bam file over
+    my $srcBam = dirname($fasta)."/shovill/shovill.bam";
+    if(!-e $bam){
+      logmsg "hard linking: $srcBam => $bam";
+      link($srcBam, $bam) or die "ERROR: could not hard link $srcBam => $bam: $!";
+    }
     
     logmsg "gbk metrics for $gbk";
     command("run_prediction_metrics.pl $gbk >> $predictionOut");
