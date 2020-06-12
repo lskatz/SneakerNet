@@ -14,7 +14,7 @@ use FindBin qw/$RealBin/;
 use lib "$RealBin/../lib/perl5";
 
 my $numcpus = 2;
-note "DEBUG"; $numcpus=24;
+#note "DEBUG"; $numcpus=24;
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
@@ -28,7 +28,7 @@ if($?){
 
 my $tsv = "$run/SneakerNet/forEmail/assemblyMetrics.tsv";
 #unlink($tsv); # ensure that assembleAll.pl doesn't skimp
-is system("assembleAll.pl --numcpus $numcpus $run"), 0, "Assembling all";
+is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
 # Let the checks be loose though because of different
