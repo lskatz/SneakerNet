@@ -27,7 +27,7 @@ if($?){
 }
 
 my $tsv = "$run/SneakerNet/forEmail/assemblyMetrics.tsv";
-#unlink($tsv); # ensure that assembleAll.pl doesn't skimp
+unlink($tsv); # ensure that assembleAll.pl doesn't skimp
 is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
