@@ -141,6 +141,12 @@ sub guessTaxon{
 
   my $taxfile="$sampledir/kraken.report";
 
+  # If sn_kraken did not complete, a file will not be present
+  if(!-e $taxfile){
+    logmsg "WARNING: kraken report not found at $taxfile";
+    return {}; # return empty hash because that is the var type expected
+  }
+
   my %bestGuess;
   my @header = qw(percent classifiedReads specificClassifiedReads rank taxid taxname);
   open(TAXONOMY, '<', $taxfile) or die "ERROR: could not open $taxfile for reading: $!";
