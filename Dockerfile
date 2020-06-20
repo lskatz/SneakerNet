@@ -256,6 +256,9 @@ RUN pip3 install chewbbaca==2.1.0
 # Get SneakerNet 0.10.2 and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
+# 
+# The command at the end t/00_env.t sets up an environment including generating contaminated reads
+# for further unit testing.
 ENV SNVER=0.10.2
 RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  tar -zxf v${SNVER}.tar.gz && \
@@ -265,7 +268,8 @@ RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  perl Makefile.PL && \
  make && \
  sed -i 's+/opt/kraken/full-20140723+/kraken-database/minikraken_20171013_4GB+g' config/settings.conf && \
- mkdir /data
+ mkdir /data && \
+ perl t/00_env.t
 
 # minikraken db
 RUN mkdir /kraken-database && \
