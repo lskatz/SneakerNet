@@ -42,10 +42,13 @@ subtest 'Create assembly-only dataset' => sub{
     my $copied = cp($asm, $target);
     is($copied, 1, "Copying $asm => $target");
 
-    my $sampleName = basename($filename, ".skesa.fasta");
+    #my $sampleName = basename($filename, ".shovill.skesa.fasta");
+    my $sampleName = basename($filename);
+    $sampleName =~ s/\..*//;
 
     # Add onto the sample sheet
-    print $fh join("\t", $sampleName, "Taxon=$taxon{$sampleName}", $filename)."\n";
+    my $taxon = $taxon{$sampleName};
+    print $fh join("\t", $sampleName, "Taxon=$taxon", $filename)."\n";
   }
   close $fh;
 
@@ -54,5 +57,7 @@ subtest 'Create assembly-only dataset' => sub{
   is($opened, 1, "Opened $dir/snok.txt");
   print $snokFh "workflow = assembly\n";
   close $snokFh;
+
+  note "New SneakerNet project in $dir";
 };
 
