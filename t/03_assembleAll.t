@@ -34,7 +34,7 @@ is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all"
 # Let the checks be loose though because of different
 # versions of assemblers.
 subtest "Expected assembly stats" => sub {
-  plan tests => 20;
+  #plan tests => 20; # number of tests will change depending on whether 00_env.t was run first
   my %genomeLength = (
     "2010EL-1786.shovill.skesa"      => 2955394,
     "Philadelphia_CDC.shovill.skesa" => 3328163,
