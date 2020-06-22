@@ -348,7 +348,19 @@ Arguments:
 sub readTsv{
   my($filename, $settings) = @_;
 
+  my ($package, $script, $line, $subroutine, $hasargs,$wantarray, $evaltext, $is_require, $hints, $bitmask, $hinthash) = caller(1);
+
   my %TSV;
+
+  # If the filename can't be read or if it has zero bytes, return empty hash
+  if(!-r $filename){
+    logmsg "$subroutine (line $line): WARNING: could not read from $filename";
+    return \%TSV;
+  }
+  if(!-s $filename){
+    logmsg "$subroutine (line $line): WARNING: trying to read from zero byte file $filename";
+    return \%TSV;
+  }
 
   my $keyIndex = $$settings{keyIndex} || 0;
   my $headers  = 1;
