@@ -15,7 +15,7 @@ use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION= "wgMLST plugin by Lee Katz.  Uses chewBBACA for wgMLST.";
 
 # wget --recursive http://enterobase.warwick.ac.uk/schemes/SALwgMLST.cgMLSTv1/
@@ -180,6 +180,7 @@ sub runWgMlst{
       logmsg "Copying wgMLST database to RAM at $newWgMlstDir";
       system("cp -r $wgMlstDir/* $newWgMlstDir/ >&2");
       $wgMlstDir = $newWgMlstDir;
+      logmsg "Done copying";
     }
     logmsg "Running chewBBACA.py AlleleCall on $asm on scheme $wgMlstDir ($numLoci loci)";
     command("chewBBACA.py AlleleCall --fr -i $asm -g $wgMlstDir --cpu $$settings{numcpus} -o $tmpout");

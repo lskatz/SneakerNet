@@ -40,6 +40,27 @@ sub main{
       touch                           => 'touch --version | head -n 1',
       shovill                         => 'shovill --version',
       prodigal                        => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+
+      # shovill requires a ton of things:
+      'seqtk'       => 'seqtk 2>&1 | grep Version',
+      'pigz'        => 'pigz --version 2>&1',
+      'mash'        => 'mash --version 2>&1',
+      'trimmomatic' => 'trimmomatic -version 2>&1 | grep -v _JAVA',
+      'lighter'     => 'lighter -v 2>&1',
+      'flash'       => 'flash --version 2>&1 | grep FLASH',
+      'spades.py'   => 'spades.py  --version 2>&1',
+      'skesa'       => 'skesa --version 2>&1 | grep SKESA',
+      'bwa'         => 'bwa 2>&1 | grep Version:',
+      'samtools'    => 'samtools 2>&1 | grep Version:',
+      'samclip'     => 'samclip --version 2>&1',
+      'java'        => 'java -version 2>&1 | grep version',
+      'pilon'       => 'pilon --version 2>&1 | grep -v _JAVA',
+
+      # not using megahit or velvet in this instance of shovill
+      'megahit'     => 'megahit --version 2>&1',
+      'megahit_toolkit' => 'megahit_toolkit dumpversion 2>&1',
+      'velveth'     => 'velveth 2>&1 | grep Version',
+      'velvetg'     => 'velvetg 2>&1 | grep Version',
     }, $settings,
   );
 
@@ -50,11 +71,6 @@ sub main{
 
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet/forEmail";
-
-  # Check for required executables
-  for (qw(shovill skesa prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
-    fullPathToExec($_);
-  }
 
   if($$settings{force}){
     logmsg "--force was given; removing any existing assembly results.";

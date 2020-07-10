@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname/;
+use File::Temp qw/tempfile/;
 
 use Test::More;
 
@@ -20,7 +21,21 @@ if($?){
 }
 plan tests => 2;
 
-is system("sn_passfail.pl --numcpus 1 --force $run >/dev/null 2>&1"), 0, "Running sn_passfail.pl";
+my($logFh, $log) = tempfile("sn_passfail.XXXXXX", SUFFIX=>".log", CLEANUP=>1);
+END{unlink($log);} # make sure the log goes away at the end
+system("sn_passfail.pl --numcpus 1 --force $run >$log 2>&1");
+if($?){
+  open(my $logFh2, $log) or die "ERROR: could not read $log: $!";
+  while(<$logFh2>){
+    chomp;
+    diag $_;
+  }
+  close $logFh2;
+  fail("Running sn_passfail.pl");
+} else {
+  pass("Running sn_passfail.pl");
+}
+close $logFh;
 
 my $passfail= "$run/SneakerNet/forEmail/passfail.tsv";
 
@@ -58,3 +73,4 @@ subtest "Expected passfail results from $passfail" => sub {
   }
   close $fh;
 };
+

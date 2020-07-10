@@ -5,7 +5,7 @@ set -u
 
 # Set defaults
 SCRIPT=$(basename $0)
-MY_VERSION=2
+MY_VERSION="2.1"
 MY_CITATION="Hello World example in Bash by Lee Katz"
 
 function usage(){
@@ -90,13 +90,6 @@ if [[ "${#POSITIONAL[@]}" -gt 0 ]]; then
   set -- "${POSITIONAL[@]}"
 fi
 
-# exit if there are no arguments
-if [[ "$HELP" == 1 ]] || [[ $# -lt 1 ]]; then
-  echo "$HELP .. $#"; exit
-  usage;
-  exit 0;
-fi
-
 # print and exit for certain options
 if [[ "$CITATION" == 1 ]]; then
   # Print the citation and exit
@@ -119,6 +112,12 @@ if [[ "$CHECK_DEPENDENCIES" == 1 ]]; then
   echo "basename"
   basename --version 2>&1 | grep -m 1 basename 1>&2
 
+  exit 0;
+fi
+
+# exit if there are no arguments
+if [[ "$HELP" == 1 ]] || [[ $# -lt 1 ]]; then
+  usage;
   exit 0;
 fi
 

@@ -10,6 +10,7 @@ use File::Copy qw/mv/;
 use File::Path qw/remove_tree/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
+use File::Find qw/find/;
 use FindBin;
 
 use lib "$FindBin::RealBin/../lib/perl5";
@@ -235,7 +236,18 @@ sub createSampleSheetOutOfThinAir{
 
   # get a list of fastq files for the next couple of steps
   # Do not include the full path; just the basename.
-  my @fastq = map{basename($_)} glob("$indir/*.fastq.gz");
+  #my @fastq = map{basename($_)} glob("$indir/*.fastq.gz");
+  my %fastq; # basename => full path
+  find({wanted=>sub{
+    my $path = $File::Find::name;
+    return if(!-f $path);
+    return if($path !~ /\.fastq.gz$/);
+
+    my $basename = basename($path);
+
+    $fastq{$basename} = $path;
+  }}, $indir);
+  my @fastq = sort {$a cmp $b} keys(%fastq);
   
   #awk -F'_' '{print $1}' <(ls *.fastq.gz) | sed 's/-*$//g' | uniq > wgs-ids_detailed.txt 
   my %sample;
@@ -253,9 +265,21 @@ sub createSampleSheetOutOfThinAir{
     my $R2 = $R1;
     $R2 =~ s/_R1/_R2/;
 
-    if(!-e "$indir/$R1" || !-e "$indir/$R2"){
-      die "ERROR: could not find both $R1 and $R2 in $indir!";
+    # Check that the keys exist
+    if(!$fastq{$R1} && !$fastq{$R2}){
+      die "ERROR: R1 and R2 are not both represented as $R1 and $R2";
     }
+    # Check that the fastq files exist
+    if(!-e $fastq{$R1}){
+      die "ERROR: could not find R1 for $name at $fastq{$R1}";
+    }
+    if(!-e $fastq{$R2}){
+      die "ERROR: could not find R2 for $name at $fastq{$R2}";
+    }
+
+    #if(!-e "$indir/$R1" || !-e "$indir/$R2"){
+    #  die "ERROR: could not find both $R1 and $R2 in $indir!";
+    #}
 
     print $outFh join("\t", $name, ".", "$R1;$R2")."\n";
   }

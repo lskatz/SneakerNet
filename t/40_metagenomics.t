@@ -152,7 +152,7 @@ subtest 'integrity of new run' => sub{
   }
   close $fh2;
   
-  my $expectedReads = 1634788;
+  my $expectedReads = 1718212;
   is($r1LineCounter, $expectedReads, "Num metagenomics R1 reads");
   is($r2LineCounter, $expectedReads, "Num metagenomics R2 reads");
 

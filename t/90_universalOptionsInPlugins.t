@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname basename/;
+use List::Util qw/uniq/;
 
 use Test::More tests => 4;
 
@@ -54,6 +55,8 @@ note "Testing these plugins: ". join(", ", @plugin);
 cmp_ok(scalar(@plugin), '>', 1, "Gathering all plugins. ".scalar(@plugin)." found.");
 
 # Test whether --flagopt works for each script/flag combination
+my @depsFail = ();
+my @pluginsDepsFail = ();
 subtest 'flagopt' => sub{
   for my $path(@plugin){
     my $file = basename($path);
@@ -66,6 +69,10 @@ subtest 'flagopt' => sub{
       };
       is($exit_code, 0, "Plugin $file given --$flagOpt");
       if($exit_code){
+        my $newlineChar=$/;
+        push(@depsFail, split(/$newlineChar/, $stdout));
+        push(@pluginsDepsFail, $file);
+
         local $/ = undef;
         open(my $fh, "$path.tmp");
         my $content = <$fh>;
@@ -76,6 +83,11 @@ subtest 'flagopt' => sub{
     }
   }
 };
+if(@depsFail){
+  diag "Dependencies from plugins that failed were: ".join(", ",sort(uniq(@depsFail)));
+  diag "This does not mean that every single executable failed; it just means that when a dependency failed, it lists all the dependency of that plugin.";
+  diag "Plugins that failed dependency checks were: ".join(", ", sort(@pluginsDepsFail));
+}
 
 # Test whether --flagopt str works for script/flag combinations
 subtest 'flag str' => sub{

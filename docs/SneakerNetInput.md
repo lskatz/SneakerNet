@@ -4,7 +4,7 @@
 
 Usually you can run this script to import a MiSeq run:
 
-    SneakerNet.roRun.pl path/to/dir -o SneakerNetDir --parsesamplesheet
+    SneakerNet.roRun.pl path/to/dir -o SneakerNetDir --createsamplesheet
 
 where `SneakerNetDir` is a properly formatted directory for SneakerNet.
 
@@ -26,7 +26,7 @@ See below for samples.tsv, if SampleSheet.csv is not found.
 
 #### samples.tsv
 
-This file can be created from SampleSheet.csv by the plugin [sn_parseSampleSheet.pl](../docs/plugins/sn_parseSampleSheet.pl.md), from `SneakerNet.ro.pl --createsamplesheet`, or manually.
+This file can be created from SampleSheet.csv by the plugin [sn_parseSampleSheet.pl](../docs/plugins/sn_parseSampleSheet.pl.md), from `SneakerNet.ro.pl --createsamplesheet`, from `sn_createSampleSheet.pl`, or manually.
 It has three columns, separated by tab: 
 
 * sample - Name for a sample

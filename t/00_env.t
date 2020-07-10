@@ -39,10 +39,11 @@ subtest 'Make a contaminated genome' => sub{
   system("zcat $run/Philadelphia_CDC_2.fastq.gz | gzip -c1 >  $run/contaminated_2.fastq.gz");
   is($?, 0, "Zcat Philadelphia_CDC_2.fastq.gz to contaminated R2");
 
-  system("zcat $run/FA1090_1.fastq.gz | head -n 88888 | gzip -c1 >> $run/contaminated_1.fastq.gz");
-  is($?, 0, "Zcat 88888 lines of FA1090_1.fastq.gz to contaminated R1");
-  system("zcat $run/FA1090_2.fastq.gz | head -n 88888 | gzip -c1 >> $run/contaminated_2.fastq.gz");
-  is($?, 0, "Zcat 88888 lines of FA1090_2.fastq.gz to contaminated R2");
+  my $numContaminantReads = 88888 * 2;
+  system("zcat $run/FA1090_1.fastq.gz | head -n $numContaminantReads | gzip -c1 >> $run/contaminated_1.fastq.gz");
+  is($?, 0, "Zcat $numContaminantReads lines of FA1090_1.fastq.gz to contaminated R1");
+  system("zcat $run/FA1090_2.fastq.gz | head -n $numContaminantReads | gzip -c1 >> $run/contaminated_2.fastq.gz");
+  is($?, 0, "Zcat $numContaminantReads lines of FA1090_2.fastq.gz to contaminated R2");
 
   # Copy the last line of the sample sheet but change the sample name
   open(SAMPLESHEET, '<', "$run/SampleSheet.csv") or die "ERROR reading $run/SampleSheet.csv: $!";

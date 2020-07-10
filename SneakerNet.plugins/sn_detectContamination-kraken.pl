@@ -15,18 +15,19 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "4.0";
+our $VERSION = "4.2";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
 my $tmpSettings=readConfig();
+my @contaminatedSamples; # list of potentially contaminated samples
 
 local $0=fileparse $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(minpercent|min_percent|min-percent=f version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  GetOptions($settings,qw(minpercent|min_percent|min-percent=f minwarning|min_warning|min-warning=f version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -42,7 +43,8 @@ sub main{
   $$settings{numcpus}||=1;
   $$settings{KRAKEN_DEFAULT_DB} ||= die "ERROR: KRAKEN_DEFAULT_DB needs to be defined under config/settings.conf";
   $$settings{tempdir}||=tempdir("$0XXXXXX",TMPDIR=>1, CLEANUP=>1);
-  $$settings{minpercent} ||= 25;
+  $$settings{minpercent} ||= 25.0;
+  $$settings{minwarning} ||= 5.0;
 
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet/forEmail";
@@ -55,6 +57,10 @@ sub main{
   #command("cd $dir/SneakerNet/forEmail && zip -v9 kraken.zip *.kraken.html && rm -v *.kraken.html");
 
   recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},table=>"$dir/SneakerNet/forEmail/kraken.tsv"});
+  # also record if there are any potentially contaminated samples
+  if(@contaminatedSamples){
+    recordProperties($dir,{warnings=>"There is at least one potentially contaminated sample ( >=$$settings{minwarning}%)"});
+  }
 
   return 0;
 }
@@ -89,8 +95,17 @@ sub runKrakenOnDir{
     my $guesses = guessTaxon($sampledir,$settings);
     my $html = $$guesses{html};
     if(!$html){
+      logmsg "WARNING: html file not defined for $sampleName";
+      next;
+    }
+    if(!-e $html){
       logmsg "WARNING: html file not found: $html";
       next;
+    }
+
+    # Raise a warning if there is a significant amount of contamination
+    if($$guesses{contaminant}{percent} >= $$settings{minwarning}){
+      raiseWarning($sampleName, $settings);
     }
 
     # Add onto the contamination report
@@ -126,6 +141,12 @@ sub guessTaxon{
 
   my $taxfile="$sampledir/kraken.report";
 
+  # If sn_kraken did not complete, a file will not be present
+  if(!-e $taxfile){
+    logmsg "WARNING: kraken report not found at $taxfile";
+    return {}; # return empty hash because that is the var type expected
+  }
+
   my %bestGuess;
   my @header = qw(percent classifiedReads specificClassifiedReads rank taxid taxname);
   open(TAXONOMY, '<', $taxfile) or die "ERROR: could not open $taxfile for reading: $!";
@@ -154,12 +175,11 @@ sub guessTaxon{
   # a taxon, then guess that taxon.
   my %guessedTaxon;
   RANK:
-  for my $rank(@sortedRank){
+  for my $rank(reverse @sortedRank){
     $bestGuess{$rank} //= [];
     for my $taxHash(sort {$$b{percent} <=> $$a{percent}} @{ $bestGuess{$rank} }){
       if($$taxHash{percent} > $$settings{minpercent}){
         %guessedTaxon = %$taxHash;
-        last RANK;
       }
     }
   }
@@ -184,6 +204,11 @@ sub guessTaxon{
   return {guess=>\%guessedTaxon, contaminant=>\%majorConflictingTaxon, html=>"$sampledir/report.html"};
 }
 
+sub raiseWarning{
+  my($sampleName, $settings) = @_;
+  push(@contaminatedSamples, $sampleName);
+}
+
 sub usage{
   print "Finds contamination in a miseq run with kraken and guesses the taxon
   Usage: $0 MiSeq_run_dir
@@ -192,7 +217,10 @@ sub usage{
   --force         Overwrite any previous results
   --min-percent   What percent of reads have to be attributed
                   to a taxon before presuming it as the taxon
-                  sequenced? Default: 25
+                  sequenced? Default: 25.0
+  --min-warning   What percent do reads of a contaminant taxon
+                  have to be before a warning is triggered
+                  in the report? Default: 5
 ";
   exit(0);
 }

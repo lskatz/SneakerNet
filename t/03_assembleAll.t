@@ -13,6 +13,9 @@ use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
 
+my $numcpus = 2;
+#note "DEBUG"; $numcpus=24;
+
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
@@ -25,32 +28,39 @@ if($?){
 
 my $tsv = "$run/SneakerNet/forEmail/assemblyMetrics.tsv";
 unlink($tsv); # ensure that assembleAll.pl doesn't skimp
-is system("assembleAll.pl --numcpus 2 --force $run"), 0, "Assembling all";
+is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
 # Let the checks be loose though because of different
 # versions of assemblers.
 subtest "Expected assembly stats" => sub {
-  plan tests => 10;
+  #plan tests => 20; # number of tests will change depending on whether 00_env.t was run first
   my %genomeLength = (
-    "2010EL-1786.skesa"      => 2955394,
-    "Philadelphia_CDC.skesa" => 3328163,
-    "FA1090.skesa"           => 1918813,
-    "contaminated.skesa"     => 5782258,
-    "LT2.skesa"              => 4820055,
+    "2010EL-1786.shovill.skesa"      => 2955394,
+    "Philadelphia_CDC.shovill.skesa" => 3328163,
+    "FA1090.shovill.skesa"           => 1918813,
+    "contaminated.shovill.skesa"     => 5782258,
+    "LT2.shovill.skesa"              => 4820055,
   );
   my %CDS = (
-    "2010EL-1786.skesa"      => 2714,
-    "Philadelphia_CDC.skesa" => 3096,
-    "FA1090.skesa"           => 2017,
-    "contaminated.skesa"     => 8949,
-    "LT2.skesa"              => 4802,
+    "2010EL-1786.shovill.skesa"      => 2714,
+    "Philadelphia_CDC.shovill.skesa" => 3096,
+    "FA1090.shovill.skesa"           => 2017,
+    "contaminated.shovill.skesa"     => 8949,
+    "LT2.shovill.skesa"              => 4802,
+  );
+  my %depth = (
+    "2010EL-1786.shovill.skesa"      => 4.56,
+    "Philadelphia_CDC.shovill.skesa" => 4.60,
+    "FA1090.shovill.skesa"           => 6.31,
+    "contaminated.shovill.skesa"     => 5.17,
+    "LT2.shovill.skesa"              => 4.76,
   );
   diag `echo;column -t $tsv`;
   open(my $fh, "$tsv") or die "ERROR reading $tsv: $!";
   while(<$fh>){
     chomp;
-    my ($file,$genomeLength,$CDS,$N50,$longestContig,$numContigs,$avgContigLength,$assemblyScore,$minContigLength,$expectedGenomeLength,$kmer21,$GC)
+    my ($file,$genomeLength,$CDS,$N50,$longestContig,$numContigs,$avgContigLength,$assemblyScore,$minContigLength,$expectedGenomeLength,$kmer21,$GC,$effectiveCoverage)
         = split(/\t/, $_);
     
     next if(!$genomeLength{$file}); # avoid header
@@ -61,8 +71,12 @@ subtest "Expected assembly stats" => sub {
     #ok $CDS > $CDS{$file} - 1000 && $CDS < $CDS{$file} + 1000, "CDS count for $file (expected:$CDS{$file} found:$CDS)";
 
     # Let's make this super lax for now
-    ok $genomeLength > 1, "Genome length for $file (expected:$genomeLength{$file} found:$genomeLength)";
-    ok $CDS > 1, "CDS count for $file (expected:$CDS{$file} found:$CDS)";
+    cmp_ok($genomeLength, '>', 1, "Genome length for $file (expected:$genomeLength{$file} found:$genomeLength)");
+    cmp_ok($CDS, '>', 1, "CDS count for $file (expected:$CDS{$file} found:$CDS)");
+
+    # Depth of coverage
+    cmp_ok($effectiveCoverage, '>', 1, "Effective coverage > 1x (expected:$depth{$file} found: $effectiveCoverage)");
+    cmp_ok($effectiveCoverage, '<', 200, "Effective coverage < 200x (sanity check)");
   }
   close $fh;
 };

@@ -111,7 +111,8 @@ sub runKraken{
   if(!defined($$sample{fastq}) || !@{ $$sample{fastq} }){
     logmsg "WARNING: I could not find the reads for $sampleName .";
     $inputType = "";
-    if(!defined($$sample{asm}) || !@{ $$sample{asm} }){
+    return 0;
+    if(!defined($$sample{asm}) || (ref($$sample{asm} eq 'ARRAY') &&  !@{ $$sample{asm} })){
       logmsg "WARNING: I could not find the assembly for $sampleName .";
       return 0; # no reads or asm -- give up and return 0
     } else {

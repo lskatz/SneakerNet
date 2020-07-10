@@ -11,9 +11,9 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/@rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "3.0";
+our $VERSION = "4.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -32,6 +32,15 @@ sub main{
 
   usage() if($$settings{help} || !@ARGV);
   $$settings{numcpus}||=1;
+  if(!defined($$settings{kraken_contamination_min_rank})){
+    logmsg "WARNING: kraken_contamination_min_rank was not set in settings.conf. Defaulting to G";
+    logmsg "NOTE: Possible values for kraken_contamination_min_rank are single letters: @rankOrder";
+    $$settings{kraken_contamination_min_rank} = 'G';
+  }
+  if(!defined($$settings{kraken_contamination_threshold})){
+    logmsg "WARNING: kraken_contamination_threshold was not set in settings.conf. Defaulting to 25.0";
+    $$settings{kraken_contamination_threshold} = 25.0;
+  }
 
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet/forEmail";
@@ -39,7 +48,11 @@ sub main{
   my $outfile=passfail($dir,$settings);
   logmsg "The pass/fail file is under $outfile";
   
-  recordProperties($dir,{version=>$VERSION,table=>$outfile});
+  recordProperties($dir,{
+      version=>$VERSION,table=>$outfile,
+      kraken_contamination_min_rank  => $$settings{kraken_contamination_min_rank},
+      kraken_contamination_threshold => $$settings{kraken_contamination_threshold},
+  });
 
   return 0;
 }
@@ -65,7 +78,7 @@ sub passfail{
     print $failFh "\n";
   }
   print $failFh "#1: fail\n#0: pass\n#-1: unknown\n";
-  print $failFh "#Failure by Kraken is when the number of contaminant reads is > 10%\n";
+  print $failFh "#Failure by Kraken is when the number of contaminant reads at rank $$settings{kraken_contamination_min_rank} or higher is >= $$settings{kraken_contamination_threshold}%\n";
   close $failFh;
 
   return $failFile;
@@ -95,26 +108,6 @@ sub identifyBadRuns{
   # If the readmetrics file does not exist, then the values are blank
   else {
     logmsg "WARNING: readMetrics.tsv was not found. Unknown whether samples pass or fail by coverage and quality.";
-  }
-
-  # Kraken results
-  my %kraken;
-  if(-e "$dir/SneakerNet/forEmail/kraken.tsv"){
-    open(my $krakenFh, '<', "$dir/SneakerNet/forEmail/kraken.tsv") or logmsg "WARNING: kraken results were not found in $dir/SneakerNet/forEmail/kraken.tsv: $!";
-    my $header = <$krakenFh>;
-    chomp($header);
-    my @header = split(/\t/, $header);
-    while(<$krakenFh>){
-      chomp;
-      next if(/^\s*#/);
-      my @F = split(/\t/, $_);
-      my %F;
-      @F{@header} = @F;
-      $F{PERCENTAGE_CONTAMINANT} //= 0;
-
-      $kraken{$F{NAME}} = \%F;
-    }
-    close $krakenFh;
   }
 
   # Understand for each sample whether it passed or failed
@@ -198,16 +191,39 @@ sub identifyBadRuns{
     }
 
     # Did it pass by kraken / read classification
-    if(defined($kraken{$samplename})){
-      if($kraken{$samplename}{PERCENTAGE_CONTAMINANT} > 10){
-        $fail{kraken} = 1;
-      } else {
-        $fail{kraken} = 0;
-      }
-    } else {
-      $fail{kraken} = -1;
+    # Start with a stance that we do not know (value: -1)
+    $fail{kraken} = -1;
+    my $krakenResults = readKrakenDir("$dir/SneakerNet/kraken/$samplename",{minpercent=>1});
+    # If we have any results at all, then gain the stance
+    # that it has not failed yet (value: 0)
+    if(scalar(keys(%$krakenResults)) > 1){
+      $fail{kraken} = 0;
     }
+    for my $rank(reverse @rankOrder){
+      # We can only call it conflicting if we are at the min rank or higher
+      next if($rankOrder{$rank} < $rankOrder{$$settings{kraken_contamination_min_rank}});
+      #next if(!$$krakenResults{$rank});
 
+      # are there conflicting taxa at this rank?
+      $$krakenResults{$rank} //= []; # Make sure this is defined before testing it in an array context
+      my @taxon = @{$$krakenResults{$rank}};
+      next if(scalar(@taxon) < 2);
+      
+      # Are the number of reads at least kraken_contamination_threshold?
+      # The elements are sorted by percent and so the first element
+      # is the dominant taxon.
+      # Therefore we can judge contamination by the second element.
+      # TODO instead, judge contamination by summing all percentages 
+      #      except the zeroth.
+      if($$krakenResults{$rank}[1]{percent} < $$settings{kraken_contamination_threshold}){
+        next;
+      }
+      
+      # If we made it through all filters, then we have reached
+      # the point where we can call it contaminated.
+      $fail{kraken} = 1;
+      last; # no need to test any further because it has failed
+    }
     $whatFailed{$samplename} = \%fail;
   }
 

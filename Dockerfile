@@ -3,7 +3,7 @@ FROM ubuntu:xenial
 LABEL base.image="ubuntu:xenial"
 LABEL container.version="1"
 LABEL software="SneakerNet"
-LABEL software.version="0.9.7"
+LABEL software.version="0.10.4"
 LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
 LABEL website="https://github.com/lskatz/SneakerNet"
 LABEL license="https://github.com/lskatz/SneakerNet/blob/master/LICENSE"
@@ -230,7 +230,7 @@ RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.
 # apt deps: python3 python3-pip python3-setuptools git ncbi-blast+ (blast installed manually)
 # update pip3 and install staramr 0.5.1
 RUN python3 -m pip install -U pip && \
- pip3 install staramr==0.5.1
+ pip3 install biopython==1.76 staramr==0.5.1
 
 # ColorID 1.4.3
 RUN mkdir colorid && \
@@ -253,10 +253,13 @@ RUN pip3 install poetry && \
 # python deps (installed via pip3 cmd below) numpy scipy biopython plotly SPARQLWrapper
 RUN pip3 install chewbbaca==2.1.0
 
-# Get SneakerNet 0.9.7 and make /data
+# Get SneakerNet 0.10.4 and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
-ENV SNVER=0.9.7
+# 
+# The command at the end t/00_env.t sets up an environment including generating contaminated reads
+# for further unit testing.
+ENV SNVER=0.10.4
 RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  tar -zxf v${SNVER}.tar.gz && \
  rm v${SNVER}.tar.gz && \
@@ -265,7 +268,8 @@ RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  perl Makefile.PL && \
  make && \
  sed -i 's+/opt/kraken/full-20140723+/kraken-database/minikraken_20171013_4GB+g' config/settings.conf && \
- mkdir /data
+ mkdir /data && \
+ perl t/00_env.t
 
 # minikraken db
 RUN mkdir /kraken-database && \

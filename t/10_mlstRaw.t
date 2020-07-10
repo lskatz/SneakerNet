@@ -21,6 +21,7 @@ my $run = "$RealBin/M00123-18-001-test";
 subtest 'ColorID' => sub{
   diag `sn_detectContamination-mlst.pl --check-dependencies 2>&1`;
   if($?){
+    diag "Dependencies not found. Will not test.";
     plan 'skip_all' => "sn_detectContamination-mlst.pl dependency check failed";
   }
 

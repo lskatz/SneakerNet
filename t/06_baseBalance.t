@@ -60,8 +60,8 @@ subtest "Expected base balance results from $basebalance" => sub {
     
     next if(!$AT || !$AT{$file});
 
-    is sprintf("%0.2f",$AT), sprintf("%0.2f", $AT{$file}), "AT percentage for $file";
-    is sprintf("%0.2f",$GC), sprintf("%0.2f", $GC{$file}), "GC percentage for $file";
+    is sprintf("%0.1f",$AT), sprintf("%0.1f", $AT{$file}), "AT percentage for $file";
+    is sprintf("%0.1f",$GC), sprintf("%0.1f", $GC{$file}), "GC percentage for $file";
     #ok $AT==$AT{$file}, "AT percentage for $file";
     #ok $GC==$GC{$file}, "GC percentage for $file";
   }
