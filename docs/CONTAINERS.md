@@ -33,13 +33,28 @@ Create your SneakerNet-formatted directory first.
 For instructions on how to create the SneakerNet-formatted directory, please see [SneakerNetInput.md](SneakerNetInput.md).
 Next, run `SneakerNetPlugins.pl` on the target directory.
 An example is below where file transfer and email is disabled.
+Commands are broken into multiple lines for readability.
+```bash
+# Set up a SneakerNet style directory using the example data
+singularity exec -B $(pwd):/data sneakernet.simg \
+SneakerNet.roRun.pl /SneakerNet-*/t/M00123-18-001-test -o /data/singularity-test
 
-    export MISEQ=my/miseq/run/dir
-    export INDIR=my/run/dir
-    
-    # this assumes $MISEQ and $INDIR are in your $PWD
-    singularity exec -B $PWD:/data sneakernet.simg SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-    singularity exec -B $PWD:/data sneakernet.simg SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+# Run SneakerNet on the example data
+singularity exec -B $(pwd):/data sneakernet.simg \
+SneakerNetPlugins.pl --numcpus 8 --no email --no transfer --no save /data/singularity-test
+
+#####################################
+
+# Run SneakerNet on your own data (typically a MiSeq run directory)
+
+# this assumes INDIR and OUTDIR are in your $PWD
+export INDIR=my-input-miseq-run-dir/
+export OUTDIR=my-output-dir/
+
+# Set up a SneakerNet style directory using your own data
+TODO - test and add commands for this
+
+```
 
 ## Docker
 
