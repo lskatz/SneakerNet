@@ -6,7 +6,7 @@ A pipeline for processing reads from a sequencing run. Currently supports Illumi
 but it can be expanded to other platforms.
 
     # Run SneakerNet on the example data
-    SneakerNetPlugins.pl --numcpus 4 t/data/M00123-18-001
+    SneakerNetPlugins.pl --numcpus 4 t/M00123-18-001-test
 
 <p align='center'>
   <img src='./docs/images/overview.png' alt='SneakerNet workflow' width='400' />
@@ -15,6 +15,11 @@ but it can be expanded to other platforms.
 ## Installation
 
 See [docs/INSTALL.md](docs/INSTALL.md)
+
+### Container installation
+
+SneakerNet has been containerized and is at [dockerhub](https://hub.docker.com/repository/docker/lskatz/sneakernet).
+For more information, please see our [containers documentation](docs/CONTAINERS.md).
 
 ## Workflow
 
