@@ -1,6 +1,15 @@
 # Containers
 
-We have containerized SneakerNet into a docker image that is publicly available on [dockerhub](https://hub.docker.com/repository/docker/lskatz/sneakernet).
+We have containerized SneakerNet into a docker image that is publicly available on [dockerhub](https://hub.docker.com/r/lskatz/sneakernet).
+
+## TOC
+- [Requirements](#requirements)
+- [Singularity](#singularity)
+  * [Singularity image installation](#singularity-image-installation)
+  * [Running SneakerNet using Singularity](#running-sneakernet-using-singularity)
+- [Docker](#docker)
+  * [Docker image installation](#docker-image-installation)
+  * [Running SneakerNet using Docker](#running-sneakernet-using-docker)
 
 ## Requirements
 Docker, Singularity,  or another Docker-compatible container software must be installed e.g. shifter (untested)
@@ -52,8 +61,12 @@ export INDIR=my-input-miseq-run-dir/
 export OUTDIR=my-output-dir/
 
 # Set up a SneakerNet style directory using your own data
-TODO - test and add commands for this
+singularity exec -B $(pwd):/data sneakernet.simg \
+SneakerNet.roRun.pl /data/$INDIR -o /data/$OUTDIR
 
+# Run SneakerNet on your own data
+singularity exec -B $(pwd):/data sneakernet.simg \
+SneakerNetPlugins.pl --numcpus 8 --no email --no transfer --no save /data/$OUTDIR
 ```
 
 ## Docker
