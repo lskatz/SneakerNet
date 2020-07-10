@@ -45,13 +45,11 @@ An example is below where file transfer and email is disabled.
 
 ### Docker image installation
 
-Docker CE must first be installed onto your system. Check that it is installed by running:
+Docker CE must first be installed onto your computer. Check that it is installed by running:
 ```bash
 docker info
 ```
 If it is not installed, visit: [https://docs.docker.com/install/](https://docs.docker.com/install/) and follow the install instructions according to your operating system.
-
-For Ubuntu users, please see concise install instructions here: [https://github.com/StaPH-B/scripts/blob/master/image-information.md#docker-ce](https://github.com/StaPH-B/scripts/blob/master/image-information.md#docker-ce)
 
 Download the docker image using the `latest` docker image tag
 ```bash
@@ -60,17 +58,35 @@ docker pull lskatz/sneakernet:latest
 
 ### Running SneakerNet using Docker
 
-Run the container, using the same example as above:
+Commands broken into multiple lines for readability.
 ```bash
-# this assumes that your miseq run directory, and desired SneakerNet input directory are in your PWD.
-# you will need to adjust PATHs depending on where your data is located
-export MISEQ=my/miseq/run/dir
-export INDIR=my/sneakernet/run/dir
+# Docker run options explanation:
+# docker run -v option will mount your PWD into the /data directory inside the container
+# docker run -u option preserves your user/group when executing commands in the container
+# docker run --rm option will remove/delete the container after it exits 
 
-# -v flag will mount your PWD into the /data directory inside the container
-# -u flag preserves your user/group when executing commands in the container
-# --rm flag will remove/delete the container after it exits 
-# make sure output files are written to /data so you don't lose them after the container exits!
-docker run --rm -v $PWD:/data -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-docker run --rm -v $PWD:/data -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+# Set up a SneakerNet style directory using the example data
+# Make sure output files are written to /data so you don't lose them after the container exits!
+docker run --rm -u $(id -u):$(id -g) -v $(pwd):/data lskatz/sneakernet:latest \
+SneakerNet.roRun.pl /SneakerNet-*/t/M00123-18-001-test -o /data/test
+
+# Run SneakerNet on example data
+docker run --rm -u $(id -u):$(id -g) -v $(pwd):/data lskatz/sneakernet:latest \
+SneakerNetPlugins.pl --numcpus 8 --no email --no transfer --no save /data/test
+
+#####################################
+
+# Run SneakerNet on your own data (typically a MiSeq run directory)
+
+# this assumes INDIR and OUTDIR are in your $PWD
+export INDIR=my-input-miseq-run-dir/
+export OUTDIR=my-output-dir/
+
+# Set up a SneakerNet style directory using your own data
+docker run --rm -u $(id -u):$(id -g) -v $(pwd):/data lskatz/sneakernet:latest \
+SneakerNet.roRun.pl /data/$INDIR -o /data/$OUTDIR
+
+# Run SneakerNet on your own data
+docker run --rm -u $(id -u):$(id -g) -v $(pwd):/data lskatz/sneakernet:latest \
+SneakerNetPlugins.pl --numcpus 8 --no email --no transfer --no save /data/$OUTDIR
 ```
