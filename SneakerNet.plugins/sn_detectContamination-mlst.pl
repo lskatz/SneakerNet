@@ -8,13 +8,14 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
+use File::Which qw/which/;
 use FindBin;
 use Bio::SeqIO;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION= "Contamination detection by Eshaw Vidyaprakash and Lee Katz.  Uses ColorID by Henk den Bakker.";
 
 local $0=fileparse $0;
@@ -39,8 +40,8 @@ sub main{
 
   # If the mlstfasta is not given, try to find it
   if(! $$settings{mlstfasta} ){
-    my $mlstExec = `which mlst 2>/dev/null`;
-    if($?){
+    my $mlstExec = which("mlst");
+    if(!$mlstExec){
       die "ERROR: need --mlstfasta or mlst the executable in your path";
     }
     my $mlstBaseDir = dirname($mlstExec)."/..";
@@ -61,8 +62,8 @@ sub main{
 
   # If the report doesn't exist, then run the workflow
   if( (!-e $finalReport || !-s $finalReport) || $$settings{force} ){
-    system("which colorid >& /dev/null");
-    if($?){
+    my $coloridExec = which("colorid");
+    if(!$coloridExec){
       die "ERROR: could not find colorid in your PATH";
     }
 
