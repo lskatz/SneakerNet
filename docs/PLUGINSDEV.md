@@ -7,9 +7,7 @@ parameters.
 
 # EXAMPLES
 
-Two plugin scripts have been provided in the plugins directory.
-`sn_helloWorld.pl` is coded in Perl, and 
-`sn_helloWorld.py` is coded in Python.
+Please see below for language specific tips for Hello World examples.
 
 # How to make a plugin
 
