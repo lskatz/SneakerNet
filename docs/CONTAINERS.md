@@ -2,6 +2,10 @@
 
 We have containerized SneakerNet into a docker image that is publicly available on [dockerhub](https://hub.docker.com/repository/docker/lskatz/sneakernet).
 
+Some test data can be found in this repository in
+t/M00123-18-001-test/
+and is generally what the variable `INDIR` would hold in this document.
+
 ## Requirements
 Docker, Singularity,  or another Docker-compatible container software must be installed e.g. shifter (untested)
 
