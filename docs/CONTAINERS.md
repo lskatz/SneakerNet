@@ -41,7 +41,7 @@ Navigate into a directory where you would like your Singularity image to be stor
 Build the image with `singularity build`.
 
     cd your/containers/directory/
-    singularity build sneakernet.simg docker://lskatz/sneakernet:latest
+    singularity build sneakernet.sif docker://lskatz/sneakernet:latest
 
 ### Running SneakerNet using Singularity
 
@@ -59,8 +59,8 @@ An example is below, where file transfer and email is disabled.
     [[ -e "$KRAKEN_DEFAULT_DB" ]] || echo "ERROR: please set KRAKEN_DEFAULT_DB"
     
     # this assumes $MISEQ and $INDIR are in your $PWD
-    singularity exec -B $PWD:/data sneakernet.simg SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-    singularity exec -B $PWD:/data -B $KRAKEN_DEFAULT_DB:/kraken-database sneakernet.simg SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+    singularity exec -B $PWD:/data sneakernet.sif SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
+    singularity exec -B $PWD:/data -B $KRAKEN_DEFAULT_DB:/kraken-database sneakernet.sif SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 
 ## Docker
 
