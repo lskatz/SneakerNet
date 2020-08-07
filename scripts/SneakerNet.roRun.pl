@@ -165,6 +165,7 @@ sub bcl2fastq{
     # well with bcl2fastq
     $line =~ s/^\s+|\s+$//g;
     $line =~ s/\357\273\277//g; # "BOM" character
+    #$line =~ s/\377\376//g;     # Some other character that shouldn't be there?
     #$line =~ s/^[^S]*Sample_ID/Sample_ID/i; # sledgehammer approach
     print $fhOut $line."\n";
   }
@@ -178,6 +179,8 @@ sub bcl2fastq{
 
   # Run base calling with bcl2fastq
   command("bcl2fastq --sample-sheet $sampleSheet --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --barcode-mismatches 1 --ignore-missing-bcls >&2");
+
+  #logmsg "DEBUG"; system("cp -rv $fastqdir ./bcl2fastq.out.tmp");
 
   my @fastq=glob("$$settings{tempdir}/bcl2fastq/*.fastq.gz");
   return @fastq;
