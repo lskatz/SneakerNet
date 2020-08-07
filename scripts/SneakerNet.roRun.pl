@@ -18,6 +18,8 @@ use SneakerNet qw/readConfig command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
+our $VERSION = "2.1";
+
 local $0=fileparse $0;
 
 exit(main());
@@ -123,7 +125,7 @@ sub makeSneakernetDir{
     @fastq = glob("$dir/*.fastq.gz $dir/*/*.fastq.gz");
     if(!@fastq){
       logmsg "WARNING: no fastq files were found; attempting bcl2fastq";
-      @fastq=bcl2fastq($dir,$settings);
+      @fastq=bcl2fastq($dir, $sampleSheet, $settings);
       if(!@fastq){
         die "ERROR: could not find any fastq files in $dir";
       }
@@ -149,12 +151,33 @@ sub makeSneakernetDir{
 }
 
 sub bcl2fastq{
-  my($dir,$settings)=@_;
+  my($dir,$sampleSheetSrc,$settings)=@_;
   my $fastqdir="$$settings{tempdir}/bcl2fastq";
   mkdir($fastqdir);
 
-  #command("bcl2fastq --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --demultiplexing-threads $$settings{numcpus} --barcode-mismatches 1 >&2");
-  command("bcl2fastq --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --barcode-mismatches 1 --ignore-missing-bcls >&2");
+  # Make a sanitized sample sheet
+  my $sampleSheet = "$$settings{tempdir}/SampleSheet.csv";
+  open(my $fhOut, ">", $sampleSheet) or die "ERROR: could not write to $sampleSheet: $!";
+  open(my $fh, $sampleSheetSrc) or die "ERROR: could not read $sampleSheetSrc: $!";
+  while(my $line = <$fh>){
+    # In case someone opened the SampleSheet in Excel,
+    # this removes some characters we know don't work
+    # well with bcl2fastq
+    $line =~ s/^\s+|\s+$//g;
+    $line =~ s/\357\273\277//g; # "BOM" character
+    #$line =~ s/^[^S]*Sample_ID/Sample_ID/i; # sledgehammer approach
+    print $fhOut $line."\n";
+  }
+  close $fhOut;
+  close $fh;
+
+  logmsg "In case the sample sheet fails, here is the first line of the file in hexdump in decimal";
+  system("hexdump -c '$sampleSheet' | head -n1");
+  logmsg "In case the sample sheet fails, here is the first line of the file in hexdump in hex characters";
+  system("hexdump    '$sampleSheet' | head -n1");
+
+  # Run base calling with bcl2fastq
+  command("bcl2fastq --sample-sheet $sampleSheet --input-dir $dir/Data/Intensities/BaseCalls --runfolder-dir $dir --output-dir $fastqdir --processing-threads $$settings{numcpus} --barcode-mismatches 1 --ignore-missing-bcls >&2");
 
   my @fastq=glob("$$settings{tempdir}/bcl2fastq/*.fastq.gz");
   return @fastq;
