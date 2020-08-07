@@ -6,7 +6,7 @@ A pipeline for processing reads from a sequencing run. Currently supports Illumi
 but it can be expanded to other platforms.
 
     # Run SneakerNet on the example data
-    SneakerNetPlugins.pl --numcpus 4 t/data/M00123-18-001
+    SneakerNetPlugins.pl --numcpus 4 t/M00123-18-001-test
 
 <p align='center'>
   <img src='./docs/images/overview.png' alt='SneakerNet workflow' width='400' />
@@ -16,10 +16,24 @@ but it can be expanded to other platforms.
 
 See [docs/INSTALL.md](docs/INSTALL.md)
 
-## Workflow
-
 _NOTE_: to ensure all dependencies are met, please follow
 the dependencies section under the [installation document](docs/INSTALL.md).
+
+### Container installation
+
+SneakerNet has been containerized and is at [dockerhub](https://hub.docker.com/repository/docker/lskatz/sneakernet).
+For more information, please see our [containers documentation](docs/CONTAINERS.md).
+
+Here is a summary of Docker commands, from the [containers documentation](docs/CONTAINERS.md).
+
+    # Pull image
+    docker pull lskatz/sneakernet:latest
+    # Import data directly from the MiSeq machine
+    docker run --rm -v $PWD:/data -v $KRAKEN_DEFAULT_DB:/kraken-database -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
+    # Run SneakerNet
+    docker run --rm -v $PWD:/data -v $KRAKEN_DEFAULT_DB:/kraken-database -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+
+## Workflow
 
 ### Creating a SneakerNet project directory
 
@@ -74,4 +88,8 @@ For more details, see the [plugins readme](docs/PLUGINS.md).
 You too can develop for SneakerNet!  For more information, 
 please look at the [readme for plugins](docs/PLUGINSDEV.md)
 and the [contributing](CONTRIBUTING.md) doc.
+
+## Further reading
+
+Please see the docs subfolder for more specific documentation.
 

@@ -22,6 +22,7 @@ if($?){
 plan tests => 2;
 
 my($logFh, $log) = tempfile("sn_passfail.XXXXXX", SUFFIX=>".log", CLEANUP=>1);
+END{unlink($log);} # make sure the log goes away at the end
 system("sn_passfail.pl --numcpus 1 --force $run >$log 2>&1");
 if($?){
   open(my $logFh2, $log) or die "ERROR: could not read $log: $!";
@@ -34,6 +35,7 @@ if($?){
 } else {
   pass("Running sn_passfail.pl");
 }
+close $logFh;
 
 my $passfail= "$run/SneakerNet/forEmail/passfail.tsv";
 
@@ -71,3 +73,4 @@ subtest "Expected passfail results from $passfail" => sub {
   }
   close $fh;
 };
+

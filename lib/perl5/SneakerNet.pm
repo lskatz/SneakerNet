@@ -31,7 +31,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.9.10';
+our $VERSION  = '0.11.0';
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -348,7 +348,19 @@ Arguments:
 sub readTsv{
   my($filename, $settings) = @_;
 
+  my ($package, $script, $line, $subroutine, $hasargs,$wantarray, $evaltext, $is_require, $hints, $bitmask, $hinthash) = caller(1);
+
   my %TSV;
+
+  # If the filename can't be read or if it has zero bytes, return empty hash
+  if(!-r $filename){
+    logmsg "$subroutine (line $line): WARNING: could not read from $filename";
+    return \%TSV;
+  }
+  if(!-s $filename){
+    logmsg "$subroutine (line $line): WARNING: trying to read from zero byte file $filename";
+    return \%TSV;
+  }
 
   my $keyIndex = $$settings{keyIndex} || 0;
   my $headers  = 1;

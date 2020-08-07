@@ -5,6 +5,22 @@ We have containerized SneakerNet into a docker image that is publicly available 
 ## Requirements
 Docker, Singularity,  or another Docker-compatible container software must be installed e.g. shifter (untested)
 
+## Database(s)
+
+As of SneakerNet version 0.11.0, the Kraken database must be installed separately.
+You will need to choose a directory to keep the database in.
+An example path is given in the instructions below, with `KRAKEN_DEFAULT_DB`.
+```bash
+KRAKEN_DEFAULT_DB=$HOME/db/kraken1/minikraken_20171013_4GB
+mkdir -pv $KRAKEN_DEFAULT_DB
+cd $KRAKEN_DEFAULT_DB
+cd ..
+wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+tar -zxvf minikraken_20171019_4GB.tgz
+rm -vf minikraken_20171019_4GB.tgz
+cd -
+```
+
 ## Singularity
 
 ### Singularity image installation
@@ -31,15 +47,20 @@ Build the image with `singularity build`.
 
 Create your SneakerNet-formatted directory first.
 For instructions on how to create the SneakerNet-formatted directory, please see [SneakerNetInput.md](SneakerNetInput.md).
+The variable `MISEQ` represents the original MiSeq directory,
+which is then converted into a new format in a new directory, `INDIR`.
 Next, run `SneakerNetPlugins.pl` on the target directory.
-An example is below where file transfer and email is disabled.
+An example is below, where file transfer and email is disabled.
 
     export MISEQ=my/miseq/run/dir
     export INDIR=my/run/dir
+
+    # This line is here to catch you if you missed the KRAKEN_DEFAULT_DB step
+    [[ -e "$KRAKEN_DEFAULT_DB" ]] || echo "ERROR: please set KRAKEN_DEFAULT_DB"
     
     # this assumes $MISEQ and $INDIR are in your $PWD
     singularity exec -B $PWD:/data sneakernet.simg SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-    singularity exec -B $PWD:/data sneakernet.simg SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+    singularity exec -B $PWD:/data -B $KRAKEN_DEFAULT_DB:/kraken-database sneakernet.simg SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 
 ## Docker
 
@@ -60,17 +81,25 @@ docker pull lskatz/sneakernet:latest
 
 ### Running SneakerNet using Docker
 
-Run the container, using the same example as above:
+As in the Singularity section,
+create your SneakerNet-formatted directory first.
+For instructions on how to create the SneakerNet-formatted directory, please see [SneakerNetInput.md](SneakerNetInput.md).
+The variable `MISEQ` represents the original MiSeq directory,
+which is then converted into a new format in a new directory, `INDIR`.
+Next, run `SneakerNetPlugins.pl` on the target directory.
+An example is below, where file transfer and email is disabled.
+
 ```bash
-# this assumes that your miseq run directory, and desired SneakerNet input directory are in your PWD.
-# you will need to adjust PATHs depending on where your data is located
 export MISEQ=my/miseq/run/dir
 export INDIR=my/sneakernet/run/dir
+
+# This line is here to catch you if you missed the KRAKEN_DEFAULT_DB step
+[[ -e "$KRAKEN_DEFAULT_DB" ]] || echo "ERROR: please set KRAKEN_DEFAULT_DB"
 
 # -v flag will mount your PWD into the /data directory inside the container
 # -u flag preserves your user/group when executing commands in the container
 # --rm flag will remove/delete the container after it exits 
 # make sure output files are written to /data so you don't lose them after the container exits!
-docker run --rm -v $PWD:/data -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-docker run --rm -v $PWD:/data -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+docker run --rm -v $PWD:/data -v $KRAKEN_DEFAULT_DB:/kraken-database -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
+docker run --rm -v $PWD:/data -v $KRAKEN_DEFAULT_DB:/kraken-database -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 ```

@@ -18,7 +18,8 @@ very rare but present.
 
 # Outputs
 
-Table with columns (`TODO`)
+Table with columns describing metrics of each reads file.
+Reads are not interleaved and are quantified independently of either R1 or R2.
 
 * File
 * avgReadLength

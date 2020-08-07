@@ -107,7 +107,7 @@ t/06_baseBalance.t
 t/07_sn_passfail.t
 t/08_transferFilesToRemoteComputers.t
 t/09_emailWhoever.t
-t/20_metagenomics.t
+t/40_metagenomics.t
 t/90_universalOptionsInPlugins.t
 t/91_pluginsDocumentation.t
 t/M00123-18-001-test/2010EL-1786_1.fastq.gz

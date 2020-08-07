@@ -19,4 +19,6 @@ Table with columns
 * sample
 * coverage - pass or fail
 * quality  - pass or fail
+* kraken - pass or fail 
 
+1 indicates failure; 0 indicates pass
