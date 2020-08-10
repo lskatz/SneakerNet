@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/@rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "4.0";
+our $VERSION = "5.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -153,12 +153,15 @@ sub identifyBadRuns{
       # If avgQual is missing, then -1 for unknown pass status
       $$fastqMetrics{avgQuality} //= '.';
       if($$fastqMetrics{avgQuality} eq '.'){
+        logmsg "$samplename/".basename($fastq)." qual is $$fastqMetrics{avgQuality}" if($$settings{debug});
         $is_passing_quality{$fastq} = -1;
       }
       # Set whether this fastq passes quality by the > comparison:
       # if yes, then bool=true, if less than, bool=false
       else {
         $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
+        $is_passing_quality{$fastq} += 0; # force to int/boolean
+        logmsg "$samplename/".basename($fastq)." passes quality?  $is_passing_quality{$fastq} (boolean)" if($$settings{debug});
       }
     }
 
@@ -180,12 +183,14 @@ sub identifyBadRuns{
     while(my($fastq,$passed) = each(%is_passing_quality)){
       # If
       if($passed == 0){
-        $fail{$samplename} = 1;
+        $fail{quality} = 1;
+        logmsg "  I will fail sample $samplename on quality because ".basename($fastq) if($$settings{debug});
         last;
       }
       # Likewise if a file's quality is unknown, then it's all unknown
       if($passed == -1){
         $fail{quality} = -1;
+        logmsg "  I will set quality failure as unknown for sample $samplename because ".basename($fastq) if($$settings{debug});
         last;
       }
     }
