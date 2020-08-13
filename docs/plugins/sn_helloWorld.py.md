@@ -27,6 +27,11 @@ The steps are:
     2. The central table for all plugins is at `dir + "/SneakerNet/properties.txt"`
     3. Two entries are placed into `properties.txt`: the version and the table path.
 
+## Epilogue
+
+1. `properties.txt` will be read by `sn_report.pl` which will email a formatted table in the plugin `emailWhoever.pl`.
+2. `helloworld.py.tsv` will be included in the email because it is in the folder `SneakerNet/forEmail`. All files in that folder will be attached to the email when `emailWhoever.pl` runs.
+
 # Outputs
 
 ## Table
