@@ -49,5 +49,5 @@ Table with columns
 * expectedGenomeLength
 * kmer21 - a quantifier for how much 21-mers are duplicated. A marker for overassembly.
 * GC
-
+* effectiveCoverage - the number of mapped base pairs against the assembly. Will be lower than the coverage noted in readMetrics.
 
