@@ -16,7 +16,7 @@ The steps are:
 
 1. Argument parsing with `argparse` to conform to the required flags and positional parameter of every plugin
 2. In `main()`, check on whether there are some options where we print something and exit: `--help`, `--version`, or `--check-dependencies`.  This is done in `setup(args)`.
-3. If we have no exited already, move onto `main(args)`
+3. If we have not exited already, move onto `main(args)`
 4. Make a temporary directory to avoid collision with other instances of this script. However, the user could have also supplied `--tempdir` and so the script has to accept that parameter if supplied.
 5. Make the required subfolders just in case they are not there: `dir/SneakerNet/forEmail`
 6. The example analysis
