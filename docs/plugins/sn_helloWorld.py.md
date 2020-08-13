@@ -20,12 +20,12 @@ The steps are:
 4. Make a temporary directory to avoid collision with other instances of this script. However, the user could have also supplied `--tempdir` and so the script has to accept that parameter if supplied.
 5. Make the required subfolders just in case they are not there: `dir/SneakerNet/forEmail`
 6. The example analysis
-  1. `samples = readWriteSamples(args.dir)`: rewrite `SampleSheet.csv` to `dir + "/SneakerNet/forEmail/helloworld.py.tsv"`
-  2. `readWriteFlags(args.dir, args)`: record all parameters to the output table at `dir + "/SneakerNet/forEmail/helloworld.py.tsv"`
+    1. `samples = readWriteSamples(args.dir)`: rewrite `SampleSheet.csv` to `dir + "/SneakerNet/forEmail/helloworld.py.tsv"`
+    2. `readWriteFlags(args.dir, args)`: record all parameters to the output table at `dir + "/SneakerNet/forEmail/helloworld.py.tsv"`
 7. Wrap up: write all properties to the central properties table. Because other plugins write to this, the plugin _appends_ and does not truncate.
-  1. `writeProperties(args.dir, samples)`
-  2. The central table for all plugins is at `dir + "/SneakerNet/properties.txt"`
-  3. Two entries are placed into `properties.txt`: the version and the table path.
+    1. `writeProperties(args.dir, samples)`
+    2. The central table for all plugins is at `dir + "/SneakerNet/properties.txt"`
+    3. Two entries are placed into `properties.txt`: the version and the table path.
 
 # Outputs
 
