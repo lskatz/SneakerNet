@@ -157,6 +157,13 @@ sub mlstColorId{
     system("colorid search -b $indexPrefix.bxi -q $mlstFasta -m -s > $coloridResults.tmp 2>$coloridDir/search.log");
     die "ERROR with colorid search. Here is the log:\n".`cat $coloridDir/search.log` if $?;
     mv("$coloridResults.tmp", $coloridResults) or die "ERROR: could not move $coloridResults.tmp => $coloridResults: $!";
+
+    # I had no idea I was taking up so much space with this log file
+    # but it compresses nicely
+    system("gzip $coloridDir/search.log");
+    if($?){
+      logmsg "WARNING: could not compress $coloridDir/search.log";
+    }
   }
 
   # Parse allele hits for each sample/locus
@@ -167,6 +174,7 @@ sub mlstColorId{
     chomp;
     my($schemeLocusAllele, $sample, $bp, $percentage) = split /\t/;
     my($scheme, $locus, $allele);
+    #logmsg "$scheme $locus $allele <== $_" if($$settings{debug});
     if($schemeLocusAllele =~ /(.+)\.(.+?)[_-](\d+)/){
       $scheme = $1;
       $locus  = $2;
@@ -182,7 +190,7 @@ sub mlstColorId{
 
   # Sanity check on whether there are any reference alleles
   if(!keys(%allele)){
-    die "ERROR: no reference alleles were found";
+    logmsg "ERROR: no reference alleles were found";
   }
 
   # Are there any loci on any samples with multiple alleles?
