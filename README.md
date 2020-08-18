@@ -28,9 +28,10 @@ Here is a summary of Docker commands, from the [containers documentation](docs/C
 
     # Pull image
     docker pull lskatz/sneakernet:latest
-    # Import data directly from the MiSeq machine
+    # Import data directly from the MiSeq machine, where $MISEQ is a raw run folder exported by the MiSeq machine
+    # and $INDIR is the newly created SneakerNet input folder
     docker run --rm -v $PWD:/data -v $KRAKEN_DEFAULT_DB:/kraken-database -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-    # Run SneakerNet
+    # Run SneakerNet on the $INDIR (SneakerNet formatted folder)
     docker run --rm -v $PWD:/data -v $KRAKEN_DEFAULT_DB:/kraken-database -u $(id -u):$(id -g) lskatz/sneakernet:latest SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 
 ## Workflow

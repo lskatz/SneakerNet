@@ -23,6 +23,12 @@
 
 ## Dependencies
 
+## Resources
+The minimum requirements are about 4G RAM, but 8G RAM is recommended.
+An average run with only 1 thread is about 200 minutes; however with 4 threads, the run time gets down to about 9 minutes.
+For more information: https://github.com/lskatz/SneakerNet/issues/42#issuecomment-672900992
+
+## Software
 There are few core dependencies. However, SneakerNet is
 based on plugins that have individual dependencies.
 Here is a list of dependencies across the board, although
@@ -34,7 +40,7 @@ To find the right dependencies for you, run the following
     SneakerNet.checkdeps.pl --list  # and find the workflow, e.g., 'default'
     SneakerNet.checkdeps.pl default # Check deps for all plugins for the workflow 'default'
 
-### Comprehensive list
+#### Comprehensive list
 
 This list was created using `SneakerNet.checkdeps.pl [iontorrent metagenomics cryptosporidium default]`
 on version 0.8.14.
@@ -43,7 +49,7 @@ Dependencies may or may not have changed since then but they can still be checke
 All workflows require perl v5.12 or higher, compiled with multithreading.
 This version of perl is already installed in most modern Linux operating systems.
 
-#### Default workflow
+##### Default workflow
 
 * blastn (BLAST+)
 * GNU utilities (`cp`, `cat`, ...)
@@ -58,14 +64,14 @@ This version of perl is already installed in most modern Linux operating systems
 * staramr
 * `zip`
 
-#### metagenomics
+##### metagenomics
 
 * Kraken1: http://ccb.jhu.edu/software/kraken/
 * Krona: https://github.com/marbl/Krona/
 * CG-Pipeline: https://github.com/lskatz/cg-pipeline (scripts only -- do not run `make`)
 * `zip`
 
-#### cryptosporidium
+##### cryptosporidium
 
 * blastn (BLAST+)
 * GNU utilities (`cp`, `cat`, ...)
@@ -78,7 +84,7 @@ This version of perl is already installed in most modern Linux operating systems
 * `countGP60repeats.pl`: currently in development in a private repo. To exclude, remove `sn_crypto_gp60.pl` from `config/plugins.conf` (already not included by default)
 * `zip`
 
-#### iontorrent
+##### iontorrent
 
 * Shovill
 * SPAdes
@@ -95,9 +101,9 @@ This version of perl is already installed in most modern Linux operating systems
 * staramr
 * `zip`
 
-#### Non-workflow
+##### Non-workflow
 
-##### SneakerNet.roRun.pl
+###### SneakerNet.roRun.pl
 
 * bcl2fastq
 
