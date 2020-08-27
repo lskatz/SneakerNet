@@ -35,6 +35,8 @@ then produces assembly and gene prediction metrics.
 
 # Outputs
 
+Assemblies are found in SneakerNet/assemblies/[samplename]/\*.fasta
+
 Table with columns
 
 * sample
