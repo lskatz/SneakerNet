@@ -46,6 +46,26 @@ Two major steps are described below for making a plugin.
 |`--citation`|     | Print a citation statement to give yourself credit. | 
 |`--check-dependencies`|     | check all executable dependencies. Print executable dependencies to stdout and version information to stderr. | 
 
+## Available inputs
+
+How do you specify where the input assemblies are?  Or where the kraken inputs are?
+After all, the only parameter is the input directory right?
+
+Never fear!  Here are some basic inputs that you have access to as a developer.
+The most important input is `samples.tsv`.
+Here are the most common inputs you might want to have access to:
+
+|What    | path from root input folder [^1] | Common source script or plugin [^2] | For more information |
+|--------|----------------------------------|-------------------------------------|----------------------|
+|Sample information | `samples.tsv`         | `SneakerNet.roRun.pl --createsamplesheet` or `sn_createSampleSheet.pl` | [SneakerNetInput.md](/docs/SneakerNetInput.md#samplestsv) under the samples.tsv section |
+|Assemblies and genbank files               | `SneakerNet/assemblies/[samplename]/` | [`assembleAll.pl`](/docs/plugins/assembleAll.pl.md) | |
+|Assembly and predicted gene metrics        | `SneakerNet/forEmail/assemblyMetrics.tsv` | [`assembleAll.pl`](/docs/plugins/assembleAll.pl.md) | |
+|Kraken output                              | `SneakerNet/kraken/[samplename]`    | [`sn_kraken.pl`](/master/docs/plugins/sn_kraken.pl.md)| |
+|read metrics | `SneakerNet/forEmail/readMetrics.tsv` | [`addReadMetrics.pl`](/master/docs/plugins/addReadMetrics.pl.md)|
+
+[^1] `[samplename]` is the name of the sample in `samples.tsv`.  
+[^2] It is possible that other sources would generate this information and so these are the most common sources.
+
 ## Activate the script as a plugin
 
 1. Place it in the SneakerNet.plugins folder
