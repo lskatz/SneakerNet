@@ -60,8 +60,8 @@ Here are the most common inputs you might want to have access to:
 |Sample information | `samples.tsv`         | `SneakerNet.roRun.pl --createsamplesheet` or `sn_createSampleSheet.pl` | [SneakerNetInput.md](/docs/SneakerNetInput.md#samplestsv) under the samples.tsv section |
 |Assemblies and genbank files               | `SneakerNet/assemblies/[samplename]/` | [`assembleAll.pl`](/docs/plugins/assembleAll.pl.md) | |
 |Assembly and predicted gene metrics        | `SneakerNet/forEmail/assemblyMetrics.tsv` | [`assembleAll.pl`](/docs/plugins/assembleAll.pl.md) | |
-|Kraken output                              | `SneakerNet/kraken/[samplename]`    | [`sn_kraken.pl`](/master/docs/plugins/sn_kraken.pl.md)| |
-|read metrics | `SneakerNet/forEmail/readMetrics.tsv` | [`addReadMetrics.pl`](/master/docs/plugins/addReadMetrics.pl.md)|
+|Kraken output                              | `SneakerNet/kraken/[samplename]`    | [`sn_kraken.pl`](/docs/plugins/sn_kraken.pl.md)| |
+|read metrics | `SneakerNet/forEmail/readMetrics.tsv` | [`addReadMetrics.pl`](/docs/plugins/addReadMetrics.pl.md)|
 
 [^1] `[samplename]` is the name of the sample in `samples.tsv`.  
 [^2] It is possible that other sources would generate this information and so these are the most common sources.
