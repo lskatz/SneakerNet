@@ -15,6 +15,9 @@ after all plugins have created their outputs.
 
 Workflows are defined in [plugins.conf](../config.bak/plugins.conf).
 
+To make your own custuom workflow, edit the file under `config/plugins.conf`.
+Plugins are run in the order specified for any given workflow.
+
 ## Default
 
 This workflow runs most plugins and assumes that you have some flavor
