@@ -16,7 +16,15 @@ after all plugins have created their outputs.
 Workflows are defined in [plugins.conf](../config.bak/plugins.conf).
 
 To make your own custuom workflow, edit the file under `config/plugins.conf`.
-Plugins are run in the order specified for any given workflow.
+Plugins are run in the order specified for any given workflow.  For example:
+
+    default = pluginA.pl, pluginB.pl, pluginZ.pl
+
+In this example, in the default workflow, 
+if `pluginB` has a dependency on `pluginZ`, you might want to change the order
+so that `pluginB` runs last.
+
+    default = pluginA.pl, pluginZ.pl, pluginB.pl
 
 ## Default
 
