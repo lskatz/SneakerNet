@@ -41,9 +41,9 @@ Here is a summary of Docker commands, from the [containers documentation](docs/C
 _For more information on a SneakerNet-style folder, see [docs/SneakerNetInput.md](docs/SneakerNetInput.md)_
 
 SneakerNet requires a project directory that is in a certain format already.
-To create the project, you can use `SneakerNet.ro.pl`.  For example,
+To create the project, you can use `SneakerNet.roRun.pl`.  For example,
 
-    SneakerNet.ro.pl --createsamplesheet -o M1234-18-001-test miseq/working/directory
+    SneakerNet.roRun.pl --createsamplesheet -o M1234-18-001-test miseq/working/directory
 
 M01234-19-01-test is a project folder name, where it is dash-delimited and contains
 machine name, year, ordinal, and optionally a name.
