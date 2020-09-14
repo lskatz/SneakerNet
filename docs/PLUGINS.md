@@ -79,6 +79,8 @@ The pseudo-workflow `all` is an alphabetical listing of all available plugins.
         metagenomics
         sn_parseSampleSheet.pl, addReadMetrics.pl, sn_kraken.pl, sn_kraken-metagenomics.pl, sn_passfail.pl, sn_report.pl
 
+![Default workflow](/docs/images/defaultworkflow.png)
+
 # Command line
 
 Each plugin can accept the following options. The first positional
