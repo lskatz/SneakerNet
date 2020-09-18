@@ -87,7 +87,7 @@ sub main{
 
       my $command="$RealBin/../SneakerNet.plugins/$e . --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
-      $command.=" --tempdir $$settings{tempdir}/$e" if($$settings{tempdir});
+      $command.=" --tempdir $$settings{tempdir}" if($$settings{tempdir});
       #print "$command\n\n"; next;
       #command($command); next;
 
