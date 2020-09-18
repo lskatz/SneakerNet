@@ -30,6 +30,7 @@ FROM staphb/salmid:0.1.23 AS salmid
 FROM mgibio/samtools:1.9 AS samtools
 FROM flowcraft/krona:2.7-1 AS krona
 FROM ummidock/chewbbaca:2.1.0-1 AS chewbbaca
+FROM ncbi/blast:2.7.1 AS blast
 
 # EDIT: this bioperl container uses perl/5.18 which doesn't match our perl v5.26.1
 # Bring in libraries
@@ -55,8 +56,11 @@ COPY --from=staramr   /usr/local/bin       /usr/local/bin/
 COPY --from=salmid    /usr/local/bin       /usr/local/bin/
 COPY --from=samtools  /opt/samtools/bin/samtools            /usr/local/bin/
 COPY --from=krona     /NGStools/KronaTools-2.7              /NGStools/KronaTools-2.7
-COPY --from=chewbbaca /NGStools            /NGStools
+COPY --from=chewbbaca /NGStools/clustalw-2.1-linux-x86_64-libcppstatic  /NGStools
+COPY --from=chewbbaca /NGStools/Prodigal                                /NGStools
+COPY --from=chewbbaca /NGStools/prodigal_training_files                 /NGStools
 COPY --from=chewbbaca /usr/local/bin/*     /usr/local/bin/
+COPY --from=blast     /blast                /blast    
 #COPY --from=rust      /usr/local/rustup    /usr/local/rustup
 #COPY --from=rust      /usr/local/cargo     /usr/local/cargo
 
@@ -64,6 +68,7 @@ COPY --from=chewbbaca /usr/local/bin/*     /usr/local/bin/
 COPY --from=staramr   /usr/local/lib/python3.6             /usr/local/lib/python3.6/
 # Taking a risk using python3.5 libraries in a python3.6 folder
 COPY --from=salmid    /usr/local/lib/python3.5             /usr/local/lib/python3.6/
+COPY --from=chewbbaca /usr/local/lib/python3.5             /usr/local/lib/python3.6/
 #COPY --from=bioperl   /usr/lib/            /usr/lib
 #COPY --from=bioperl   /usr/local/lib/      /usr/local/lib
 #COPY --from=bioperl   /usr/share           /usr/share
@@ -184,7 +189,6 @@ ENV PATH="${PATH}:\
 /mlst-2.19.0/bin/:\
 /NGStools/KronaTools-2.7/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
 /NGStools/chewBBACA:/NGStools/chewBBACA/utils:/NGStools/prodigal_training_files:/NGStools/clustalw-2.1-linux-x86_64-libcppstatic:\
-/NGStools/ncbi-blast-2.9.0+/bin:\
 /usr/local/bin/Trimmomatic-0.38:\
 /colorid:\
 /pilon:\
@@ -192,9 +196,11 @@ ENV PATH="${PATH}:\
 /usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
 /shovill/shovill-1.1.0/bin:\
 /SPAdes-3.14.1-Linux/bin:\
+/blast/bin:\
 "\
  LC_ALL=C \
- RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0
+ RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
+ BLASTDB=/blast/blastdb
 
 # Pip installations after I set the path
 # SalmID 0.1.23
@@ -214,7 +220,6 @@ RUN mkdir colorid && \
   wget --no-check-certificate https://github.com/hcdenbakker/colorid/releases/download/v0.1.4.3/colorid_Linux64v0.1.4.3 && \
   chmod +x colorid_Linux64v0.1.4.3 && \
   mv colorid_Linux64v0.1.4.3 /usr/local/bin/colorid
-
 
 
 WORKDIR /data
