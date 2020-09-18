@@ -9,7 +9,7 @@ install:
 # deploying to dockerhub
 deploy:
   on:
-    branch: master
+    branch: $TRAVIS_BRANCH
   provider: script
   script:
     - docker build -t $CI_PROJECT_NAME:$TRAVIS_REPO_SLUG .
