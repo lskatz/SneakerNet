@@ -15,7 +15,7 @@ use Bio::SeqIO;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.3";
+our $VERSION = "1.3.1";
 our $CITATION= "Contamination detection by Eshaw Vidyaprakash and Lee Katz.  Uses ColorID by Henk den Bakker.";
 
 local $0=fileparse $0;
@@ -117,6 +117,14 @@ sub mlstColorId{
   open(my $fh, ">", $peTxt) or die "ERROR writing to $peTxt: $!";
   while(my($sample,$info)=each(%$sampleInfo)){
     $sampleCounter++;
+
+    # Double check that the fastq files are there
+    if(!$$info{fastq} || ref($$info{fastq}) ne 'ARRAY' || @{$$info{fastq}} < 2){
+      logmsg "WARNING: There is an issue with fastq files for $sample in $dir/samples.tsv";
+      logmsg "  Therefore I am skipping $sample";
+      next;
+    }
+
     # for f in *.fastq.gz; do echo ${f%.fastq.gz}$'\t'$f >> PE.txt; done
     print $fh join("\t", $sample, @{ $$info{fastq} });
     # Only print a newline if there is another record coming up,
