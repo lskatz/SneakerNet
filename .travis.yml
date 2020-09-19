@@ -24,7 +24,7 @@ after_success:
   - docker push $CI_PROJECT_NAME:$TRAVIS_COMMIT
   - docker push $CI_PROJECT_NAME:latest 
 
-https://stackoverflow.com/a/58505735
+#https://stackoverflow.com/a/58505735
 cache:
   directories:
     - docker_images
