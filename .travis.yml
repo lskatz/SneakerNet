@@ -11,8 +11,12 @@ deploy:
   on:
     branch: $TRAVIS_BRANCH
   provider: script
-  script:
+  before_script:
     - CI_PROJECT_NAME=SneakerNet
+    - echo "$CI_PROJECT_NAME"
+    - echo ${DOCKER_USERNAME:0:2}
+    - echo ${DOCKER_PASSWORD:0:2}
+  script:
 #   - [[ -z "$DOCKER_USERNAME" ]] && echo "DOCKER_USERNAME not set"
 #   - [[ -z "$DOCKER_PASSWORD" ]] && echo "DOCKER_PASSWORD not set"
 #   - [[ -z "$CI_PROJECT_NAME" ]] && echo "CI_PROJECT_NAME not set"
