@@ -7,10 +7,12 @@ install:
   - echo "Just testing docker on this branch"
 
 after_success:
+  - docker build -t $CI_PROJECT_NAME:$TRAVIS_COMMIT .
   - CI_PROJECT_NAME=sneakernet
   - SLUG=$(echo "$TRAVIS_REPO_SLUG" | tr '[:upper:]' '[:lower:]')
   - echo "$CI_PROJECT_NAME"
-  - docker build -t $CI_PROJECT_NAME:$TRAVIS_COMMIT .
+  - echo $SLUG
+  - echo $REPOSITORY_URL
   - docker tag ${CI_PROJECT_NAME}:${SLUG} $REPOSITORY_URL/$CI_PROJECT_NAME:$TRAVIS_COMMIT
   - docker tag ${CI_PROJECT_NAME}:${SLUG} $REPOSITORY_URL/$CI_PROJECT_NAME:latest
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin 
