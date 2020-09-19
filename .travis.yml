@@ -18,7 +18,7 @@ after_success:
 # e.g., docker tag httpd:test fedora/httpd:version1.0.test
   -      docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:$TRAVIS_COMMIT
   -      docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:latest
-  - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin 
+  - echo "$DOCKER_PASSWORD" | docker login --username "lskatz" --password-stdin 
   - docker push $CI_PROJECT_NAME:$TRAVIS_COMMIT
   - docker push $CI_PROJECT_NAME:latest 
 
