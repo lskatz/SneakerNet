@@ -1,0 +1,13 @@
+# https://docs.github.com/en/actions/reference/encrypted-secrets#using-encrypted-secrets-in-a-workflow
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+name: travis-docker
+on: 
+  push:
+    branches:
+      - docker-multistage
+steps:
+  - name: travis-docker-credentials
+    env:
+      DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
+      DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
+      
