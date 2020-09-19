@@ -30,6 +30,7 @@ before_install:
 before_cache:
   - mkdir -p $HOME/docker
   - docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}' > $HOME/dockerImages.stdout
+  - cat $HOME/dockerImages.stdout
   - xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz' < $HOME/dockerImages.stdout
 
 # deploying to dockerhub
