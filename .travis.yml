@@ -26,11 +26,10 @@ after_success:
 
 #https://stackoverflow.com/a/58505735
 before_install:
-  - rm -rvf $HOME/dockerImages.stdout $HOME/docker/*
+#  - rm -rvf $HOME/dockerImages.stdout $HOME/docker/*
   - for file in $HOME/docker/*.tar.gz; do if [ ! -e "$file" ]; then continue; fi; echo "loading $file"; zcat "$file" | docker load; done
 before_cache:
   - mkdir -p $HOME/docker
-  - rm -vf $HOME/dockerImages.stdout
   - docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}' > $HOME/dockerImages.stdout
   - cat $HOME/dockerImages.stdout
   - if [[ -s $HOME/dockerImages.stdout ]]; then xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz' < $HOME/dockerImages.stdout; fi
