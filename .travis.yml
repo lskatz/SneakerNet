@@ -7,8 +7,8 @@ install:
   - echo "Just testing docker on this branch"
 
 after_success:
-  - docker build -t $CI_PROJECT_NAME:$TRAVIS_COMMIT .
   - CI_PROJECT_NAME=sneakernet
+  - docker build -t $CI_PROJECT_NAME:$TRAVIS_COMMIT .
   - SLUG=$(echo "$TRAVIS_REPO_SLUG" | tr '[:upper:]' '[:lower:]')
   - echo "$CI_PROJECT_NAME"
   - echo $SLUG
