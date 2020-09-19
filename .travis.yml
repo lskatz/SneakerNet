@@ -26,8 +26,8 @@ after_success:
 
 #https://stackoverflow.com/a/58505735
 before_install:
-  - rm -rvf $HOME/dockerImages.stdout $HOME/docker/*
-  - for file in $HOME/docker/*.tar.gz; do echo "loading $file"; zcat "$file" | docker load; done
+#  - rm -rvf $HOME/dockerImages.stdout $HOME/docker/*
+  - for file in $HOME/docker/*.tar.gz; do if [ ! -e "$file" ]; then continue; fi; echo "loading $file"; zcat "$file" | docker load; done
 before_cache:
   - mkdir -p $HOME/docker
   - rm -vf $HOME/dockerImages.stdout
