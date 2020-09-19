@@ -29,7 +29,7 @@ FROM staphb/salmid:0.1.23 AS salmid
 # Other sources
 FROM mgibio/samtools:1.9 AS samtools
 FROM flowcraft/krona:2.7-1 AS krona
-FROM ummidock/chewbbaca:2.1.0-1 AS chewbbaca
+FROM ummidock/chewbbaca_py3 AS chewbbaca
 FROM ncbi/blast:2.7.1 AS blast
 
 # EDIT: this bioperl container uses perl/5.18 which doesn't match our perl v5.26.1
