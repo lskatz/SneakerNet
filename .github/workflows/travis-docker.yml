@@ -18,6 +18,8 @@ jobs:
       DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
     runs-on: ubuntu-18.04
     steps:
-      - id: step1
-        run: echo ${DOCKER_USERNAME:2:4}
+      - id:  test-not-so-secret-variable
+        run: echo "logging in with ${DOCKER_USERNAME:0:6}"
+      - id:  docker-login
+        run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
         
