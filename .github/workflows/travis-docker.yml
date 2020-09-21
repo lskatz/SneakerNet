@@ -13,15 +13,17 @@ on:
 jobs:
   docker_deploy:
     
-    #    env:      
-    #      DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
-    #      DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
+    env:      
+      DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
+      DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
+      CI_PROJECT_NAME: sneakernet
     runs-on: ubuntu-18.04
     steps:
       - id:  test-not-so-secret-variable
-        run: echo "logging in with ${DOCKER_USERNAME:0:6}"
-      - id:  docker-login-ssh-key
-        run: docker login --username "$DOCKER_USERNAME"
-      #- id:  docker-login
-      #  run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
-        
+        run: echo "logging in with ${DOCKER_USERNAME:0:6}"; echo "$CI_PROJECT_NAME:$GITHUB_SHA"
+      #- id:  docker-login-ssh-key
+      #  run: docker login --username "$DOCKER_USERNAME"
+      - id:  docker-login
+        run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
+      - id:  docker-build
+        run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA .
