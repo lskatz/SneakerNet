@@ -17,6 +17,7 @@ jobs:
       -uses: actions/checkout@v2
       with:
         fetch-depth: 1
+        ref: docker-multistage
       - id:  test-not-so-secret-variable
         run: echo "logging in with ${DOCKER_USERNAME:0:6}"
       - id:  test-docker-tag
