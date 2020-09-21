@@ -20,9 +20,9 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - id:  test-not-so-secret-variable
-        run: 
-          - echo "logging in with ${DOCKER_USERNAME:0:6}"; 
-          - echo "$CI_PROJECT_NAME:$GITHUB_SHA"
+        run: echo "logging in with ${DOCKER_USERNAME:0:6}"
+      - id:  test docker tag
+        run: echo "$CI_PROJECT_NAME:$GITHUB_SHA"
       #- id:  docker-login-ssh-key
       #  run: docker login --username "$DOCKER_USERNAME"
       - id:  docker-login
