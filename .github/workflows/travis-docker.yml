@@ -5,9 +5,19 @@ on:
   push:
     branches:
       - docker-multistage
-steps:
-  - name: travis-docker-credentials
-    env:
+#steps:
+#  - name: travis-docker-credentials
+#    env:
+#      DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
+#      DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
+jobs:
+  docker_deploy:
+    
+    env:      
       DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
       DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
-      
+    runs-on: ubuntu-18.04
+    steps:
+      - id: step1
+        run: echo $DOCKER_USERNAME
+        
