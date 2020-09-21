@@ -23,12 +23,12 @@ jobs:
       - id:  test-docker-tag
         run: echo "$CI_PROJECT_NAME:$GITHUB_SHA"
       - id:  test-other-vars
-        run: echo "HOME:$HOME PWD:$PWD"
+        run: echo "HOME:$HOME PWD:$PWD GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
       - id:  test-github-root
         run: ls -R $GITHUB_WORKSPACE
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
       - id:  docker-build
-        run: echo $GITHUB_WORKSPACE && cd $GITHUB_WORKSPACE && ls -lhA && docker build -t $CI_PROJECT_NAME:$GITHUB_SHA .
+        run: cd $GITHUB_WORKSPACE && ls -lhA && docker build -t $CI_PROJECT_NAME:$GITHUB_SHA .
         working-directory: $GITHUB_WORKSPACE
 
