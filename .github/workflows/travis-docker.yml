@@ -6,7 +6,7 @@ on:
     branches:
       - docker-multistage
 jobs:
-  docker_deploy:
+  docker_deploy_latest:
     
     env:      
       DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
@@ -31,7 +31,7 @@ jobs:
       - id:  docker-build
         run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
       - id:  docker-tag-latest
-        run:  docker tag $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA
+        run:  docker tag $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_REPOSITORY:$GITHUB_SHA
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       - id:  docker-push-latest
