@@ -26,7 +26,8 @@ jobs:
       - id:  test-other-vars
         run: echo "HOME:$HOME PWD:$PWD"
       - id:  test-other-env
-        run: ls
+        run: ls -R
+        working-directory: $HOME
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
       - id:  docker-build
