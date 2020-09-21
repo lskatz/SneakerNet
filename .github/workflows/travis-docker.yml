@@ -27,6 +27,8 @@ jobs:
         run: echo "HOME:$HOME PWD:$PWD"
       - id:  test-other-env
         run: ls -R $HOME
+      - id:  test-github-root
+        run: ls -R /github
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
       - id:  docker-build
