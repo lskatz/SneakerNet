@@ -28,7 +28,9 @@ jobs:
         run: ls -R $GITHUB_WORKSPACE
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
+      - id:  see-if-git-dir-is-good
+        run: ls -lha $GITHUB_WORKSPACE
       - id:  docker-build
-        run: cd $GITHUB_WORKSPACE && ls -lhA && docker build -t $CI_PROJECT_NAME:$GITHUB_SHA .
+        run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA .
         working-directory: $GITHUB_WORKSPACE
 
