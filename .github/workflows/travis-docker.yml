@@ -31,6 +31,6 @@ jobs:
       - id:  see-if-git-dir-is-good
         run: ls -lha $GITHUB_WORKSPACE
       - id:  docker-build
-        run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA .
-        working-directory: $GITHUB_WORKSPACE
+        run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
+        #working-directory: $GITHUB_WORKSPACE
 
