@@ -5,11 +5,6 @@ on:
   push:
     branches:
       - docker-multistage
-#steps:
-#  - name: travis-docker-credentials
-#    env:
-#      DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
-#      DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
 jobs:
   docker_deploy:
     
@@ -19,6 +14,9 @@ jobs:
       CI_PROJECT_NAME: sneakernet
     runs-on: ubuntu-18.04
     steps:
+      -uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
       - id:  test-not-so-secret-variable
         run: echo "logging in with ${DOCKER_USERNAME:0:6}"
       - id:  test-docker-tag
@@ -28,7 +26,7 @@ jobs:
       - id:  test-other-env
         run: ls -R $HOME
       - id:  test-github-root
-        run: ls -R /github
+        run: ls -R $GITHUB_WORKSPACE
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin; echo $?
       - id:  docker-build
