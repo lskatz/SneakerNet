@@ -19,5 +19,5 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - id: step1
-        run: echo $DOCKER_USERNAME
+        run: echo ${DOCKER_USERNAME:2:4}
         
