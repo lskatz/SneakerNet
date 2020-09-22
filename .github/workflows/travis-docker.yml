@@ -38,7 +38,7 @@ jobs:
           echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
           echo "GITHUB_ACTOR/CI_PROJECT_NAME:GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
           echo "REMOTE_TAG $REMOTE_TAG"
-          echo ${{ toJson(needs.init) }}
+          echo ${{ toJson(needs.init) }} 
 
   docker_build:
     runs-on: ubuntu-18.04
