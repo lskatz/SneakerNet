@@ -18,10 +18,6 @@ jobs:
     outputs:
       remote-tag: ${{ steps.set-remote-tag.outputs.key }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: docker-multistage
-          fetch-depth: 1
       - id:  lowercase-slug
         run: SLUG=$(echo $GITHUB_REPOSITORY:$GITHUB_SHA | tr '[:upper:]' '[:lower:]')
       - id:  set-remote-tag
@@ -43,15 +39,20 @@ jobs:
           echo "GITHUB_ACTOR/CI_PROJECT_NAME:GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
           echo "REMOTE_TAG $REMOTE_TAG"
           echo ${{ toJson(needs.init.outputs) }}
-      - id:  ls-all-the-things
-        run: |
-          ls -R $GITHUB_WORKSPACE
-          ls -lha $GITHUB_WORKSPACE
+          echo ${{ fromJson(needs.init.outputs) }}
 
   docker_build:
     runs-on: ubuntu-18.04
     needs: init
     steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: docker-multistage
+          fetch-depth: 1
+      - id:  ls-all-the-things
+        run: |
+          ls -R $GITHUB_WORKSPACE
+          ls -lha $GITHUB_WORKSPACE
       - id:  docker-build
         run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
 
