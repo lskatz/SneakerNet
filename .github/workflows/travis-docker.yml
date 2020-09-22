@@ -12,24 +12,37 @@ env:
   CI_PROJECT_NAME: sneakernet
 
 jobs:
-  docker_build:
-    
+  init:
     runs-on: ubuntu-18.04
+    steps:
+      - id:  set-env
+        run: |
+          REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
+  debugging:
+    runs-on: ubuntu-18.04
+    steps:
+      - id:  print-globals
+        run: |
+          echo "logging in with ${DOCKER_USERNAME:0:3}..."
+          echo "CI_PROJECT_NAME:GITHUB_SHA $CI_PROJECT_NAME:$GITHUB_SHA"
+          echo "HOME:$HOME"
+          echo "PWD:$PWD"
+          echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
+          echo "GITHUB_ACTOR/CI_PROJECT_NAME:GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
+          echo "REMOTE_TAG $REMOTE_TAG"
+      - id:  ls-all-the-things
+        run: |
+          ls -R $GITHUB_WORKSPACE
+          ls -lha $GITHUB_WORKSPACE
+
+  docker_build:
+    runs-on: ubuntu-18.04
+    needs: init
     steps:
       - uses: actions/checkout@v2
         with:
           ref: docker-multistage
           fetch-depth: 1
-      - id:  test-not-so-secret-variable
-        run: echo "logging in with ${DOCKER_USERNAME:0:6}"
-      - id:  test-docker-tag
-        run: echo "$CI_PROJECT_NAME:$GITHUB_SHA"
-      - id:  test-other-vars
-        run: echo "HOME:$HOME PWD:$PWD GITHUB_WORKSPACE:$GITHUB_WORKSPACE $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
-      - id:  test-github-root
-        run: ls -R $GITHUB_WORKSPACE
-      - id:  see-if-git-dir-is-good
-        run: ls -lha $GITHUB_WORKSPACE
       - id:  docker-build
         run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
 
