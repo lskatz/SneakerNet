@@ -12,8 +12,8 @@ env:
   #DOCKER_USERNAME:  ${{  secrets.DOCKER_USERNAME }}
   CI_PROJECT_NAME:   sneakernet
   github_repository: lskatz/sneakernet
-  SLUG:              ${{ format('lskatz/sneakernet:{0}', GITHUB_SHA) }}
-  LOCAL_TAG_LATEST:  ${{ format('sneakernet:{0}', GITHUB_SHA) }}
+  SLUG:              ${{ format('lskatz/sneakernet:{0}', ${{ env.GITHUB_SHA }} ) }}
+  LOCAL_TAG_LATEST:  ${{ format('sneakernet:{0}', ${{ env.GITHUB_SHA }} ) }}
 
 jobs:
   init:
