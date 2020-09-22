@@ -33,13 +33,16 @@ jobs:
     steps:
       - id:  print-globals
         run: |
-          echo "logging in with ${DOCKER_USERNAME:0:3}..."
+          echo "Docker username starts with ${DOCKER_USERNAME:0:3}..."
           echo "CI_PROJECT_NAME:GITHUB_SHA $CI_PROJECT_NAME:$GITHUB_SHA"
           echo "HOME:$HOME"
           echo "PWD:$PWD"
           echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
           echo "GITHUB_ACTOR/CI_PROJECT_NAME:GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
           echo "REMOTE_TAG $REMOTE_TAG"
+          echo ${{needs.init.outputs.set-remote-tag}}
+          echo ${{needs.init.outputs.key}}
+          echo ${{needs.init.outputs}}
       - id:  ls-all-the-things
         run: |
           ls -R $GITHUB_WORKSPACE
