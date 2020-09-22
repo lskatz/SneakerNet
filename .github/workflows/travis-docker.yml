@@ -21,8 +21,8 @@ jobs:
       - id:  set-remote-tag
         run: |
           REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
-          echo "$REMOTE_TAG"
-          echo "::set-output name=key::$REMOTE_TAG"
+          echo "$REMOTE_TAG" >&2
+          echo "::set-output name=key::$REMOTE_TAG" >&2
           echo "::set-output name=key::$REMOTE_TAG"
 
   debugging:
