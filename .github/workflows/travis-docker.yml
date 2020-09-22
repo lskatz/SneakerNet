@@ -13,8 +13,7 @@ env:
   CI_PROJECT_NAME: sneakernet
   REMOTE_TAG:      UNDEFINED
   github_repository: lskatz/sneakernet
-  slug:            "lskatz/sneakernet/$GITHUB_SHA"
-  SLUG:            "$GITHUB_REPOSITORY:$GITHUB_SHA"
+  SLUG:            "lskatz/sneakernet:$GITHUB_SHA"
 
 jobs:
   init:
