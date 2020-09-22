@@ -15,13 +15,19 @@ env:
 jobs:
   init:
     runs-on: ubuntu-18.04
+    outputs:
+      remote-tag: ${{ steps.set-remote-tag.outputs.key }}
     steps:
-      - id:  set-env
+      - id:  set-remote-tag
         run: |
-          export REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
+          REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
+          echo "::set-output name=key::$REMOTE_TAG"
+
   debugging:
     runs-on: ubuntu-18.04
-    needs: init
+    needs:   init
+    env:     
+      REMOTE_TAG: ${{needs.init.outputs.set-remote-tag}}
     steps:
       - id:  print-globals
         run: |
