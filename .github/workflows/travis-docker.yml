@@ -21,8 +21,6 @@ jobs:
       - id:  set-remote-tag
         run: |
           REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
-          echo "$REMOTE_TAG" >&2
-          echo "::set-output name=key::$REMOTE_TAG" >&2
           echo "::set-output name=key::$REMOTE_TAG"
 
   debugging:
@@ -40,7 +38,7 @@ jobs:
           echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
           echo "GITHUB_ACTOR/CI_PROJECT_NAME:GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
           echo "REMOTE_TAG $REMOTE_TAG"
-          echo ${{ toJson(needs.init.outputs) }}
+          echo ${{ toJson(needs.init) }}
       - id:  ls-all-the-things
         run: |
           ls -R $GITHUB_WORKSPACE
