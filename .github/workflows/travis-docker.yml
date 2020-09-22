@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: docker_login
     steps:
-      - id:  debug env
+      - id:  debug-env
         run: |
           echo $GITHUB_WORKSPACE
           ls $GITHUB_WORKSPACE
