@@ -5,13 +5,15 @@ on:
   push:
     branches:
       - docker-multistage
+
+env:      
+  DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
+  DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
+  CI_PROJECT_NAME: sneakernet
+
 jobs:
   docker_deploy_latest:
     
-    env:      
-      DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
-      DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
-      CI_PROJECT_NAME: sneakernet
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
