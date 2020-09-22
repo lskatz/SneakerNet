@@ -19,7 +19,7 @@ jobs:
       remotetag: ${{ steps.setremotetag.outputs.remotetag}}
     steps:
       - id:  lowercase-slug
-        run: SLUG=$(echo $GITHUB_REPOSITORY:$GITHUB_SHA | tr '[:upper:]' '[:lower:]')
+        run: export SLUG=$(echo $GITHUB_REPOSITORY:$GITHUB_SHA | tr '[:upper:]' '[:lower:]')
       - id:  test-slug
         run: echo $SLUG
       - id:  setremotetag
