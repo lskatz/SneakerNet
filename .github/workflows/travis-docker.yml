@@ -10,6 +10,7 @@ env:
   DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
   DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
   CI_PROJECT_NAME: sneakernet
+  REMOTE_TAG:      UNDEFINED
 
 jobs:
   init:
@@ -17,7 +18,7 @@ jobs:
     steps:
       - id:  set-env
         run: |
-          export REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
+          REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
   debugging:
     runs-on: ubuntu-18.04
     needs: init
