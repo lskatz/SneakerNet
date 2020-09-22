@@ -20,6 +20,7 @@ jobs:
           REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
   debugging:
     runs-on: ubuntu-18.04
+    needs: init
     steps:
       - id:  print-globals
         run: |
