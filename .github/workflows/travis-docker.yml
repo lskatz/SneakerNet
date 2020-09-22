@@ -23,6 +23,7 @@ jobs:
           REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
           echo "$REMOTE_TAG"
           echo "::set-output name=key::$REMOTE_TAG"
+          echo "::set-output name=key::$REMOTE_TAG"
 
   debugging:
     runs-on: ubuntu-18.04
