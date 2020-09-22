@@ -31,7 +31,9 @@ jobs:
       - id:  docker-build
         run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
       - id:  docker-tag-latest
-        run:  docker tag $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_REPOSITORY:$GITHUB_SHA
+        run: |
+          REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
+          docker tag $CI_PROJECT_NAME:$GITHUB_SHA $REMOTE_TAG
       - id:  docker-login
         run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       - id:  docker-push-latest
