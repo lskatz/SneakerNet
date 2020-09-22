@@ -16,20 +16,20 @@ jobs:
   init:
     runs-on: ubuntu-18.04
     outputs:
-      remote-tag: ${{ steps.set-remote-tag.outputs.remote_tag}}
+      remotetag: ${{ steps.setremotetag.outputs.remotetag}}
     steps:
       - id:  lowercase-slug
         run: SLUG=$(echo $GITHUB_REPOSITORY:$GITHUB_SHA | tr '[:upper:]' '[:lower:]')
       - id:  test-slug
         run: echo $SLUG
-      - id:  set-remote-tag
-        run: echo "::set-output name=remote_tag::$SLUG"
+      - id:  setremotetag
+        run: echo "::set-output name=remotetag::$SLUG"
 
   debugging:
     runs-on: ubuntu-18.04
     needs:   init
     env:     
-      REMOTE_TAG: ${{needs.init.outputs.remote-tag}}
+      REMOTE_TAG: ${{needs.init.outputs.remotetag}}
     steps:
       - id:  print-globals
         run: |
@@ -40,7 +40,7 @@ jobs:
           echo "GITHUB_WORKSPACE:$GITHUB_WORKSPACE"
           echo "GITHUB_ACTOR/CI_PROJECT_NAME:GITHUB_SHA $GITHUB_ACTOR/$CI_PROJECT_NAME:$GITHUB_SHA"
           echo "REMOTE_TAG $REMOTE_TAG"
-          echo ${{ toJson(needs.init.outputs.remote-tag) }} 
+          echo ${{ toJson(needs.init.outputs.remotetag) }} 
 
   docker_build:
     runs-on: ubuntu-18.04
