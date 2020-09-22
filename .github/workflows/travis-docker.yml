@@ -18,7 +18,7 @@ jobs:
     steps:
       - id:  set-env
         run: |
-          REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
+          export REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
   debugging:
     runs-on: ubuntu-18.04
     needs: init
