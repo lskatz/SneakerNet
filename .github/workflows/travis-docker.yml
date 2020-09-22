@@ -44,13 +44,17 @@ jobs:
     runs-on: ubuntu-18.04
     needs: docker_login
     steps:
+      - id:  debug env
+        run: |
+          echo $GITHUB_WORKSPACE
+          ls $GITHUB_WORKSPACE
       - id:  docker-tag-latest
         run: |
           REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
           docker tag $CI_PROJECT_NAME:$GITHUB_SHA $REMOTE_TAG
 
 # https://stackoverflow.com/questions/58475748/github-actions-how-to-check-if-current-push-has-new-tag-is-new-release
-  docker_build_version:
+  docker_build_versioned:
     runs-on: ubuntu-18.04
     needs: docker_login
     steps:
@@ -59,7 +63,7 @@ jobs:
 
   docker_push:
     runs-on: ubuntu-18.04
-    needs: [docker_build_latest, docker_build_version]
+    needs: [docker_build_latest, docker_build_versioned]
     steps:
       - id:  docker-push-latest
         run: docker push $CI_PROJECT_NAME:$GITHUB_SHA
