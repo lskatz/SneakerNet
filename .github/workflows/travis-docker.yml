@@ -50,10 +50,11 @@ jobs:
           ls -R $GITHUB_WORKSPACE
           ls -lha $GITHUB_WORKSPACE
       - id:  docker-build
-        run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
+        #run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
+        run: docker build . --file $GITHUB_WORKSPACE/Dockerfile --tag $CI_PROJECT_NAME:$GITHUB_SHA
       - id:  docker-tag-latest
         run: |
-          docker tag $CI_PROJECT_NAME:$GITHUB_SHA $github_repository:$GITHUB_SHA
+          docker tag $CI_PROJECT_NAME:$GITHUB_SHA $github_repository:$GITHUB_SHA .
       - id:  docker-push-latest
         run: docker push $CI_PROJECT_NAME:$GITHUB_SHA
 
