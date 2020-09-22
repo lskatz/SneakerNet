@@ -8,9 +8,13 @@ on:
 
 env:      
   DOCKER_PASSWORD: ${{  secrets.DOCKER_PASSWORD }}
-  DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
+  DOCKER_USERNAME: lskatz
+  #DOCKER_USERNAME: ${{  secrets.DOCKER_USERNAME }}
   CI_PROJECT_NAME: sneakernet
   REMOTE_TAG:      UNDEFINED
+  github_repository: lskatz/sneakernet
+  slug:            ${{ lskatz/sneakernet/$GITHUB_SHA }}
+  SLUG:            "$GITHUB_REPOSITORY:$GITHUB_SHA"
 
 jobs:
   init:
