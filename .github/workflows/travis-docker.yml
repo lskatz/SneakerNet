@@ -12,7 +12,7 @@ env:
   CI_PROJECT_NAME: sneakernet
 
 jobs:
-  docker_deploy_latest:
+  docker_build:
     
     runs-on: ubuntu-18.04
     steps:
@@ -32,12 +32,27 @@ jobs:
         run: ls -lha $GITHUB_WORKSPACE
       - id:  docker-build
         run: docker build -t $CI_PROJECT_NAME:$GITHUB_SHA $GITHUB_WORKSPACE
+
+  docker_login:
+    runs-on: ubuntu-18.04
+    needs: docker_build
+    steps:
+      - id:  docker-login
+        run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+
+  docker_build_latest:
+    runs-on: ubuntu-18.04
+    needs: docker_login
+    steps:
       - id:  docker-tag-latest
         run: |
           REMOTE_TAG=$(echo "$GITHUB_REPOSITORY:$GITHUB_SHA" | tr '[:upper:]' '[:lower:]')
           docker tag $CI_PROJECT_NAME:$GITHUB_SHA $REMOTE_TAG
-      - id:  docker-login
-        run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+
+  docker_push:
+    runs-on: ubuntu-18.04
+    needs: [docker_build_latest]
+    steps:
       - id:  docker-push-latest
         run: docker push $CI_PROJECT_NAME:$GITHUB_SHA
 
