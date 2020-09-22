@@ -44,7 +44,7 @@ jobs:
           ref: docker-multistage
           fetch-depth: 1
       - uses: satackey/action-docker-layer-caching@v0.0.8
-          continue-on-error: true
+        continue-on-error: true
       - id:  ls-all-the-things
         run: |
           ls -R $GITHUB_WORKSPACE
