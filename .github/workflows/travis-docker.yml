@@ -55,6 +55,8 @@ jobs:
       - id:  docker-tag-latest
         run: |
           docker tag $CI_PROJECT_NAME:$GITHUB_SHA $github_repository:$GITHUB_SHA
+      - id:  docker-login
+        run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       - id:  docker-push-latest
         run: docker push $CI_PROJECT_NAME:$GITHUB_SHA
 
