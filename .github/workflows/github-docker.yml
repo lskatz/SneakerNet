@@ -1,0 +1,34 @@
+# https://docs.github.com/en/actions/reference/encrypted-secrets#using-encrypted-secrets-in-a-workflow
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+# https://docs.github.com/en/actions/guides/publishing-docker-images
+name: github-docker
+on: 
+  push:
+    branches:
+      - docker-multistage
+
+env:      
+  DOCKER_PASSWORD:   ${{  secrets.DOCKER_PASSWORD }}
+  DOCKER_USERNAME:   lskatz
+  #DOCKER_USERNAME_SECRET:  ${{  secrets.DOCKER_USERNAME }}
+  CI_PROJECT_NAME:   sneakernet
+  github_repository: lskatz/sneakernet
+  #SLUG:              ${{ format('lskatz/sneakernet:{0}', GITHUB_SHA ) }}
+  #LOCAL_TAG_LATEST:  ${{ format('sneakernet:{0}', ${{ env.GITHUB_SHA }} ) }}
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-18.04
+    needs: init
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: my-docker-hub-namespace/my-docker-hub-repository
+          tag_with_ref: true
+
