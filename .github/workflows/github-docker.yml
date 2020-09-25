@@ -36,5 +36,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          repository: lskatz/sneakernet/my-image
+          repository: lskatz/sneakernet/sneakernet
           tag_with_ref: true
