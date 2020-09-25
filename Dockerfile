@@ -221,6 +221,9 @@ RUN mkdir colorid && \
   chmod +x colorid_Linux64v0.1.4.3 && \
   mv colorid_Linux64v0.1.4.3 /usr/local/bin/colorid
 
+# Trying to avoid an error 
+#   bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+ENV LC_ALL=C
 
 WORKDIR /data
 
