@@ -18,7 +18,7 @@ env:
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
+    name: Push Docker image to multiple registries
     runs-on: ubuntu-18.04
     steps:
       - name: Check out the repo
@@ -30,4 +30,11 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: lskatz/sneakernet
           tag_with_ref: true
-
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: lskatz/sneakernet/my-image
+          tag_with_ref: true
