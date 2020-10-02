@@ -67,9 +67,9 @@ COPY --from=blast     /blast               /blast
 
 # Libraries
 COPY --from=staramr   /usr/local/lib/python3.6             /usr/local/lib/python3.6/
-COPY --from=blast     /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
-COPY --from=blast     /lib64               /lib64
-COPY --from=blast     /usr/lib/x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu
+#COPY --from=blast     /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
+#COPY --from=blast     /lib64               /lib64
+#COPY --from=blast     /usr/lib/x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu
 
 # Taking a risk using python3.5 libraries in a python3.6 folder
 COPY --from=salmid    /usr/local/lib/python3.5             /usr/local/lib/python3.6/
