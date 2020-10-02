@@ -30,7 +30,6 @@ FROM staphb/salmid:0.1.23 AS salmid
 FROM mgibio/samtools:1.9 AS samtools
 FROM flowcraft/krona:2.7-1 AS krona
 FROM mickaelsilva/chewbbaca_py3 AS chewbbaca
-FROM ncbi/blast:2.10.1 AS blast
 
 # EDIT: this bioperl container uses perl/5.18 which doesn't match our perl v5.26.1
 # Bring in libraries
@@ -60,7 +59,7 @@ COPY --from=chewbbaca /NGStools/clustalw-2.1-linux-x86_64-libcppstatic  /NGStool
 COPY --from=chewbbaca /NGStools/Prodigal                                /NGStools
 COPY --from=chewbbaca /NGStools/prodigal_training_files                 /NGStools
 COPY --from=chewbbaca /usr/local/bin/*     /usr/local/bin/
-COPY --from=blast     /blast               /blast    
+COPY --from=mlst      /ncbi-blast-2.9.0+   /ncbi-blast-2.9.0+/
 
 #COPY --from=rust      /usr/local/rustup    /usr/local/rustup
 #COPY --from=rust      /usr/local/cargo     /usr/local/cargo
@@ -201,11 +200,11 @@ ENV PATH="${PATH}:\
 /usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
 /shovill/shovill-1.1.0/bin:\
 /SPAdes-3.14.1-Linux/bin:\
-/blast/bin:\
+/ncbi-blast-2.9.0+/bin:\
 "\
  LC_ALL=C \
  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
- BLASTDB=/blast/blastdb
+ BLASTDB=/blast/blastdb 
 
 # Pip installations after I set the path
 # SalmID 0.1.23
@@ -226,7 +225,7 @@ RUN mkdir colorid && \
   chmod +x colorid_Linux64v0.1.4.3 && \
   mv colorid_Linux64v0.1.4.3 /usr/local/bin/colorid
 
-# Trying to avoid an error 
+# Trying to avoid an error where LC_ALL gets somehow undefined before this step
 #   bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
 ENV LC_ALL=C
 
