@@ -22,7 +22,7 @@ FROM staphb/mlst:2.19.0 AS mlst
 FROM staphb/prokka:1.14.5 AS prokka
 FROM staphb/shovill:1.1.0 AS shovill
 FROM staphb/seqtk:1.3 AS seqtk
-FROM staphb/staramr:0.7.1 AS staramr
+#FROM staphb/staramr:0.7.1 AS staramr
 FROM staphb/salmid:0.1.23 AS salmid
 #FROM rust:1.46.0-slim-buster AS rust
 
@@ -65,7 +65,7 @@ COPY --from=mlst      /ncbi-blast-2.9.0+   /ncbi-blast-2.9.0+/
 #COPY --from=rust      /usr/local/cargo     /usr/local/cargo
 
 # Libraries
-COPY --from=staramr   /usr/local/lib/python3.6             /usr/local/lib/python3.6/
+#COPY --from=staramr   /usr/local/lib/python3.6             /usr/local/lib/python3.6/
 #COPY --from=blast     /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
 #COPY --from=blast     /lib64               /lib64
 #COPY --from=blast     /usr/lib/x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu
@@ -107,6 +107,7 @@ RUN apt-get update && \
  git \
  rsync \
  vim \
+ less \
  ssh \
  wget \
  curl \
@@ -205,6 +206,10 @@ ENV PATH="${PATH}:\
  LC_ALL=C \
  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
  BLASTDB=/blast/blastdb 
+
+# Staramr: lifting the code from staphb
+# https://github.com/StaPH-B/docker-builds/blob/master/staramr/0.7.1/Dockerfile
+RUN pip3 install staramr==0.7.1 pandas==0.25.3 && staramr db update -d && staramr db info
 
 # Pip installations after I set the path
 # SalmID 0.1.23
