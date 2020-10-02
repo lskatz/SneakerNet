@@ -29,7 +29,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: lskatz/sneakernet
-          tags: latest
+          tags: |
+            latest
+            ${{ GITHUB_SHA }}
           #tag_with_ref: true
       - name: Push to GitHub Packages
         uses: docker/build-push-action@v1
@@ -38,5 +40,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           repository: lskatz/sneakernet/sneakernet
-          tags: latest
+          tags: |
+            latest
+            ${{ GITHUB_SHA }}
           #tag_with_ref: true
