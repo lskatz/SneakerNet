@@ -144,6 +144,7 @@ RUN apt-get update && \
  liblzma-dev \
  libcurl4-gnutls-dev \
  libssl-dev \
+ python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose
  libfindbin-libs-perl && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 
