@@ -69,5 +69,5 @@ jobs:
           cache-to:   type=registry,ref=lskatz/sneakernet
           tags:       |
             latest
-            #lskatz/sneakernet:${{ github.GITHUB_SHA }}
-            #
+#lskatz/sneakernet:${{ github.GITHUB_SHA }}
+#
