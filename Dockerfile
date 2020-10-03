@@ -144,10 +144,10 @@ RUN apt-get update && \
  liblzma-dev \
  libcurl4-gnutls-dev \
  libssl-dev \
- python-numpy python-scipy python-matplotlib ipython python-pandas python-sympy python-nose \
+ python-numpy python-scipy  \
  libfindbin-libs-perl && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
-
+#python-matplotlib ipython python-pandas python-sympy python-nose
 
 # Perl libraries
 RUN cpanm --force --notest \
