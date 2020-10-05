@@ -69,7 +69,7 @@ jobs:
           cache-to:   type=registry,ref=lskatz/sneakernet
           tags: |
             lskatz/sneakernet:latest
-            docker.pkg.github.com/lskatz/sneakernet:latest
-#           lskatz/sneakernet:${{ github.GITHUB_SHA }}
+            lskatz/sneakernet:${{ github.GITHUB_SHA }}
+#           docker.pkg.github.com/lskatz/sneakernet:latest
 #           docker.pkg.github.com/lskatz/sneakernet:${{ github.GITHUB_SHA }}
 #
