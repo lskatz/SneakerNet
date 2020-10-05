@@ -29,7 +29,7 @@ FROM staphb/salmid:0.1.23 AS salmid
 # Other sources
 FROM mgibio/samtools:1.9 AS samtools
 FROM flowcraft/krona:2.7-1 AS krona
-FROM mickaelsilva/chewbbaca_py3 AS chewbbaca
+#FROM mickaelsilva/chewbbaca_py3 AS chewbbaca
 
 # EDIT: this bioperl container uses perl/5.18 which doesn't match our perl v5.26.1
 # Bring in libraries
@@ -52,13 +52,13 @@ COPY --from=prokka    /prokka-1.14.5/bin   /usr/local/bin/
 COPY --from=prokka    /barrnap-0.9/bin     /usr/local/bin/
 COPY --from=seqtk     /seqtk-1.3           /usr/local/bin/
 #COPY --from=staramr   /usr/local/bin       /usr/local/bin/
-COPY --from=salmid    /usr/local/bin       /usr/local/bin/
+#COPY --from=salmid    /usr/local/bin       /usr/local/bin/
 COPY --from=samtools  /opt/samtools/bin/samtools            /usr/local/bin/
 COPY --from=krona     /NGStools/KronaTools-2.7              /NGStools/KronaTools-2.7
-COPY --from=chewbbaca /NGStools/clustalw-2.1-linux-x86_64-libcppstatic  /NGStools
-COPY --from=chewbbaca /NGStools/Prodigal                                /NGStools
-COPY --from=chewbbaca /NGStools/prodigal_training_files                 /NGStools
-COPY --from=chewbbaca /usr/local/bin/*     /usr/local/bin/
+#COPY --from=chewbbaca /NGStools/clustalw-2.1-linux-x86_64-libcppstatic  /NGStools
+#COPY --from=chewbbaca /NGStools/Prodigal                                /NGStools
+#COPY --from=chewbbaca /NGStools/prodigal_training_files                 /NGStools
+#COPY --from=chewbbaca /usr/local/bin/*     /usr/local/bin/
 COPY --from=mlst      /ncbi-blast-2.9.0+   /ncbi-blast-2.9.0+/
 
 #COPY --from=rust      /usr/local/rustup    /usr/local/rustup
@@ -71,8 +71,8 @@ COPY --from=mlst      /ncbi-blast-2.9.0+   /ncbi-blast-2.9.0+/
 #COPY --from=blast     /usr/lib/x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu
 
 # Taking a risk using python3.5 libraries in a python3.6 folder
-COPY --from=salmid    /usr/local/lib/python3.5             /usr/local/lib/python3.6/
-COPY --from=chewbbaca /usr/local/lib/python3.5             /usr/local/lib/python3.6/
+#COPY --from=salmid    /usr/local/lib/python3.5             /usr/local/lib/python3.6/
+#COPY --from=chewbbaca /usr/local/lib/python3.5             /usr/local/lib/python3.6/
 #COPY --from=bioperl   /usr/lib/            /usr/lib
 #COPY --from=bioperl   /usr/local/lib/      /usr/local/lib
 #COPY --from=bioperl   /usr/share           /usr/share
@@ -145,6 +145,9 @@ RUN apt-get update && \
  libcurl4-gnutls-dev \
  libssl-dev \
  libfindbin-libs-perl && \
+ psmisc && \
+ libatlas-base-dev && \
+ mafft && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 #python-matplotlib ipython python-pandas python-sympy python-nose
 # python-numpy python-scipy  \
@@ -208,6 +211,9 @@ ENV PATH="${PATH}:\
  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
  BLASTDB=/blast/blastdb 
 
+## pip installations after this line
+RUN python3 -m pip install --upgrade pip
+
 # Staramr: lifting the code from staphb
 # https://github.com/StaPH-B/docker-builds/blob/master/staramr/0.7.1/Dockerfile
 RUN pip3 install numpy==1.19.2 staramr==0.7.1 pandas==0.25.3
@@ -217,11 +223,29 @@ RUN staramr db update -d && staramr db info
 # Pip installations after I set the path
 # SalmID 0.1.23
 # apt deps: python-setuptools python3 python3-pip curl build-essential file git python3-venv
-#RUN pip3 install poetry && \
-# git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
-# cd SalmID && \
-# poetry build -vvv && \
-# pip3 install dist/salmid*.whl
+RUN pip3 install poetry && \
+ git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
+ cd SalmID && \
+ poetry build -vvv && \
+ pip3 install dist/salmid*.whl
+
+# Chewbbaca
+# Taking code from here: https://hub.docker.com/r/mickaelsilva/chewbbaca_py3/dockerfile
+WORKDIR /NGStools/
+#GET training files and Prodigal 
+RUN git clone https://github.com/hyattpd/Prodigal.git
+#INSTALL chewBBACA requirements 
+RUN pip3 install biopython plotly SPARQLWrapper chewbbaca
+WORKDIR /NGStools/Prodigal
+RUN make install
+WORKDIR /NGStools/
+RUN git clone https://github.com/mickaelsilva/prodigal_training_files
+#install mafft and clustalw2 to run schema evaluator
+RUN wget www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
+RUN tar -zxf clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
+RUN rm clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
+# Reset the working directory after chewbbaca installation
+WORKDIR /
 
 # Rust for at least colorid
 #RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
