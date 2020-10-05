@@ -144,10 +144,10 @@ RUN apt-get update && \
  liblzma-dev \
  libcurl4-gnutls-dev \
  libssl-dev \
- python-numpy python-scipy  \
  libfindbin-libs-perl && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 #python-matplotlib ipython python-pandas python-sympy python-nose
+# python-numpy python-scipy  \
 
 # Perl libraries
 RUN cpanm --force --notest \
@@ -210,7 +210,9 @@ ENV PATH="${PATH}:\
 
 # Staramr: lifting the code from staphb
 # https://github.com/StaPH-B/docker-builds/blob/master/staramr/0.7.1/Dockerfile
-RUN pip3 install staramr==0.7.1 pandas==0.25.3 && staramr db update -d && staramr db info
+RUN pip3 install numpy==1.19.2 staramr==0.7.1 pandas==0.25.3
+# TODO merge this command with previous to reduce layers
+RUN staramr db update -d && staramr db info
 
 # Pip installations after I set the path
 # SalmID 0.1.23
