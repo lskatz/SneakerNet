@@ -144,10 +144,11 @@ RUN apt-get update && \
  liblzma-dev \
  libcurl4-gnutls-dev \
  libssl-dev \
- libfindbin-libs-perl && \
- psmisc && \
- libatlas-base-dev && \
- mafft && \
+ libfindbin-libs-perl \
+ psmisc \
+ libatlas-base-dev \
+ mafft \
+ && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 #python-matplotlib ipython python-pandas python-sympy python-nose
 # python-numpy python-scipy  \
