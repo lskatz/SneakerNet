@@ -67,9 +67,8 @@ jobs:
           #build-args:
           cache-from: type=registry,ref=lskatz/sneakernet
           cache-to:   type=registry,ref=lskatz/sneakernet
-          tags: |
-            lskatz/sneakernet:latest
-            lskatz/sneakernet:${{ github.GITHUB_SHA }}
+          tags:  lskatz/sneakernet:latest
+#           lskatz/sneakernet:${{ github.GITHUB_SHA }}
 #           docker.pkg.github.com/lskatz/sneakernet:latest
 #           docker.pkg.github.com/lskatz/sneakernet:${{ github.GITHUB_SHA }}
 #
