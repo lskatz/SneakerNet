@@ -148,7 +148,7 @@ RUN apt-get update && \
  psmisc \
  libatlas-base-dev \
  mafft \
- libpython3.5-dev \
+ libpython-dev \
  && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 #python-matplotlib ipython python-pandas python-sympy python-nose
