@@ -218,7 +218,8 @@ RUN python3 -m pip install --upgrade pip
 
 # Staramr: lifting the code from staphb
 # https://github.com/StaPH-B/docker-builds/blob/master/staramr/0.7.1/Dockerfile
-RUN pip3 install numpy==1.19.2 staramr==0.7.1 pandas==0.25.3
+RUN pip3 install staramr==0.7.1
+RUN pip3 install pandas==0.25.3
 # TODO merge this command with previous to reduce layers
 RUN staramr db update -d && staramr db info
 
