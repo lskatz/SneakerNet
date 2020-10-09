@@ -235,17 +235,15 @@ RUN pip3 install poetry && \
 # Taking code from here: https://hub.docker.com/r/mickaelsilva/chewbbaca_py3/dockerfile
 WORKDIR /NGStools/
 #GET training files and Prodigal 
-RUN git clone https://github.com/hyattpd/Prodigal.git
-#INSTALL chewBBACA requirements 
-RUN pip3 install biopython plotly SPARQLWrapper chewbbaca
-WORKDIR /NGStools/Prodigal
-RUN make install
+RUN git clone https://github.com/hyattpd/Prodigal.git && \
+  pip3 install biopython plotly SPARQLWrapper chewbbaca && \
+  cd /NGStools/Prodigal && \
+  make install
 WORKDIR /NGStools/
-RUN git clone https://github.com/mickaelsilva/prodigal_training_files
-#install mafft and clustalw2 to run schema evaluator
-RUN wget www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
-RUN tar -zxf clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
-RUN rm clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
+RUN git clone https://github.com/mickaelsilva/prodigal_training_files && \
+  wget www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz && \
+  tar -zxf clustalw-2.1-linux-x86_64-libcppstatic.tar.gz && \
+  rm clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
 # Reset the working directory after chewbbaca installation
 WORKDIR /
 
