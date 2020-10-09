@@ -218,19 +218,19 @@ RUN python3 -m pip install --upgrade pip
 
 # Staramr: lifting the code from staphb
 # https://github.com/StaPH-B/docker-builds/blob/master/staramr/0.7.1/Dockerfile
-RUN pip3 install staramr==0.7.1
-RUN pip3 install pandas==0.25.3
+#RUN pip3 install staramr==0.7.1
+#RUN pip3 install pandas==0.25.3
 # TODO merge this command with previous to reduce layers
-RUN staramr db update -d && staramr db info
+#RUN staramr db update -d && staramr db info
 
 # Pip installations after I set the path
 # SalmID 0.1.23
 # apt deps: python-setuptools python3 python3-pip curl build-essential file git python3-venv
-RUN pip3 install poetry
-RUN git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
- cd SalmID && \
- poetry build -vvv && \
- pip3 install dist/salmid*.whl
+#RUN pip3 install poetry
+#RUN git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
+# cd SalmID && \
+# poetry build -vvv && \
+# pip3 install dist/salmid*.whl
 
 # Chewbbaca
 # Taking code from here: https://hub.docker.com/r/mickaelsilva/chewbbaca_py3/dockerfile
