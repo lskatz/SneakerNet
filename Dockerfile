@@ -149,6 +149,7 @@ RUN apt-get update && \
  libatlas-base-dev \
  mafft \
  libpython3-dev \
+ locales \
  && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/* 
 #python-matplotlib ipython python-pandas python-sympy python-nose
