@@ -154,6 +154,14 @@ RUN apt-get update && \
 #python-matplotlib ipython python-pandas python-sympy python-nose
 # python-numpy python-scipy  \
 
+# Set LC_ALL env
+# https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
+RUN echo "LC_ALL=C" >> /etc/environment
+#echo "en_US.C" >> /etc/locale.gen
+#echo "LANG=C" > /etc/locale.conf
+#locale-gen en_US.UTF-8
+
+
 # Perl libraries
 RUN cpanm --force --notest \
   LWP::Protocol::https \
