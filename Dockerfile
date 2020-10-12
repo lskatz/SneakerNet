@@ -156,10 +156,10 @@ RUN apt-get update && \
 
 # Set LC_ALL env
 # https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
-RUN echo "LC_ALL=C" >> /etc/environment
-#echo "en_US.C" >> /etc/locale.gen
-#echo "LANG=C" > /etc/locale.conf
-#locale-gen en_US.UTF-8
+RUN echo "LC_ALL=en_US.UTF-8" >> /etc/environment && \
+ echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
+ echo "LANG=en_US.UTF-8" > /etc/locale.conf && \
+ locale-gen en_US.UTF-8
 
 
 # Perl libraries
@@ -217,7 +217,7 @@ ENV PATH="${PATH}:\
 /SPAdes-3.14.1-Linux/bin:\
 /ncbi-blast-2.9.0+/bin:\
 "\
- LC_ALL=C \
+ LC_ALL=en_US.UTF-8 \
  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
  BLASTDB=/blast/blastdb 
 
@@ -267,7 +267,7 @@ RUN mkdir colorid && \
 
 # Trying to avoid an error where LC_ALL gets somehow undefined before this step
 #   bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
-ENV LC_ALL=C
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR /data
 
