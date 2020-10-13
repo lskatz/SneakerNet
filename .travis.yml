@@ -2,105 +2,46 @@ language: perl
 os: linux
 perl:
   - "5.24-shrplib"
-python:
-  - "3.7"
-dist: xenial
-#services:
-#  - docker
-addons:
-  apt:
-    #sources:
-    packages:
-    - build-essential
-    - libberkeleydb-perl # helps with perl module DB_FILE
-    - bioperl
-    - bioperl-run
-    - ncbi-blast+
-    - prodigal
-    - tree
-    - sendmail
-    - python3
-    - python3-pip
-      #- kraken  # travis kraken testing for another day
-before_install:
-  - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-  - sudo update-alternatives --set python /usr/bin/python3
-  - python --version
-  - pip3 --version
-  # Configure cpanm properly
-  - cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
-  # Docker
-  #- docker pull staphb/skesa:2.3.0
-  #- docker pull staphb/mlst:2.16.2
-  #- docker pull staphb/prokka:1.14.0
-  #- docker pull staphb/kraken:1.1.1
-  #- export PATH=$PATH:$(pwd)/scripts/dockerAliases
-  # Perl modules
-  - export PERL5LIB=$PERL5LIB:/usr/share/perl5
-  - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5  # user libs
-  - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi  # user libs
-  - export PERL5LIB=$PERL5LIB:$HOME/lib/perl5/x86_64-linux-gnu-thread-multi/auto  # user libs
-  #- find / -type f -name SeqIO.pm 2>/dev/null || echo "SeqIO.pm NOT FOUND"
-  - echo $PERL5LIB | tr ':' '\n' | cat -n
-  - cpanm -l ~ Bio::FeatureIO --notest --force
-  - cpanm -l ~ Statistics::Descriptive
-  - cpanm -l ~ File::Slurp
-  - cpanm -l ~ Config::Simple
-  - tree -d $HOME -L 5
-  - find $HOME -type f -name Slurp.pm
-  - find $HOME -type f -name Descriptive.pm
-  - find $HOME -type f -name Simple.pm
-  - perl -MData::Dumper -MFile::Slurp -MStatistics::Descriptive -Mthreads -e 'print Dumper \%INC'
-  - perl -MBio::SeqIO -e 1; # Check for Bio::SeqIO from bioperl
-    #- cpanm -l ~ Bio::FeatureIO --force --notest --verbose # b/c it wasn't getting installed properly somehow with cpanm --installdeps
-  # perl debugging statement
-  # CGP
-  - wget --progress=dot:mega --no-check-certificate https://github.com/lskatz/CG-Pipeline/archive/v0.5.tar.gz
-  - tar zxvf v0.5.tar.gz
-  - export PATH=$PATH:$(pwd -P)/CG-Pipeline-0.5/scripts
-  - wget --progress=dot:mega --no-check-certificate https://github.com/tseemann/shovill/archive/v1.0.0.tar.gz
-  - tar zxvf v1.0.0.tar.gz
-  - export PATH=$PATH:$(pwd -P)/shovill-1.0.0/bin
-  - tree $(pwd -P)/shovill*
-  # Python things
-  - export PATH=$PATH:$HOME/.local/bin
-  # staramr
-  #- pip3 install staramr --user
-  # chewbbaca
-  #- pip install chewbbaca --user
-  #- find $HOME -maxdepth 3 -name chewBBACA.py
+script: true
 install:
-  # Kraken testing
-  #- wget --progress=dot:mega --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-  #- tar zxvf minikraken_20171019_4GB.tgz
-  # Krona
-  - wget --progress=dot:mega --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
-  - tar zxvf xl2.5.tar.gz
-  - perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
-  # Configure SneakerNet
-  - cp -rv config.bak config
-  - sed -i '/KRAKEN_DEFAULT_DB/d' config/settings.conf
-  - sed -i '/KRAKENDIR/d' config/settings.conf
-  - echo -e "KRAKEN_DEFAULT_DB\t$(pwd -P)/minikraken_20171013_4GB" >> config/settings.conf
-  - echo -e "KRAKENDIR\t$HOME/.linuxbrew/bin" >> config/settings.conf
-  - sed -i '/KRONADIR/d' config/settings.conf
-  - echo -e "KRONADIR\t$HOME/krona/bin" >> config/settings.conf
-  - head -n 50 config/*.conf # display configuration file
-  - export PATH=$PATH:$(pwd -P)/scripts:$(pwd -P)/SneakerNet.plugins
-script: 
-  - cpanm --installdeps --notest .
-  - perl Makefile.PL
-  - make test
+  - echo "Just testing docker on this branch"
 
+after_success:
+  - CI_PROJECT_NAME=sneakernet
+  - docker build -t $CI_PROJECT_NAME:$TRAVIS_COMMIT .
+  - SLUG=$(echo "$TRAVIS_REPO_SLUG" | tr '[:upper:]' '[:lower:]')
+  - echo "$CI_PROJECT_NAME"
+  - echo $SLUG
+  - echo $REPOSITORY_URL
+  - echo $TRAVIS_COMMIT
+  - DOCKER_PASSWORD=${{secrets.DOCKER_PASSWORD}}
+  - DOCKER_USERNAME=${{secrets.DOCKER_USERNAME}}
+  - echo $DOCKER_USERNAME
+  - echo docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:$TRAVIS_COMMIT
+  -      docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:$TRAVIS_COMMIT
+  -      docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:latest
+  - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin 
+  - docker push $CI_PROJECT_NAME:$TRAVIS_COMMIT
+  - docker push $CI_PROJECT_NAME:latest 
+
+#https://stackoverflow.com/a/58505735
+before_install:
+#  - rm -rvf $HOME/dockerImages.stdout $HOME/docker/*
+  - for file in $HOME/docker/*.tar.gz; do if [ ! -e "$file" ]; then continue; fi; echo "loading $file"; zcat "$file" | docker load; done
+before_cache:
+  - mkdir -p $HOME/docker
+  - docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}' > $HOME/dockerImages.stdout
+  - cat $HOME/dockerImages.stdout
+  - if [[ -s $HOME/dockerImages.stdout ]]; then xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz' < $HOME/dockerImages.stdout; fi
+cache:
+  bundler: true
+  directories:
+    - $HOME/docker
+    
 # deploying to dockerhub
-deploy:
-  on:
-    branch: master
-  provider: script
-  script:
-    - docker build -t $CI_PROJECT_NAME:$TRAVIS_REPO_SLUG .
-    - docker tag ${CI_PROJECT_NAME}:${TRAVIS_REPO_SLUG} $REPOSITORY_URL/$CI_PROJECT_NAME:$TRAVIS_PULL_REQUEST_SHA
-    - docker tag ${CI_PROJECT_NAME}:${TRAVIS_REPO_SLUG} $REPOSITORY_URL/$CI_PROJECT_NAME:latest
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin 
-    - docker push $REPOSITORY_URL/$CI_PROJECT_NAME:$TRAVIS_PULL_REQUEST_SHA
-    - docker push $REPOSITORY_URL/$CI_PROJECT_NAME:latest 
+#deploy:
+#  provider: script
+#  script: bash .travis-ci/docker_push
+#  on:
+#    branch: $TRAVIS_BRANCH
+
