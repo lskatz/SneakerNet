@@ -17,12 +17,12 @@ An example path is given in the instructions below, with `KRAKEN_DEFAULT_DB`.
 ```bash
 KRAKEN_DEFAULT_DB=$HOME/db/kraken1/minikraken_20171013_4GB
 mkdir -pv $KRAKEN_DEFAULT_DB
-cd $KRAKEN_DEFAULT_DB
+pushd $KRAKEN_DEFAULT_DB
 cd ..
 wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
 tar -zxvf minikraken_20171019_4GB.tgz
 rm -vf minikraken_20171019_4GB.tgz
-cd -
+popd
 ```
 
 ## Singularity
