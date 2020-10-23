@@ -32,6 +32,12 @@ but there are other workflows available as described in
 * [HTML summary report](/docs/plugins/sn_report.pl.md)
 * [Email](/docs/plugins/emailWhoever.pl.md) the report
 
+### Quick start
+
+1. Install and configure SneakerNet - [from source](docs/INSTALL.md) or [with a container](docs/CONTAINERS.md)
+2. Make an input folder from your MiSeq run [docs/SneakerNetInput.md](docs/SneakerNetInput.md)
+3. Run [`SneakerNetPlugins.pl`](docs/SneakerNetPlugins.pl) on the input folder.
+
 ## Installation
 
 See [docs/INSTALL.md](docs/INSTALL.md)
