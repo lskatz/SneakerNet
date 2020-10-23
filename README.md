@@ -12,6 +12,26 @@ but it can be expanded to other platforms.
   <img src='./docs/images/overview.png' alt='SneakerNet workflow' width='400' />
 </p>
 
+### Main steps
+
+This is the default workflow in v0.14
+but there are other workflows available as described in
+[PLUGINS.md](/docs/PLUGINS.md#workflows).
+ 
+* [Parse sample entries](/docs/plugins/sn_detectContamination-kraken.pl.md) - create an input file `samples.tsv`
+* [Read metrics](/docs/plugins/addReadMetrics.pl.md) - get raw read yields and raw read QC summary (CG-Pipeline)
+* [Assembly](/docs/plugins/assembleAll.pl.md) - assemble each genome (Shovill/skesa)
+* [MLST](/docs/plugins/sn_mlst.pl.md) - 7-gene MLST (_mlst_)
+* [Run Kraken](/docs/plugins/sn_kraken.pl.md)
+* [Contamination detection](/docs/plugins/sn_detectContamination-kraken.pl.md) - check that all reads come from one taxon for each genome (Kraken)
+* [Contamination detection](/docs/plugins/sn_detectContamination-mlst.pl.md) - check that all seven MLST genes have only one instance in the genome as expected (ColorID)
+* [Base balance](/docs/plugins/baseBalance.pl.md) - check that the ratio of A/T is approximately 1 and same with C/T
+* [Antimicrobial resistance gene prediction](/docs/plugins/sn_staramr.pl.md) - detect genotype and predict phenotype (staramr)
+* [Pass/fail](/docs/plugins/sn_passfail.pl.md) - list all genomes that have failed Q/C
+* [Transfer Files](/docs/plugins/transferFilesToRemoteComputers.pl.md) - files are copied to a remote folder
+* [HTML summary report](/docs/plugins/sn_report.pl.md)
+* [Email](/docs/plugins/emailWhoever.pl.md) the report
+
 ## Installation
 
 See [docs/INSTALL.md](docs/INSTALL.md)
