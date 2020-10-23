@@ -25,12 +25,12 @@ but there are other workflows available as described in
 * [Run Kraken](/docs/plugins/sn_kraken.pl.md)
 * [Contamination detection](/docs/plugins/sn_detectContamination-kraken.pl.md) - check that all reads come from one taxon for each genome (Kraken)
 * [Contamination detection](/docs/plugins/sn_detectContamination-mlst.pl.md) - check that all seven MLST genes have only one instance in the genome as expected (ColorID)
-* [Base balance](/docs/plugins/sn_baseBalance.pl.md) - check that the ratio of A/T is approximately 1 and same with C/T
+* [Base balance](/docs/plugins/baseBalance.pl.md) - check that the ratio of A/T is approximately 1 and same with C/T
 * [Antimicrobial resistance gene prediction](/docs/plugins/sn_staramr.pl.md) - detect genotype and predict phenotype (staramr)
 * [Pass/fail](/docs/plugins/sn_passfail.pl.md) - list all genomes that have failed Q/C
 * [Transfer Files](/docs/plugins/transferFilesToRemoteComputers.pl.md) - files are copied to a remote folder
 * [HTML summary report](/docs/plugins/sn_report.pl.md)
-* [Email](/docs/plugins/emailWhoever.pl) the report
+* [Email](/docs/plugins/emailWhoever.pl.md) the report
 
 ## Installation
 
