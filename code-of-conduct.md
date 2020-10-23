@@ -1,4 +1,4 @@
-#Creating a Culture of Innovation 
+# Creating a Culture of Innovation 
 
 We aspire to create a culture where people work joyfully, communicate openly about things that matter, and 
 provide great services globally. We would like our team and communities (both government and private sector)
@@ -10,7 +10,7 @@ This is our code of conduct (adapted from [18F's Code of Conduct](https://github
 We follow all Equal Employment Opportunity laws and we expect everyone we work with to adhere to the [GSA Anti-harrasment Policy](http://www.gsa.gov/portal/directive/d0/content/512516), even if they do not work for the Centers for Disease Control 
 and Prevention or GSA. We expect every user to follow this code of conduct and the laws and policies mentioned above.
     
-##Be Empowering 
+## Be Empowering 
   
 Consider what you can do to encourage and support others. Make room for quieter voices to contribute. Offer support 
 and enthusiasm for great ideas. Leverage the low cost of experimentation to support your colleagues' ideas, and take 
@@ -19,7 +19,7 @@ normally wouldn't. Share your knowledge and skills. Prioritize access for and in
 excluded from the civic process. 
 
 
-##Rules of Behavior
+## Rules of Behavior
 
  * I understand that I must complete security awareness and records management training annually in order to comply with the 
    latest security and records management policies. 
@@ -31,7 +31,7 @@ excluded from the civic process.
  * I understand that all passwords I create to set up accounts need to comply with CDC's password policy. 
  * I understand that the stewards reserves the right to moderate all data at any time. 
 
-##Boundaries 
+## Boundaries 
 
 Create boundaries to your own behavior and consider how you can create a safe space that helps prevent unacceptable
 behavior by others. We can't list all instances of unacceptable behavior, but we can provide examples to help guide 
@@ -43,7 +43,7 @@ where the line is for them. Impact matters more than intent. Ensuring that your 
 is your responsibility. Problems usually arise when we assume that our way of thinking or behavior is the norm for everyone. 
     
 
-###Here are some examples of unacceptable behavior: 
+### Here are some examples of unacceptable behavior: 
  * Negative or offensive remarks based on the protected classes as listed in the GSA Anti-harrasment Policy of
    race, religion, color, sex, national origin, age, disability, genetric information, sexual orientation, gender
    identity, parental status, maritual status, and political affiliation as well as gender expression, mental 
@@ -58,7 +58,7 @@ is your responsibility. Problems usually arise when we assume that our way of th
    identity; for instance by using incorrect pronouns or forms of address (misgendering) 
  * Retaliating against anyone who files a formal complaint that someone has violated these codes or laws. 
  
-##Background 
+## Background 
 CDC Scientific Clearance is the process of obtaining approvals by appropriate CDC officials before a CDC information product
 is released to the public or CDC's external public health partners. Information products that require formal clearance include 
 print, electronic, or oral materials, that CDC employees author or co-author, whether published by CDC or outside CDC. 
@@ -75,7 +75,7 @@ All collaborativer materials will be controlled by the rules contained within th
 ## Credit: 
 This code of conduct was mainly adapted from [18F's Code of Conduct](https://github.com/18F/code-of-conduct) and the [CDC's Informatics Innovation Unit R&D Lab's code of conduct.](http://www.phiresearchlab.org/?page_id=1715)
 
-##Relevant Legal Considerations: 
+## Relevant Legal Considerations: 
 
 [Laws enforced by the Equal Employment Opportunity Commission](http://www.eeoc.gov/laws/statutes/index.cfm) 
 
