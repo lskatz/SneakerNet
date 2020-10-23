@@ -36,7 +36,7 @@ but there are other workflows available as described in
 
 1. Install and configure SneakerNet - [from source](docs/INSTALL.md) or [with a container](docs/CONTAINERS.md)
 2. Make an input folder from your MiSeq run [docs/SneakerNetInput.md](docs/SneakerNetInput.md)
-3. Run [`SneakerNetPlugins.pl`](docs/SneakerNetPlugins.pl) on the input folder.
+3. Run [`SneakerNetPlugins.pl`](docs/SneakerNetPlugins.pl.md) on the input folder.
 
 ## Installation
 
