@@ -2,9 +2,9 @@
 title: 'SneakerNet: A modular quality assurance and quality check workflow for primary genomic and metagenomic read data'
 authors:
 - affiliation: 1
-  name: Taylor Griswold
+  name: Taylor Griswold^[co-first author]
 - affiliation: "1, 2"
-  name: Curtis Kapsak
+  name: Curtis Kapsak^[co-first author]
   orcid: 0000-0002-8735-1190
 - affiliation: 1
   name: Jessica C. Chen
@@ -18,7 +18,7 @@ authors:
 - affiliation: "1, 5"
   name: Eshaw Vidyaprakash
 - affiliation: "1, 3"
-  name: Lee S. Katz
+  name: Lee S. Katz^[corresponding author]
   orcid: 0000-0002-2533-9161
 date: "29 April, 2020"
 bibliography: paper.bib
