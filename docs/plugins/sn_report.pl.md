@@ -35,7 +35,7 @@ The table has columns:
 
 * sample - sample name
 * emoji - reflective of the score.  Happiest emojis reflect 100%.
-As of v0.14, emoticons range from &#128515; (best), &#128556;, and &#128561; (worst).
+As of v0.14, emoticons range from &#128515; (best), &#129320;, &#128556;, and &#128561; (worst).
 * score - a percentage, starting from 100.  Each item under the failure_code column subtracts an equal percentage from 100%.  These possible failures are shown as columns in the [passfail plugin](sn_passfail.pl.md).  If there are three possible items, then each penalty is 33%.  By default in SneakerNet version 0.10, there are three possible items: coverage, quality, and kraken.
 * qual - quality scores of R1 and R2, separated by space.
 * cov - genome coverages of R1 and R2, separated by space.
