@@ -31,7 +31,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.14.1';
+our $VERSION  = '0.15.0';
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -514,6 +514,21 @@ sub samplesheetInfo_tsv{
           last;
         }
       }
+    }
+
+    # Set the file path to the reference fasta if it exists
+    my $ref_id = $sample{$sampleName}{taxonRules}{reference_fasta_id};
+    if(defined($ref_id)){
+      my $dir = realpath($RealBin."/../db/fasta");
+      my $ref = "$dir/$ref_id.fasta";
+
+      if(!-e $ref){
+        logmsg "Did not find $ref_id in the SneakerNet installation. Downloading $ref_id into $ref";
+        logmsg "  Wget log can be found at $ref.log";
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=fasta' -O $ref 2> $ref.log ");
+      }
+
+      $sample{$sampleName}{taxonRules}{reference_fasta} = $ref;
     }
   }
   close $fh;

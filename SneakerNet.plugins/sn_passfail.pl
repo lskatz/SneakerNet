@@ -11,9 +11,9 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/@rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/readTsv @rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "5.0";
+our $VERSION = "6.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -110,6 +110,24 @@ sub identifyBadRuns{
     logmsg "WARNING: readMetrics.tsv was not found. Unknown whether samples pass or fail by coverage and quality.";
   }
 
+  # Assembly metrics
+  my %assemblyMetrics = ();
+  if(-e "$dir/SneakerNet/forEmail/assemblyMetrics.tsv"){
+    my $assemblyMetricsTmp = readTsv("$dir/SneakerNet/forEmail/assemblyMetrics.tsv"); 
+
+    # Remove extensions on the key to help with compatibility
+    # down the line.
+    # For example, either of these keys would be valid:
+    #     SRR12530732.bowtie2.bcftools
+    #     SRR12530732
+    while(my($key, $metrics) = each(%$assemblyMetricsTmp)){
+      my $newKey = $key;
+      $newKey =~ s/\..*$//; # remove extension
+      $assemblyMetrics{$key} = $metrics;
+      $assemblyMetrics{$newKey} = $metrics;
+    }
+  }
+
   # Understand for each sample whether it passed or failed
   # on each category
   for my $samplename(keys(%$sampleInfo)){
@@ -122,6 +140,7 @@ sub identifyBadRuns{
       coverage=>-1,
       quality => 0, # by default passes
       kraken  => -1,
+      assembly=> -1,# collapse any issues with assembly into one category
     );
 
     # Skip anything that says undetermined.
@@ -229,8 +248,27 @@ sub identifyBadRuns{
       $fail{kraken} = 1;
       last; # no need to test any further because it has failed
     }
+
+    # Did it pass by kraken / read classification
+    # Start with a stance that we do not know (value: -1)
+
+    #die Dumper [\%assemblyMetrics, {%{$assemblyMetrics{$samplename}}}, $samplename];
+    my $minNs = $$sampleInfo{$samplename}{taxonRules}{assembly_percentN};
+    my $percentNs = $assemblyMetrics{$samplename}{percentNs};
+    if(!defined($percentNs)){
+      $fail{assembly} = -1;
+    }
+    elsif($percentNs > $minNs){
+      $fail{assembly} = 1;
+    }
+    elsif($percentNs <= $minNs){
+      $fail{assembly} = 0;
+    }
+
+    # Save the culmination of pass/fail for this sample
     $whatFailed{$samplename} = \%fail;
   }
+
 
   return \%whatFailed;
 }

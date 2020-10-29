@@ -224,7 +224,7 @@ sub makeSummaryTable{
   for my $row(@sortedRow){
     print $fh join("\t", @$row)."\n";
   }
-  print $fh "# Scores start at 100 percent and receive a 33 percent penalty for each: low coverage, low quality, or high contamination in the Kraken report.\n";
+  print $fh "# Scores start at 100 percent and receive a 33 percent penalty for each: low coverage, low quality, high percentage of Ns in the assembly, or high contamination in the Kraken report.\n";
   close $fh;
 }
 
