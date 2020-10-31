@@ -10,15 +10,16 @@ use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
 use Bio::SeqIO;
 use Bio::FeatureIO::gff;
+use List::Util qw/min max/;
 
 use threads;
 use Thread::Queue;
 
 use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION= "SARS-CoV-2 assembly plugin by Lee Katz.";
 
 local $0=fileparse $0;
@@ -40,7 +41,7 @@ sub main{
       seqtk                           => 'seqtk 2>&1 | grep -m 1 Version:',
       bgzip                           => 'bgzip --version | head -n1',
       tabix                           => 'tabix --version | head -n1',
-      #'v-annotate.pl (VADR)'          => 'v-annotate.pl -h | grep -m 1 [0-9]'
+      'v-annotate.pl (VADR)'          => 'v-annotate.pl -h | grep -m 1 [0-9]'
     }, $settings,
   );
 
@@ -75,6 +76,7 @@ sub assembleAll{
   
   # Find information about each genome
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
+  my %sampleMetrics = ();
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
     logmsg "ASSEMBLE SAMPLE $sample";
@@ -99,150 +101,100 @@ sub assembleAll{
         cp($srcFile, $target) or die "ERROR copying $srcFile => $target\n  $!";
       }
       cp($assembly, $outassembly) or die "ERROR copying $assembly => $outassembly\n  $!";
+    }
 
-      mkdir "$outdir/vadr"; # just make this directory right away
+    # Assembly metrics
+    my $asmMetricsFile = "$outdir/assemblyMetrics.tsv";
+    if(! -e $asmMetricsFile){
+      logmsg "Assembly metrics for $outassembly";
+      command("run_assembly_metrics.pl --allMetrics --numcpus $$settings{numcpus} $outassembly >> $asmMetricsFile.tmp");
+      mv("$asmMetricsFile.tmp", $asmMetricsFile) or die "ERROR: could not make $asmMetricsFile";
     }
 
     # Genome annotation
     #logmsg "PREDICT GENES FOR SAMPLE $sample";
-    #if(!-e $outgbk){
-    #  my $gbk=annotateFasta($sample,$outassembly,$settings);
-    #  cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
-    #}
+    my $vadrPass = "$outdir/vadr/vadr.vadr.pass.tbl";
+    my $vadrFail = "$outdir/vadr/vadr.vadr.fail.tbl";
+    if(!-e $vadrPass || !-e $vadrFail){
+      logmsg "ANNOTATE SAMPLE $sample";
+      my $tmpVadrDir=annotateFasta($sample,$outassembly,$settings);
+      mkdir("$outdir/vadr");
+      for(glob("$tmpVadrDir/*")){
+        next if(!-f $_);
+        cp($_, "$outdir/vadr/".basename($_)) or die "ERROR copying $_ to $outdir/vadr/: $!";
+      }
+    }
+    logmsg "Annotations can be found in $vadrPass and $vadrFail";
+
+    my $cdsMetricsFile = "$outdir/predictionMetrics.tsv";
+    if(!-e $cdsMetricsFile){
+      logmsg "Prediction metrics for $vadrPass";
+      my $passCds = readTbl($vadrPass, $settings);
+      #print Dumper $passCds;
+      logmsg "Prediction metrics for $vadrFail";
+      my $failCds = readTbl($vadrFail, $settings);
+      #print Dumper $failCds;
+
+      my $numPassed = $$passCds{numFeatures}{mat_peptide} || 0;
+      my $numFailed = $$failCds{numFeatures}{mat_peptide} || 0;
+
+      open(my $fh, ">", $cdsMetricsFile.".tmp") or die "ERROR: could not write to $cdsMetricsFile.tmp: $!";
+      print $fh join("\t", qw(File passCds failCds))."\n";
+      print $fh join("\t", $outassembly, $numPassed, $numFailed)."\n";
+      close $fh;
+      mv("$cdsMetricsFile.tmp", $cdsMetricsFile) or die "ERROR: could not mv $cdsMetricsFile.tmp => $cdsMetricsFile: $!";
+    }
+    logmsg "Summary CDS info in $cdsMetricsFile";
+
+    # Combine metrics
+    my $annMetrics = readTsv($cdsMetricsFile, $settings);
+    my $asmMetrics = readTsv($asmMetricsFile,$settings);
+    my %asmAnnMetrics = (%$annMetrics, %$asmMetrics);
+    while(my($filePath, $metricsHash) = each(%asmAnnMetrics)){
+      while(my($metric, $value) = each(%$metricsHash)){
+        $sampleMetrics{$sample}{$metric} = $value;
+      }
+      
+      ## Add more metrics for this sample
+      # percentage of Ns
+      my %ntCounter;
+      my $totalNt = 0;
+      my $seqin = Bio::SeqIO->new(-file=>$outassembly);
+      while(my $seq = $seqin->next_seq){
+        my $sequence = $seq->seq;
+        while($sequence =~ /(.)/g){
+          $ntCounter{uc($1)}++;
+        }
+        $totalNt += length($sequence);
+      }
+      $seqin->close;
+
+      $totalNt ||= ~0; # avoid divide by zero error by setting this number to something really high if zero.
+      $sampleMetrics{$sample}{percentNs} = sprintf("%0.2f", $ntCounter{N} / $totalNt);
+    }
 
   }
-  
-  # run assembly metrics with min contig size=0.5kb
+
   my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
-  logmsg "Running metrics on the genbank files at $metricsOut";
-
-  my @thr;
-  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.bowtie2.bcftools.fasta"));
-  for(0..$$settings{numcpus}-1){
-    $thr[$_]=threads->new(\&assemblyMetricsWorker,$Q,$settings);
-    $Q->enqueue(undef);
+  if(!-e $metricsOut || $$settings{force}){
+    logmsg "Combining metrics into $metricsOut";
+    open(my $fh, ">", $metricsOut.".tmp") or die "ERROR: could not write to $metricsOut.tmp: $!";
+    my @sample = sort {$a cmp $b} keys(%sampleMetrics);
+    my @header = grep {!/File/} sort{$a cmp $b} keys($sampleMetrics{$sample[0]});
+    print $fh join("\t", "File", @header) ."\n";
+    for my $sample(@sample){
+      print $fh basename($sampleMetrics{$sample}{File});
+      for(@header){
+        print $fh "\t".$sampleMetrics{$sample}{$_}
+      }
+      print $fh "\n";
+    }
+    close $fh;
+    mv("$metricsOut.tmp", $metricsOut) or die "ERROR: could not move metrics file to $metricsOut: $!";
   }
-  for(@thr){
-    $_->join;
-  }
-  
-  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
-  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
   
   return $metricsOut;
 }
-
-sub assemblyMetricsWorker{
-  my($Q,$settings)=@_;
-  my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
-  my $assemblyOut   ="$tempdir/assemblyMetrics.tsv";
-  my $metricsOut    ="$tempdir/metrics.tsv";  # Combined metrics
-  my $coverageOut   ="$tempdir/effectiveCoverage.tsv";
-  command("touch $assemblyOut");
-
-  my $numMetrics=0;
-  while(defined(my $fasta=$Q->dequeue)){
-    # Bring the shovill bam file over
-    my $bam = dirname($fasta)."/consensus/sorted.bam";
-    
-    logmsg "asm metrics for $fasta";
-    command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta >> $assemblyOut");
-
-    logmsg "Effective coverage for $bam";
-    command("samtools depth -aa $bam > $coverageOut");
-    my $total=0;
-    my $numSites=0;
-    for my $line(`cat $coverageOut`){
-      chomp($line);
-      my(undef, undef, $depth) = split(/\t/, $line);
-      $total+=$depth;
-      $numSites++;
-    }
-    open(my $tmpFh, ">", $coverageOut) or die "ERROR: could not write to $coverageOut: $!";
-
-    # Effective coverage: avoid divide by zero error.
-    my $effectiveCoverage = "0.00";
-    if($numSites > 0){
-      $effectiveCoverage = sprintf("%0.2f", $total/$numSites);
-    }
-
-    print $tmpFh join("\t", qw(File effectiveCoverage))."\n";
-    print $tmpFh join("\t", $fasta, $effectiveCoverage)."\n";
-    close $tmpFh;
-    $numMetrics++;
-  }
-
-  # Don't do any combining if no metrics were performed
-  return if($numMetrics==0);
-
-  # Combine the files
-  open(my $assemblyFh, $assemblyOut) or die "ERROR: could not read $assemblyOut: $!";
-  open(my $coverageFh, $coverageOut) or die "ERROR: could not read $coverageOut: $!";
-  open(my $metricsFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
-
-  # Get and paste the header into the output metrics file
-  my $assemblyHeader=<$assemblyFh>;
-  my $coverageHeader=<$coverageFh>;
-  chomp($assemblyHeader,$coverageHeader);
-  my @assemblyHeader=split(/\t/,$assemblyHeader);
-  my @coverageHeader=split(/\t/, $coverageHeader);
-  print $metricsFh "File\tgenomeLength";
-  for(@assemblyHeader, @coverageHeader){
-    next if($_ =~ /File|genomeLength/);
-    print $metricsFh "\t".$_;
-  }
-  # adding on percent Ns to the header
-  print $metricsFh "\t"."percentNs";
-  print $metricsFh "\n";
-
-  # Get and paste the metrics from asm and pred into the output file
-  while(my $assemblyLine=<$assemblyFh>){
-    my $coverageLine=<$coverageFh>;
-    chomp($assemblyLine,$coverageLine);
-
-    my %F;
-    @F{@assemblyHeader}=split(/\t/,$assemblyLine);
-    @F{@coverageHeader}=split(/\t/,$coverageLine);
-    # In case there was no assembly or predictions, add in a default value
-    for(@assemblyHeader, @coverageHeader){
-      $F{$_} //= 'NA';
-    }
-    # Also take care of genomeLength specifically
-    $F{assembly} = $F{File}; # save the path to the asm
-    $F{genomeLength} //= "NA";
-    $F{File}=basename($F{assembly},qw(.gbk .fasta .bam));
-
-    # Check percent Ns in the assembly
-    my %ntCounter;
-    my $totalNt = 0;
-    my $seqin = Bio::SeqIO->new(-file=>$F{assembly});
-    while(my $seq = $seqin->next_seq){
-      my $sequence = $seq->seq;
-      while($sequence =~ /(.)/g){
-        $ntCounter{uc($1)}++;
-      }
-      $totalNt += length($sequence);
-    }
-    $seqin->close;
-    $F{percentN} = sprintf("%0.2f", $ntCounter{N} / $totalNt);
-
-    # Combine all the values into the metrics file
-    print $metricsFh $F{File}."\t".$F{genomeLength};
-    for(@assemblyHeader, @coverageHeader){
-      next if($_ =~ /File|genomeLength/);
-      print $metricsFh "\t".$F{$_}
-    }
-    # add percent Ns to the metrics
-    print $metricsFh "\t".$F{percentN};
-
-    print $metricsFh "\n";
-  }
-  close $_ for($assemblyFh,$coverageFh,$metricsFh);
-
-  #system("ls $metricsOut; cat $metricsOut");
-  #die "Problem with $metricsOut" if $?;
-}
-
 
 sub assembleSample{
   my($sample,$sampleInfo,$settings)=@_;
@@ -308,7 +260,8 @@ sub assembleSample{
   system("perl $RealBin/helper/vcf_mask_lowcoverage.pl --bam $sortedBam --vcf $vcf.gz --depth $mindepth --reference $ref --consout $consensusfasta");
   die if $?;
 
-  # Some cleanup
+  # Some cleanup of needlessly large files that we just
+  # want to make sure are gone
   unlink($sam);
   unlink("$outdir/out.vcf.gz");
   unlink("$outdir/out.vcf.gz.tbi");
@@ -319,57 +272,14 @@ sub assembleSample{
 # annotate with vadr
 sub annotateFasta{
   my($sample,$assembly,$settings)=@_;
-
-  # Ensure a clean slate
   my $outdir="$$settings{tempdir}/$sample/vadr";
   system("rm -rf $outdir");
 
   mkdir "$$settings{tempdir}/$sample";
-  mkdir $outdir;
 
-  my $outgff="$outdir/vadr.gff";
-  my $outgbk="$outdir/vadr.gbk";
+  command("v-annotate.pl -r -s --nomisc --lowsimterm 2 --mxsize 64000 --mdir $$settings{VADRMODELDIR} --mkey NC_045512 --fstlowthr 0.0 --alt_fail lowscore,fsthicnf,fstlocnf --lowsc 0.75 $assembly $outdir");
 
-  logmsg "Annotating genes on $sample with VADR";
-  eval{
-    #command("prodigal -q -i $assembly -o $outgff -f gff -g 11 1>&2");
-    # v-annotate.pl -s --nomisc --lowsimterm 2 --mxsize 64000 --mdir $VADRMODELDIR --mkey NC_045512 --fstlowthr 0.0 --alt_fail lowscore,fsthicnf,fstlocnf --lowsc 0.75 SRR12754173.bowtie2.bcftools.fasta vadr
-    command("v-annotate.pl -s --nomisc --lowsimterm 2 --mxsize 64000 --mdir $$settings{VADRMODELDIR} --mkey NC_045512 --fstlowthr 0.0 --alt_fail lowscore,fsthicnf,fstlocnf --lowsc 0.75 $assembly $outdir/vadr");
-  };
-  # If there is an issue, push ahead with a zero byte file
-  if($@){
-    logmsg "There was an issue with predicting genes on sample $sample. This might be caused by a poor assembly.";
-    open(my $fh, ">", $outgff) or die "ERROR: could not write to $outgff: $!";
-    close $fh;
-  }
-
-  die;
-
-  # Read the assembly sequence
-  my %seqObj;
-  my $seqin=Bio::SeqIO->new(-file=>$assembly);
-  while(my $seq=$seqin->next_seq){
-    $seqObj{$seq->id}=$seq;
-  }
-  $seqin->close;
-
-  # Add seq features
-  my $gffin=Bio::FeatureIO->new(-file=>$outgff);
-  while(my $feat=$gffin->next_feature){
-    # put the features onto the seqobj and write it to file
-    my $id=$feat->seq_id;
-    $seqObj{$id}->add_SeqFeature($feat);
-  }
-  $gffin->close;
-
-  # Convert to gbk
-  my $gbkObj=Bio::SeqIO->new(-file=>">$outgbk",-format=>"genbank");
-  for my $seq(values(%seqObj)){
-    $gbkObj->write_seq($seq);
-  }
-  $gbkObj->close;
-
-  return $outgbk;
+  return $outdir;
 }
 
 sub adapterTrim{
@@ -394,6 +304,81 @@ sub adapterTrim{
   command("cutadapt -j $threads -g GTTTCCCAGTCACGATA -G GTTTCCCAGTCACGATA -a TATCGTGACTGGGAAAC -A TATCGTGACTGGGAAAC -g ACACTCTTTCCCTACACGACGCTCTTCCGATCT -G ACACTCTTTCCCTACACGACGCTCTTCCGATCT -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -n 3 -m 75 -q 25 --interleaved $R1in $R2in 2>>$log | cutadapt -j $threads --interleaved -m 75 -u 30 -u -30 -U 30 -U -30 -o $R1out -p $R2out - >> $log 2>&1");
 
   return($R1out, $R2out);
+}
+
+# Read tbl format into a hash of features
+# https://www.ncbi.nlm.nih.gov/projects/Sequin/table.html
+sub readTbl{
+  my($infile, $settings) = @_;
+
+  # Variable for just feature information
+  my %feature;
+  # Variable for containing all features + meta information
+  my %uber;
+  # Contains counts of features by $featureKey
+  my %numFeatures;
+
+  my $currentSeqid = "UNKNOWN";
+  my $currentTableName = "UNKNOWN";
+  my ($featureStart, $featureStop, $featureKey);
+  open(my $fh, "<", $infile) or die "ERROR: could not read $infile: $!";
+  while(<$fh>){
+    chomp;
+
+    my @F = split(/\s+/, $_);
+    next if(/^\s*$/);
+
+    # get the contig information if it starts with >Feature
+    if($F[0] =~ /^>Feature/){
+      shift(@F); # Removes ">Feature" from array
+      ($currentSeqid, $currentTableName) = @F;
+      die "ERROR: it seems like there should be a sequence identifer but there wasn't one in $infile" if(!$currentSeqid);
+      next;
+    }
+    
+    # Get gene location information
+    #   This is a three column format with start/stop/featureKey
+    if(defined($F[0]) && $F[0] ne ""){
+      
+      # In VADR, there can be a line after all features saying
+      #   Additional note(s) to submitter
+      # This clues us into that all the rest of the text is not
+      # part of the format.
+      if($F[0] =~ /^\s*Additional note/i){
+        last;
+      }
+
+      ($featureStart, $featureStop, $featureKey) = @F;
+      if(!defined($featureKey)){
+        $featureKey = "UNTYPED_FEATURE";
+      }
+      $numFeatures{$featureKey}++;
+      next;
+    }
+
+    # Get qualifier key and value.
+    # This line type is indented with threee empty columns.
+
+    my($qualifierKey, $qualifierValue) = grep {/./} @F;
+
+    # This is the structure of the features hash.
+    # It's not necessary to explicitly define it like this but
+    # it's also possibly confusing.
+    $feature{$currentSeqid} //= {};
+    $feature{$currentSeqid}{$featureStart}{$featureStop} //= {};
+    $feature{$currentSeqid}{$featureStart}{$featureStop}{$featureKey} //= {};
+
+    $feature{$currentSeqid}{$featureStart}{$featureStop}{$featureKey}{$qualifierKey} = $qualifierValue;
+
+    #print Dumper [[$featureStart, $featureStop, $featureKey], [$qualifierKey, $qualifierValue]];
+  }
+
+  %uber = (
+    features    => \%feature,
+    numFeatures => \%numFeatures,
+  );
+
+  return \%uber;
 }
 
 sub usage{
