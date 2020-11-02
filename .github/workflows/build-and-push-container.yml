@@ -4,7 +4,7 @@
 name: github-docker
 on: 
   push:
-    branches: [ docker-multistage, master, main ]
+    branches: [ docker-multistage, master, main, crypto ]
 
 
 
