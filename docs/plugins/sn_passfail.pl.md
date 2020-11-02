@@ -17,8 +17,10 @@ read quality, from the read metrics plugin.
 Table with columns
 
 * sample
+* assembly - pass or fail based on number of Ns (threshold defined in `taxonProperties.conf`) or number of genes
 * coverage - pass or fail
 * quality  - pass or fail
 * kraken - pass or fail 
 
-1 indicates failure; 0 indicates pass
+1 indicates failure; 0 indicates pass; -1 indicates unknown (e.g., if Kraken was never run)
+

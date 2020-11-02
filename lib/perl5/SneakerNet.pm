@@ -211,15 +211,30 @@ Returns:
 sub readConfig{
   my $settings={};
 
-  my @file=glob("$thisdir/../../config/*.conf");
+  #my %seenBasename = ();
+
+  my @file=glob("$thisdir/../../config/*.conf $thisdir/../../config.bak/*.conf");
   for my $file(@file){
+    # Look at the filename. If we've seen this filename,
+    # then skip. This will happen if the file exists
+    # in config/ and in config.bak/
+    #next if($seenBasename{basename($file)}++);
+
     my $cfg = new Config::Simple();
     if(!$cfg->read($file)){
       logmsg "WARNING: could not read $file: ".$cfg->error;
       next;
     }
     my %vars= $cfg->vars();
-    $$settings{$_}=$vars{$_} for(keys(%vars));
+    for my $key(keys(%vars)){
+      if(dirname($file) =~ /config.bak/){
+        if(!defined($$settings{$key})){
+          logmsg "WARNING: key $key was expected but was not found in your local config. I will use the value found in $file. Please edit in $thisdir/../../config/";
+        }
+      }
+
+      $$settings{$key} //= $vars{$key};
+    }
     $$settings{obj}{basename($file)}=$cfg; # save the obj too
   }
   return $settings;
