@@ -205,8 +205,8 @@ RUN export SNVER=${SNVER:-0.16.0} && \
 ENV PATH="${PATH}:\
 /CG-Pipeline/scripts:\
 /KronaTools-2.7.1/bin:\
-/SneakerNet-${SNVER}/scripts:/SneakerNet-${SNVER}/SneakerNet.plugins:\
-/SneakerNet-${SNVER}/scripts/GP60_Counter/Scripts:\
+/SneakerNet-${SNVER:-0.16.0}/scripts:/SneakerNet-${SNVER:-0.16.0}/SneakerNet.plugins:\
+/SneakerNet-${SNVER:-0.16.0}/scripts/GP60_Counter/Scripts:\
 /mlst-2.19.0/bin/:\
 /NGStools/KronaTools-2.7/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
 /NGStools/chewBBACA:/NGStools/chewBBACA/utils:/NGStools/prodigal_training_files:/NGStools/clustalw-2.1-linux-x86_64-libcppstatic:\
@@ -224,7 +224,7 @@ ENV PATH="${PATH}:\
  BLASTDB=/blast/blastdb 
 
 ## Need to format the GP60 blast database
-RUN cd /SneakerNet-${SNVER}/scripts/GP60_Counter/db && \
+RUN cd /SneakerNet-${SNVER:-0.16.0}/scripts/GP60_Counter/db && \
   makeblastdb -in Master_GP60_Final_2020-1-23.fasta -dbtype nucl
 
 ## pip installations after this line
