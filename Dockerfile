@@ -223,6 +223,10 @@ ENV PATH="${PATH}:\
  RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
  BLASTDB=/blast/blastdb 
 
+## Need to format the GP60 blast database
+RUN cd /SneakerNet-${SNVER}/scripts/GP60_Counter/db && \
+  makeblastdb -in Master_GP60_Final_2020-1-23.fasta -dbtype nucl
+
 ## pip installations after this line
 RUN python3 -m pip install --upgrade pip
 
