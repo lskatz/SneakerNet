@@ -26,7 +26,7 @@ jobs:
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl
+          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - run: perl -V
