@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest' ]
-  name: System Perl on ${{ matrix.os }}
+    name: System Perl on ${{ matrix.os }}
     steps:
       - name: checkout my repo
         uses: actions/checkout@v2
