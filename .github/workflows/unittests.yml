@@ -38,21 +38,21 @@ jobs:
       - run: perl -V
       - name: env
         run:  env
-#     - name: install Bio::SeqIO
-#       run: |
-#         export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
-#         which cpanm
-#         sudo cpanm --verbose --notest --force Bio::SeqIO 
-#     - name: install Bio::FeatureIO
-#       run: |
-#         export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
-#         which cpanm
-#         sudo cpanm --verbose --notest --force Bio::FeatureIO 
-#     - name: install Bio::Kmer
-#       run: |
-#         export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
-#         which cpanm
-#         sudo cpanm --verbose --notest --force Bio::Kmer 
+     - name: install Bio::SeqIO
+        run: |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          which cpanm
+          sudo cpanm --verbose --notest --force Bio::SeqIO 
+      - name: install Bio::FeatureIO
+        run: |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          which cpanm
+          sudo cpanm --verbose --notest --force Bio::FeatureIO 
+      - name: install Bio::Kmer
+        run: |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          which cpanm
+          sudo cpanm --verbose --notest --force Bio::Kmer 
       - name: install-makemaker
         run: |
           which cpanm
