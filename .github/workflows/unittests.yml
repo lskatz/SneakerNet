@@ -58,7 +58,7 @@ jobs:
           which cpanm
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           sudo cpanm --verbose --notest --force ExtUtils::MakeMaker
-          sudo cpanm --installdeps . -l . --verbose --notest --force
+          sudo cpanm --installdeps -l . --verbose --notest --force
       - name: perl-check-dependencies
         run:  |
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
