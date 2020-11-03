@@ -38,7 +38,7 @@ jobs:
       - run: perl -V
       - name: env
         run:  env
-     - name: install Bio::SeqIO
+      - name: install Bio::SeqIO
         run: |
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           which cpanm
