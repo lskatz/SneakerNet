@@ -24,7 +24,9 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - name: apt-get install
-        run:  sudo apt-get install tree libbio-perl-perl libtest-most-perl
+        run:  |
+          sudo apt-get update
+          sudo apt-get -y --no-install-recommends install tree bioperl
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - run: perl -V
