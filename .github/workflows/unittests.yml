@@ -29,10 +29,10 @@ jobs:
         run:  cpanm --verbose --notest --force LWP::Simple
       - name: tree
         run:  tree
-      - name: find LWPSimple
-        run:  sudo find / -name Simple.pm
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print \@INC'
+      - name: find LWPSimple
+        run:  sudo find / -name Simple.pm || true
       - run: perl -V
       - name: env
         run:  env
