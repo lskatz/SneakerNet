@@ -1,7 +1,7 @@
 name: unit-tests
 on:
   push:
-    branches: [master, dev]
+    branches: [master, dev, unit-test]
 
 
 # perl: [ '5.32', '5.30', '5.28' ]
@@ -23,6 +23,10 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
+      - name: apt-get install
+        run:  sudo apt-get install tree
+      - name: tree
+        run:  tree
       - run: perl -V
       - name: env
         run:  env
