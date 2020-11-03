@@ -57,8 +57,8 @@ jobs:
           sudo cpanm --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
         run:  |
-          perl Makefile.PL
-          make
+          sudo perl Makefile.PL
+          sudo make
           sudo cpanm --installdeps . -l . --verbose --notest --force
           perl -I$(pwd)/lib/perl5 -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
@@ -66,8 +66,8 @@ jobs:
       - name: check-mymeta
         run: |
           echo "MYMETA.json";
-          cat MYMETA.json
+          sudo cat MYMETA.json
       - id: prove-lv-t
         run: |
-          prove -lv t
+          sudo prove -lv t
 
