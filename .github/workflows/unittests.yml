@@ -26,17 +26,27 @@ jobs:
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y --no-install-recommends install tree bioperl
+          sudo apt-get -y install tree bioperl
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - run: perl -V
       - name: env
         run:  env
-      - name: install Bio modules
+      - name: install Bio::SeqIO
         run: |
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           which cpanm
-          cpanm --verbose --notest --force Bio::SeqIO Bio::FeatureIO Bio::Kmer .
+          cpanm --verbose --notest --force Bio::SeqIO .
+      - name: install Bio::FeatureIO
+        run: |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          which cpanm
+          cpanm --verbose --notest --force Bio::FeatureIO .
+      - name: install Bio::Kmer
+        run: |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          which cpanm
+          cpanm --verbose --notest --force Bio::Kmer .
       - name: install-makemaker
         run: |
           which cpanm
