@@ -36,22 +36,22 @@ jobs:
         run: |
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           which cpanm
-          cpanm --verbose --notest --force Bio::SeqIO .
+          sudo cpanm --verbose --notest --force Bio::SeqIO 
       - name: install Bio::FeatureIO
         run: |
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           which cpanm
-          cpanm --verbose --notest --force Bio::FeatureIO .
+          sudo cpanm --verbose --notest --force Bio::FeatureIO 
       - name: install Bio::Kmer
         run: |
           export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           which cpanm
-          cpanm --verbose --notest --force Bio::Kmer .
+          sudo cpanm --verbose --notest --force Bio::Kmer 
       - name: install-makemaker
         run: |
           which cpanm
-          cpanm --verbose --notest --force ExtUtils::MakeMaker
-          cpanm --installdeps --verbose --notest --force .
+          sudo cpanm --verbose --notest --force ExtUtils::MakeMaker
+          sudo cpanm --installdeps --verbose --notest --force
       - name: perl-check-dependencies
         run:  |
           perl Makefile.PL
