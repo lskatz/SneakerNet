@@ -31,6 +31,8 @@ jobs:
         run:  tree
       - name: find LWPSimple
         run:  find / -name Simple.pm
+      - name: Dumper INC
+        run:  perl -MData::Dumper -e 'print \@INC'
       - run: perl -V
       - name: env
         run:  env
