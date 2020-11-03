@@ -18,7 +18,8 @@ jobs:
         #perl: [ '5.32', '5.30.1', '5.16.3' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
-      #- uses: actions/checkout@v2
+      - name: checkout my repo
+        uses: actions/checkout@v2
       #- name: Set up perl
       #  uses: shogo82148/actions-setup-perl@v1
       #  with:
@@ -29,6 +30,8 @@ jobs:
           sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
+      - name: tree
+        run: tree
       - run: perl -V
       - name: env
         run:  env
