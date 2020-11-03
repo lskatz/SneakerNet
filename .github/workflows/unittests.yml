@@ -36,15 +36,15 @@ jobs:
       - run: perl -V
       - name: env
         run:  env
+      - name: install Bio modules
+        run:  cpanm --verbose --notest --force Bio::SeqIO Bio::FeatureIO Bio::Kmer
       - name: install-makemaker
         run: |
           which cpanm
-          export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
-          cpanm -l $HOME --verbose --notest --force ExtUtils::MakeMaker
+          cpanm --verbose --notest --force ExtUtils::MakeMaker
           cpanm --installdeps --verbose --notest --force .
       - name: perl-check-dependencies
         run:  |
-          export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
           perl Makefile.PL
           perl -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
@@ -55,6 +55,5 @@ jobs:
           cat MYMETA.json
       - id: prove-lv-t
         run: |
-          export PERL5LIB=$PERL5LIB:$HOME/lib/perl5
           prove -lv t
 
