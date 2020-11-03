@@ -3,7 +3,6 @@ on:
   push:
     branches: [master, dev, unit-test]
 
-
 # perl: [ '5.32', '5.30', '5.28' ]
 # perl: [ '5.32', '5.30.1', '5.16.3', '5.12.3' ]
 # os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
@@ -21,7 +20,8 @@ jobs:
         os: ['ubuntu-latest' ]
         perl: [ '5.30.1' ]
         #perl: [ '5.32', '5.30.1', '5.16.3' ]
-    name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
+#   name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
+   name: System Perl on ${{ matrix.os }}
     steps:
       - name: checkout my repo
         uses: actions/checkout@v2
@@ -58,10 +58,12 @@ jobs:
       - name: install-makemaker
         run: |
           which cpanm
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           sudo cpanm --verbose --notest --force ExtUtils::MakeMaker
-          sudo cpanm --installdeps . --verbose --notest --force
+          sudo cpanm --installdeps . -l . --verbose --notest --force
       - name: perl-check-dependencies
         run:  |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           sudo perl Makefile.PL
           sudo make
           sudo cpanm --installdeps . -l . --verbose --notest --force
@@ -74,5 +76,6 @@ jobs:
           sudo cat MYMETA.json
       - id: prove-lv-t
         run: |
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
           sudo prove -lv t
 
