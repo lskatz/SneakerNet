@@ -24,16 +24,14 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - name: apt-get install
-        run:  sudo apt-get install tree bioperl
+        run:  sudo apt-get install tree
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
-      - name: test bioperl
-        run:  perl -MData::Dumper -MBio::SeqIO -MBio::FeatureIO -e 'print Dumper \@INC'
       - run: perl -V
       - name: env
         run:  env
       - name: install Bio modules
-        run:  cpanm --verbose --notest --force Bio::Kmer
+        run:  cpanm --verbose --notest --force Bio::SeqIO Bio::FeatureIO Bio::Kmer .
       - name: install-makemaker
         run: |
           which cpanm
