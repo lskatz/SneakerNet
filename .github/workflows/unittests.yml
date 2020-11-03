@@ -24,20 +24,16 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - name: apt-get install
-        run:  sudo apt-get install tree
-      - name: initial cpanm that should work no matter what
-        run:  cpanm --verbose --notest --force LWP::Simple
-      - name: tree
-        run:  tree
+        run:  sudo apt-get install tree bioperl
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
-      - name: find LWPSimple
-        run:  sudo find /opt/hostedtoolcache -name Simple.pm || true
+      - name: test bioperl
+        run:  perl -MData::Dumper -MBio::SeqIO -MBio::FeatureIO -e 'print Dumper \@INC'
       - run: perl -V
       - name: env
         run:  env
       - name: install Bio modules
-        run:  cpanm --verbose --notest --force Bio::SeqIO Bio::FeatureIO Bio::Kmer
+        run:  cpanm --verbose --notest --force Bio::Kmer
       - name: install-makemaker
         run: |
           which cpanm
