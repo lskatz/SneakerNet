@@ -59,6 +59,7 @@ jobs:
         run:  |
           perl Makefile.PL
           make
+          sudo cpanm --installdeps --verbose --notest --force
           perl -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
