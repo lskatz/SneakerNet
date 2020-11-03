@@ -34,7 +34,8 @@ jobs:
         run:  env
       - name: install Bio modules
         run: |
-          export PERL5LIB=$PERL5LIB:$(PWD)/lib/perl5
+          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          which cpanm
           cpanm --verbose --notest --force Bio::SeqIO Bio::FeatureIO Bio::Kmer .
       - name: install-makemaker
         run: |
