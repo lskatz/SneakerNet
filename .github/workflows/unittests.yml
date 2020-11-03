@@ -60,8 +60,8 @@ jobs:
           sudo perl Makefile.PL
           sudo make
           sudo cpanm --installdeps . -l . --verbose --notest --force
-          perl -I$(pwd)/lib/perl5 -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
-          make
+          perl -I$(pwd)/lib/perl5 -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
+          sudo make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-mymeta
         run: |
