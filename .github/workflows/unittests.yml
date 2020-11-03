@@ -32,7 +32,7 @@ jobs:
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - name: find LWPSimple
-        run:  sudo find / -name Simple.pm || true
+        run:  sudo find /opt/hostedtoolcache -name Simple.pm || true
       - run: perl -V
       - name: env
         run:  env
