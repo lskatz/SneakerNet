@@ -26,7 +26,7 @@ my $preop =
   #'cp -v config.bak/ config/' .
   '';
 
-WriteMakefile1(
+WriteMakefile(
   NAME         => 'SneakerNet',
   VERSION_FROM => 'lib/perl5/SneakerNet.pm',
   #ABSTRACT_FROM => 'lib/perl5/SneakerNet.pm',
