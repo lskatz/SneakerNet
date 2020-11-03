@@ -51,6 +51,10 @@ jobs:
       - run: perl -V
       - name: env
         run:  env
+      - name: env with perl local lib
+        run:  |
+          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          env
 #     - name: install Bio::SeqIO
 #       run: |
 #         eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
@@ -61,10 +65,10 @@ jobs:
 #         export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
 #         which cpanm
 #         sudo cpanm --verbose --notest --force Bio::FeatureIO 
-      - name: install Bio::Kmer
-        run: |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          cpanm -l $HOME/perl5 --verbose --notest --force Bio::Kmer 
+#     - name: install Bio::Kmer
+#       run: |
+#         eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+#         cpanm -l $HOME/perl5 --verbose --notest --force Bio::Kmer 
       - name: install-makemaker
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
