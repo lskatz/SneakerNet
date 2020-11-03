@@ -54,13 +54,13 @@ jobs:
         run: |
           which cpanm
           sudo cpanm --verbose --notest --force ExtUtils::MakeMaker
-          sudo cpanm --installdeps --verbose --notest --force
+          sudo cpanm --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
         run:  |
           perl Makefile.PL
           make
-          sudo cpanm --installdeps --verbose --notest --force
-          perl -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
+          sudo cpanm --installdeps . -l . --verbose --notest --force
+          perl -I$(pwd)/lib/perl5 -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-mymeta
