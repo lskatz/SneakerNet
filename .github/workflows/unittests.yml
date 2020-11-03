@@ -25,8 +25,12 @@ jobs:
           perl-version: ${{ matrix.perl }}
       - name: apt-get install
         run:  sudo apt-get install tree
+      - name: initial cpanm that should work no matter what
+        run:  cpanm --verbose --notest --force LWP::Simple
       - name: tree
         run:  tree
+      - name: find LWPSimple
+        run:  find / -name Simple.pm
       - run: perl -V
       - name: env
         run:  env
