@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v2
       - name: checkout CG-Pipeline
         uses: actions/checkout@v2
+        with:
           repository: lskatz/CG-Pipeline
       - name: apt-get install
         run:  |
