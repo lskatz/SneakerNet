@@ -28,6 +28,19 @@ jobs:
         with:
           repository: lskatz/CG-Pipeline
           path: CG-Pipeline
+          ref:  v0.5
+      - name: checkout Krona
+        uses: actions/checkout@v2
+        with:
+          repository: marbl/krona
+          path: krona
+          ref:  v2.7.1
+      - name: checkout Shovill
+        uses: actions/checkout@v2
+        with:
+          repository: tseemann/shovill
+          path: shovill
+          ref:  v1.1.0
       - name: apt-get install
         run:  |
           sudo apt-get update
@@ -55,20 +68,12 @@ jobs:
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           env
-#     - name: install Bio::SeqIO
-#       run: |
-#         eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-#         which cpanm
-#         sudo cpanm --verbose --notest --force Bio::SeqIO 
-#     - name: install Bio::FeatureIO
-#       run: |
-#         export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
-#         which cpanm
-#         sudo cpanm --verbose --notest --force Bio::FeatureIO 
-#     - name: install Bio::Kmer
-#       run: |
-#         eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-#         cpanm -l $HOME/perl5 --verbose --notest --force Bio::Kmer 
+      - name: install krona
+        run:  |
+          export PATH=$PATH:~/krona
+          wget --progress=dot:mega --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
+          tar zxvf xl2.5.tar.gz
+          perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
       - name: install-makemaker
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
@@ -91,5 +96,9 @@ jobs:
         name: prove-lv-t
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          export PATH=$PATH:~/CG-Pipeline/scripts
+          export PATH=$PATH:~/shovill-1.0.0/bin
+          export PATH=$PATH:~/.local/bin
+          export PATH=$PATH:~/krona
           prove -lv t
 
