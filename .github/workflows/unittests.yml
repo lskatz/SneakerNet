@@ -15,7 +15,8 @@ jobs:
       matrix:
         os: ['ubuntu-latest' ]
         #perl: [ '5.16.3' ]
-        perl: [ '5.32', '5.30.1', '5.16.3' ]
+        #perl: [ '5.32', '5.30.1', '5.16.3' ]
+        perl: [ '5.32-shrplib', '5.30.1-shrplib', '5.16.3-shrplib' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -26,7 +27,7 @@ jobs:
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl
+          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - run: perl -V
