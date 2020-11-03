@@ -72,11 +72,11 @@ jobs:
           cpanm -l $HOME/perl5 --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
         run:  |
-          export PERL5LIB=$PERL5LIB:$(pwd)/lib/perl5
+          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           perl Makefile.PL
           make
           cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
-          perl -I$(pwd)/lib/perl5 -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
+          perl -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-mymeta
