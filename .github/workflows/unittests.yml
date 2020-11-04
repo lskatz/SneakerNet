@@ -59,9 +59,9 @@ jobs:
           mkdir -v $GITHUB_WORKSPACE/kmc
           cd $GITHUB_WORKSPACE/kmc
           wget https://github.com/refresh-bio/KMC/releases/download/v3.1.1/KMC3.1.1.linux.tar.gz
-          tar -xzf KMC3.1.1.linux.tar.gz
-          rm KMC3.1.1.linux.tar.gz
-          sudo ln -sv /kmc/kmc* /usr/local/bin
+          tar -xvzf KMC3.1.1.linux.tar.gz || echo "WARNING: could not find KMC3.1.1.linux.tar.gz"
+          rm -vf KMC3.1.1.linux.tar.gz
+          sudo ln -sv $GITHUB_WORKSPACE/kmc/kmc* /usr/local/bin
           which kmc
           kmc --help || true
       - name: apt-get install
