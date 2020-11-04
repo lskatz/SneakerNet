@@ -45,8 +45,8 @@ jobs:
           ref:  v1.1.0
       - name: checkout seqtk
         run:  |
-          mkdir -v /seqtk-src
-          cd /seqtk-src
+          mkdir -v $GITHUB_WORKSPACE/seqtk-src
+          cd $GITHUB_WORKSPACE/seqtk-src
           wget https://github.com/lh3/seqtk/archive/v1.3.tar.gz
           tar -zxf v1.3.tar.gz 
           rm -v v1.3.tar.gz 
@@ -56,8 +56,8 @@ jobs:
           which seqtk
       - name: install kmc
         run:  |
-          mkdir -v /kmc
-          cd /kmc
+          mkdir -v $GITHUB_WORKSPACE/kmc
+          cd $GITHUB_WORKSPACE/kmc
           wget https://github.com/refresh-bio/KMC/releases/download/v3.1.1/KMC3.1.1.linux.tar.gz
           tar -xzf KMC3.1.1.linux.tar.gz
           rm KMC3.1.1.linux.tar.gz
