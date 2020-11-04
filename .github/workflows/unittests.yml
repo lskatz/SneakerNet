@@ -134,7 +134,7 @@ jobs:
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           export PATH=$PATH:$GITHUB_WORKSPACE/CG-Pipeline/scripts
-          export PATH=$PATH:$GITHUB_WORKSPACE/shovill-1.0.0/bin
+          export PATH=$PATH:$GITHUB_WORKSPACE/shovill/bin
           export PATH=$PATH:$GITHUB_WORKSPACE/.local/bin
           export PATH=$PATH:$GITHUB_WORKSPACE/krona
           export PATH=$PATH:$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin
