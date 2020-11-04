@@ -41,13 +41,16 @@ closedir($dh);
 @plugin = sort @plugin;
 
 # Travis-CI makes it super hard to install certain things so...
-if($ENV{TRAVIS}){
+if($ENV{TRAVIS} || $ENV{GITHUB_ACTIONS}){
   # Remove plugins with kraken, taxonomy, assembly, mlst, ...
   # because it is difficult to get travis to download and
   # install it all.
-  @plugin = grep {!/kraken|taxon|assembl|mlst|crypto|staramr|salm/i} @plugin;
+  my $regex = qx/kraken|taxon|assembl|mlst|crypto|staramr|salm/;
+  my @removed = grep { /$regex/i} @plugin;
+  @plugin     = grep {!/$regex/i} @plugin;
   @plugin = sort @plugin;
-  note "Removed some plugins b/c Travis-CI environment";
+  note "Removed some plugins b/c CI environment:";
+  note "  => ".join(" ", @removed);
 }
 note "Testing these plugins: ". join(", ", @plugin);
 
