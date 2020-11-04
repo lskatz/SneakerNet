@@ -43,6 +43,27 @@ jobs:
           repository: tseemann/shovill
           path: shovill
           ref:  v1.1.0
+      - name: checkout seqtk
+        run:  |
+          mkdir -v /seqtk-src
+          cd /seqtk-src
+          wget https://github.com/lh3/seqtk/archive/v1.3.tar.gz
+          tar -zxf v1.3.tar.gz 
+          rm -v v1.3.tar.gz 
+          cd seqtk-1.3/
+          make
+          sudo make install
+          which seqtk
+      - name: install kmc
+        run:  |
+          mkdir -v /kmc
+          cd /kmc
+          wget https://github.com/refresh-bio/KMC/releases/download/v3.1.1/KMC3.1.1.linux.tar.gz
+          tar -xzf KMC3.1.1.linux.tar.gz
+          rm KMC3.1.1.linux.tar.gz
+          sudo ln -sv /kmc/kmc* /usr/local/bin
+          which kmc
+          kmc --help || true
       - name: apt-get install
         run:  |
           sudo apt-get update
