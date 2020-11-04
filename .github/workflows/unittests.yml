@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: checkout my repo
         uses: actions/checkout@v2
+        with:
+          path: SneakerNet
       - name: checkout CG-Pipeline
         uses: actions/checkout@v2
         with:
@@ -89,11 +91,13 @@ jobs:
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - name: tree pwd
-        run: tree $(pwd)
+        run:  tree $(pwd)
       - name: tree home
-        run: tree $HOME
+        run:  tree $HOME
       - name: tree GITHUB_WORKSPACE
-        run: tree $GITHUB_WORKSPACE
+        run:  tree $GITHUB_WORKSPACE
+      - name: tree -L 3 -d GITHUB_WORKSPACE
+        run:  tree -L 3 -d $GITHUB_WORKSPACE
       - run: perl -V
       - name: env
         run:  env
@@ -139,5 +143,6 @@ jobs:
           echo
           echo "$PATH" | tr ":" "\n"
           echo
+          cd $GITHUB_WORKSPACE/SneakerNet
           prove -lv t
 
