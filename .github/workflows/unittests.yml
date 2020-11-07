@@ -74,6 +74,7 @@ jobs:
           tar -zvxf v1.1.1.tar.gz
           cd Lighter-1.1.1
           make
+          chmod -v +x lighter
           sudo ln -sv lighter /usr/local/bin
       - name: apt-get install
         run:  |
@@ -92,6 +93,18 @@ jobs:
         run:  |
           wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
           tar -xzf SPAdes-${spadesVer}-Linux.tar.gz
+      - name: install skesa
+        run:  |
+          mkdir $GITHUB_WORKSPACE/skesa
+          cd $GITHUB_WORKSPACE/skesa 
+          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/skesa.centos.7.7
+          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/gfa_connector.centos7.7
+          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/kmercounter.centos7.7
+          mv skesa.centos.7.7 skesa
+          mv gfa_connector.centos7.7 gfa_connector 
+          mv kmercounter.centos7.7 kmercounter
+          chmod +x skesa gfa_connector kmercounter
+          sudo ln -sv skesa gfa_connector kmercounter /usr/local/bin
       - name: configure cpanm
         run:  |
           cpanm --local-lib=$HOME/perl5 local::lib
