@@ -129,6 +129,7 @@ jobs:
       - name: perl-check-dependencies
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
           cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
