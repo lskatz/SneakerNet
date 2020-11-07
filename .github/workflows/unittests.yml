@@ -72,6 +72,7 @@ jobs:
           cd $GITHUB_WORKSPACE/lighter
           wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz
           tar -zvxf v1.1.1.tar.gz
+          cd Lighter-1.1.1
           make
           sudo ln -sv lighter /usr/local/bin
       - name: apt-get install
