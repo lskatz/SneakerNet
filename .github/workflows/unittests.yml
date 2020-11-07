@@ -76,6 +76,18 @@ jobs:
           make
           chmod -v +x lighter
           sudo ln -sv lighter /usr/local/bin
+      - name: install trimmomatic
+        run:  |
+          mkdir $GITHUB_WORKSPACE/trimmomatic 
+          cd $GITHUB_WORKSPACE trimmomatic
+          wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip 
+          unzip Trimmomatic-0.38.zip 
+          rm -rf Trimmomatic-0.38.zip 
+          chmod +x Trimmomatic-0.38/trimmomatic-0.38.jar
+          echo "#!/bin/bash" >> trimmomatic
+          echo "exec java -jar $GITHUB_WORKSPACE/trimmomatic/Trimmomatic-0.38/trimmomatic-0.38.jar """"$""@"""" " >> trimmomatic
+          chmod -v +x trimmomatic
+          sudo ln -sv trimmomatic /usr/local/bin/
       - name: apt-get install
         run:  |
           sudo apt-get update
