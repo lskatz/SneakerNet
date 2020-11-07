@@ -138,7 +138,7 @@ jobs:
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-mymeta
         run: |
-          echo "MYMETA.json";
+          cd $GITHUB_WORKSPACE/SneakerNet
           cat MYMETA.json
       - id:   prove-lv-t
         name: prove-lv-t
