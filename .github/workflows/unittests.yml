@@ -19,6 +19,17 @@ jobs:
         perl: [ '5.32' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
+      - name: add some paths to PATH
+        run:  |
+          echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
+          echo
+          cat $GITHUB_PATH
       - name: Set up perl
         uses: shogo82148/actions-setup-perl@v1
         with:
@@ -142,10 +153,11 @@ jobs:
           env
       - name: install krona
         run:  |
-          export PATH=$PATH:~/krona
+          export PATH=$PATH:$GITHUB_WORKSPACE/krona
           wget --progress=dot:mega --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
           tar zxvf xl2.5.tar.gz
-          perl Krona-xl2.5/KronaTools/install.pl -prefix $HOME/krona
+          perl Krona-xl2.5/KronaTools/install.pl -prefix $GITHUB_WORKSPACE/krona
+          echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
       - name: install-makemaker
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
@@ -170,13 +182,6 @@ jobs:
         name: prove-lv-t
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          export PATH=$PATH:$GITHUB_WORKSPACE/CG-Pipeline/scripts
-          export PATH=$PATH:$GITHUB_WORKSPACE/shovill/bin
-          export PATH=$PATH:$GITHUB_WORKSPACE/.local/bin
-          export PATH=$PATH:$GITHUB_WORKSPACE/krona
-          export PATH=$PATH:$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin
-          export PATH=$PATH:$GITHUB_WORKSPACE/kmc
-          export PATH=$PATH:$GITHUB_WORKSPACE/Lighter-1.1.1
           echo
           echo "$PATH" | tr ":" "\n"
           echo
