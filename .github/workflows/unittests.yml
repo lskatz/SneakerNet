@@ -57,6 +57,16 @@ jobs:
           repository: tseemann/shovill
           path: shovill
           ref:  v1.1.0
+      - name: install Mash
+        run:  |
+          mkdir $GITHUB_WORKSPACE/Mash-2.2
+          cd $GITHUB_WORKSPACE/Mash-2.2
+          wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar
+          untar -vf mash-Linux64-v2.2.tar
+          ln -sv mash-Linux64-v2.2 mash
+          export PATH=$PATH:$GITHUB_WORKSPACE/Mash-2.2
+          echo "$GITHUB_WORKSPACE/Mash-2.2" >> $GITHUB_PATH
+          which mash
       - name: checkout seqtk
         run:  |
           mkdir -v $GITHUB_WORKSPACE/seqtk-src
