@@ -73,8 +73,22 @@ jobs:
           cd $GITHUB_WORKSPACE/lighter
           wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz
           tar -zvxf v1.1.1.tar.gz
+          cd Lighter-1.1.1
           make
+          chmod -v +x lighter
           sudo ln -sv lighter /usr/local/bin
+      - name: install trimmomatic
+        run:  |
+          mkdir $GITHUB_WORKSPACE/trimmomatic 
+          cd $GITHUB_WORKSPACE trimmomatic
+          wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip 
+          unzip Trimmomatic-0.38.zip 
+          rm -rf Trimmomatic-0.38.zip 
+          chmod +x Trimmomatic-0.38/trimmomatic-0.38.jar
+          echo "#!/bin/bash" >> trimmomatic
+          echo "exec java -jar $GITHUB_WORKSPACE/trimmomatic/Trimmomatic-0.38/trimmomatic-0.38.jar """"$""@"""" " >> trimmomatic
+          chmod -v +x trimmomatic
+          sudo ln -sv trimmomatic /usr/local/bin/
       - name: apt-get install
         run:  |
           sudo apt-get update
@@ -92,6 +106,18 @@ jobs:
         run:  |
           wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
           tar -xzf SPAdes-${spadesVer}-Linux.tar.gz
+      - name: install skesa
+        run:  |
+          mkdir $GITHUB_WORKSPACE/skesa
+          cd $GITHUB_WORKSPACE/skesa 
+          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/skesa.centos.7.7
+          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/gfa_connector.centos7.7
+          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/kmercounter.centos7.7
+          mv skesa.centos.7.7 skesa
+          mv gfa_connector.centos7.7 gfa_connector 
+          mv kmercounter.centos7.7 kmercounter
+          chmod +x skesa gfa_connector kmercounter
+          sudo ln -sv skesa gfa_connector kmercounter /usr/local/bin
       - name: configure cpanm
         run:  |
           cpanm --local-lib=$HOME/perl5 local::lib
@@ -129,6 +155,7 @@ jobs:
       - name: perl-check-dependencies
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
           cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
@@ -137,7 +164,7 @@ jobs:
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-mymeta
         run: |
-          echo "MYMETA.json";
+          cd $GITHUB_WORKSPACE/SneakerNet
           cat MYMETA.json
       - id:   prove-lv-t
         name: prove-lv-t
