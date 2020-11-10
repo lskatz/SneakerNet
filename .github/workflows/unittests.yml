@@ -62,7 +62,6 @@ jobs:
           cd $GITHUB_WORKSPACE
           wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar
           tar -xvf mash-Linux64-v2.2.tar # creates mash-Linux64-v2.2/mash
-          ln -sv mash-Linux64-v2.2 mash
           export PATH=$PATH:$GITHUB_WORKSPACE/mash-Linux64-v2.2
           echo "$GITHUB_WORKSPACE/mash-Linux64-v2.2" >> $GITHUB_PATH
           which mash
