@@ -19,6 +19,10 @@ my $run = "$RealBin/M00123-18-001-test";
 
 
 subtest 'ColorID' => sub{
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping ColorID.";
+  }
+
   diag `sn_detectContamination-mlst.pl --check-dependencies 2>&1`;
   if($?){
     diag "Dependencies not found. Will not test.";

@@ -245,8 +245,8 @@ sub usage{
   --mlstfasta mlst.fa  The mlst.fa file in Torsten's mlst package
                        If not given, I will try to find it relative
                        to where the mlst executable is.
-  --k   kmer length
-  --quality            Minimum quality for bp
+  --k                  kmer length (default: 39)
+  --quality            Minimum quality for bp (default: 15)
   --version
 ";
   exit(0);

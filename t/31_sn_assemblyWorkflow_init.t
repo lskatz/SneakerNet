@@ -21,6 +21,10 @@ diag `sn_assemblyWorkflow_init.pl --check-dependencies 2>&1`;
 if($?){
   plan 'skip_all' => "Dependencies not met for sn_assemblyWorkflow_init.pl";
 }
+if($ENV{CI}){
+  plan 'skip_all' => "Detected CI environment. Skipping assembly";
+}
+
 
 plan tests => 2;
 
