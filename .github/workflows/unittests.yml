@@ -57,6 +57,14 @@ jobs:
           repository: tseemann/shovill
           path: shovill
           ref:  v1.1.0
+      - name: install samclip
+        run:  |
+          mkdir $GITHUB_WORKSPACE/samclip
+          cd $GITHUB_WORKSPACE/samclip
+          wget https://raw.githubusercontent.com/tseemann/samclip/master/samclip
+          chmod +x samclip
+          export PATH=$PATH:$GITHUB_WORKSPACE/samclip
+          echo "$GITHUB_WORKSPACE/samclip" >> $GITHUB_PATH
       - name: install FLASh
         run:  |
           cd $GITHUB_WORKSPACE
