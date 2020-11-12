@@ -46,18 +46,23 @@ jobs:
           repository: lskatz/CG-Pipeline
           path: CG-Pipeline
           ref:  v0.5
-      - name: checkout Krona
-        uses: actions/checkout@v2
-        with:
-          repository: marbl/krona
-          path: krona
-          ref:  v2.7.1
       - name: checkout Shovill
         uses: actions/checkout@v2
         with:
           repository: tseemann/shovill
           path: shovill
           ref:  v1.1.0
+      - name: install krona
+        run:  |
+          cd $GITHUB_WORKSPACE
+          wget https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar
+          tar xvf KronaTools-2.7.1.tar
+          cd KronaTools-2.7.1
+          ./install.pl --prefix /opt/krona
+          ./updateTaxonomy.sh
+          export PATH=$PATH:/opt/krona/bin
+          echo "/opt/krona/bin" >> $GITHUB_PATH
+          which ktImportText
       - name: install samclip
         run:  |
           mkdir $GITHUB_WORKSPACE/samclip
@@ -241,13 +246,6 @@ jobs:
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           env
-      - name: install krona
-        run:  |
-          export PATH=$PATH:$GITHUB_WORKSPACE/krona
-          wget --progress=dot:mega --no-check-certificate https://github.com/marbl/Krona/archive/xl2.5.tar.gz
-          tar zxvf xl2.5.tar.gz
-          perl Krona-xl2.5/KronaTools/install.pl -prefix $GITHUB_WORKSPACE/krona
-          echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
       - name: install-makemaker
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
