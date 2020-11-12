@@ -110,6 +110,14 @@ jobs:
           export $PATH=$PATH:$GITHUB_WORKSPACE/lighter
           echo "$GITHUB_WORKSPACE/lighter" >> $GITHUB_PATH
           which lighter
+      - name: install megahit
+        run:  |
+          mkdir "$GITHUB_WORKSPACE/megahit"
+          cd "$GITHUB_WORKSPACE/megahit"
+          wget https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
+          tar -xzf megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
+          export PATH="$PATH:$GITHUB_WORKSPACE/megahit"
+          echo "$GITHUB_WORKSPACE/megahit" >> $GITHUB_PATH
       - name: install trimmomatic
         run:  |
           mkdir $GITHUB_WORKSPACE/trimmomatic 
