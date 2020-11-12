@@ -167,6 +167,18 @@ jobs:
           sudo update-alternatives --set python /usr/bin/python3
           python --version
           pip3 --version
+      - name: install jellyfish1
+        run:  |
+          cd $GITHUB_WORKSPACE
+          wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
+          tar -zxf jellyfish-1.1.12.tar.gz
+          cd jellyfish-1.1.12
+          ./configure --prefix=/opt/jellyfish-1.1.12
+          make -j 2
+          sudo make install
+          export PATH=$PATH:/opt/jellyfish-1.1.12/bin
+          echo "/opt/jellyfish-1.1.12/bin" >> $GITHUB_PATH
+          which jellyfish
       - name: install SPAdes
         run:  |
           wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
