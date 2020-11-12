@@ -302,6 +302,6 @@ jobs:
           cd $GITHUB_WORKSPACE/SneakerNet
           #prove -lv t
           make
-          for i in t/*.t; do perl t; done;
+          for i in t/*.t; do perl $i; done;
 
 
