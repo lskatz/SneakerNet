@@ -26,7 +26,7 @@ my $preop =
   #'cp -v config.bak/ config/' .
   '';
 
-WriteMakefile1(
+WriteMakefile(
   NAME         => 'SneakerNet',
   VERSION_FROM => 'lib/perl5/SneakerNet.pm',
   #ABSTRACT_FROM => 'lib/perl5/SneakerNet.pm',
@@ -60,7 +60,7 @@ WriteMakefile1(
     'Thread::Queue'  => 0,
     # Not core (I think?)
     'Statistics::Descriptive' => 0,
-    'Config::Simple' => 0,
+    'Config::Simple' => '4.58',
     'File::Slurp'    => 0,
     'Bio::Kmer'      => 0,
     'Bio::SeqIO'     => 0,
