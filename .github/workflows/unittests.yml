@@ -65,6 +65,7 @@ jobs:
           chmod +x samclip
           export PATH=$PATH:$GITHUB_WORKSPACE/samclip
           echo "$GITHUB_WORKSPACE/samclip" >> $GITHUB_PATH
+          which samclip
       - name: install FLASh
         run:  |
           cd $GITHUB_WORKSPACE
