@@ -202,6 +202,7 @@ jobs:
           cd /kraken-database
           sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
           sudo tar -zxf minikraken_20171019_4GB.tgz 
+          sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
           sudo ls -lhSR /kraken-database
       - name: install SPAdes
         run:  |
