@@ -38,14 +38,14 @@ subtest 'Classic MLST' => sub{
 };
     
 subtest 'wgMLST' => sub{
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping wgMLST.";
+  }
+
   diag `sn_mlst-wg.pl --check-dependencies 2>&1`;
   if($?){
     plan 'skip_all' => "sn_mlst-wg.pl dependency check failed";
   }
-  if($ENV{CI}){
-    plan 'skip_all' => "Detected CI environment. Skipping assembly";
-  }
-
 
   open(my $fh, "sn_mlst-wg.pl $run --numcpus $numcpus --force 2>&1 | ") or BAIL_OUT("ERROR: could not run wgMLST on $run: $!");
   while(my $msg = <$fh>){

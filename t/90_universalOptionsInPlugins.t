@@ -39,7 +39,7 @@ closedir($dh);
 
 # sort
 @plugin = sort @plugin;
-note "Plugins in the pool of testable plugins:"
+note "Plugins in the pool of testable plugins:";
 note "  => ".join(" ", @plugin);
 
 # Travis-CI makes it super hard to install certain things so...

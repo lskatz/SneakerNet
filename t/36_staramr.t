@@ -19,14 +19,14 @@ my $run = "$RealBin/M00123-18-001-test";
 
 
 subtest 'staramr' => sub{
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping staramr";
+  }
+
   diag `sn_staramr.pl --check-dependencies 2>&1`;
   if($?){
     plan 'skip_all' => "sn_staramr.pl dependency check failed";
   }
-  if($ENV{CI}){
-    plan 'skip_all' => "Detected CI environment. Skipping assembly";
-  }
-
 
   # Run staramr
   open(my $fh, "sn_staramr.pl $run --numcpus 2 --force 2>&1 | ") or BAIL_OUT("ERROR: could not run staramr on $run: $!");
