@@ -107,7 +107,7 @@ jobs:
           cd Lighter-1.1.1
           make
           chmod -v +x lighter
-          export $PATH=$PATH:$GITHUB_WORKSPACE/lighter
+          export PATH=$PATH:$GITHUB_WORKSPACE/lighter
           echo "$GITHUB_WORKSPACE/lighter" >> $GITHUB_PATH
           which lighter
       - name: install megahit
