@@ -23,6 +23,10 @@ subtest 'staramr' => sub{
   if($?){
     plan 'skip_all' => "sn_staramr.pl dependency check failed";
   }
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping assembly";
+  }
+
 
   # Run staramr
   open(my $fh, "sn_staramr.pl $run --numcpus 2 --force 2>&1 | ") or BAIL_OUT("ERROR: could not run staramr on $run: $!");

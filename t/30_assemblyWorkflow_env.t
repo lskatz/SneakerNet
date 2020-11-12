@@ -9,6 +9,7 @@ use File::Copy qw/cp/;
 
 use Test::More tests => 1;
 
+
 use FindBin qw/$RealBin/;
 
 use lib "$RealBin/../lib/perl5";
@@ -19,6 +20,11 @@ my $rawReadsDir = "$RealBin/M00123-18-001-test";
 my $dir         = "$RealBin/M00123-18-001-asm";
 
 subtest 'Create assembly-only dataset' => sub{
+
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping assembly";
+  }
+
   remove_tree($dir);
   mkdir($dir);
 
