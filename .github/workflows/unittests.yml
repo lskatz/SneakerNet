@@ -63,6 +63,8 @@ jobs:
           wget https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz
           tar -zxf FLASH-1.2.11.tar.gz
           rm -rf FLASH-1.2.11.tar.gz
+          cd FLASH-1.2.11
+          make
           export PATH=$PATH:$GITHUB_WORKSPACE/FLASH-1.2.11
           echo "$GITHUB_WORKSPACE/FLASH-1.2.11" >> $GITHUB_PATH
           ls -RlhS "$GITHUB_WORKSPACE/FLASH-1.2.11"
