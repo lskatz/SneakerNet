@@ -119,6 +119,18 @@ jobs:
           export PATH="$PATH:$GITHUB_WORKSPACE/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin"
           echo "$GITHUB_WORKSPACE/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin" >> $GITHUB_PATH
           which megahit
+      - name: install pilon
+        run:  |
+          mkdir -v $GITHUB_WORKSPACE/pilon
+          cd $GITHUB_WORKSPACE/pilon
+          wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar
+          chmod +x pilon-1.22.jar
+          echo "#!/bin/bash" > pilon
+          echo "exec java -jar /pilon/pilon-1.22.jar """"$""@"""" " >> pilon
+          chmod +x pilon
+          export PATH=$PATH:$GITHUB_WORKSPACE/pilon
+          echo "$GITHUB_WORKSPACE/pilon" >> $GITHUB_PATH
+          which pilon
       - name: install trimmomatic
         run:  |
           cd $GITHUB_WORKSPACE
