@@ -251,7 +251,7 @@ jobs:
       - name: install-makemaker
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib >> $GITHUB_ENV
+          perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib | perl -plane 's/export .*//' >> $GITHUB_ENV
           echo 
           echo GITHUG_ENV
           cat $GITHUB_ENV
