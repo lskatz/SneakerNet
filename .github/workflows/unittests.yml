@@ -276,10 +276,15 @@ jobs:
           echo;env;echo
           ls -lhS t/M00123-18-001-test/
           md5sum t/M00123-18-001-test/*.fastq.gz
+          for i in t/M00123-18-001-test/*.fastq.gz; do echo -ne "$i\t"; zcat $i | tail -n 1; done;
           echo
           echo "PATH broken up:"
           echo "$PATH" | tr ":" "\n"
           echo
+          echo "GITHUB_ENV"
+          cat $GITHUB_ENV
+          echo "GITHUB_PATH"
+          cat $GITHUB_PATH
           which flash
       - id:   prove-lv-t
         name: prove-lv-t
