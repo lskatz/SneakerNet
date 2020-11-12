@@ -57,6 +57,15 @@ jobs:
           repository: tseemann/shovill
           path: shovill
           ref:  v1.1.0
+      - name: install FLASh
+        run:  |
+          cd $GITHUB_WORKSPACE
+          wget https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz
+          tar -zxf FLASH-1.2.11.tar.gz
+          rm -rf FLASH-1.2.11.tar.gz
+          export PATH=$PATH:$GITHUB_WORKSPACE/FLASH-1.2.11
+          echo "$GITHUB_WORKSPACE/FLASH-1.2.11" >> $GITHUB_PATH
+          which flash
       - name: install Mash
         run:  |
           cd $GITHUB_WORKSPACE
