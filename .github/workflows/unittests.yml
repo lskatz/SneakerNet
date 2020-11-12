@@ -302,6 +302,7 @@ jobs:
           mkdir -v $GITHUB_WORKSPACE/tmp
           export TMPDIR=$GITHUB_WORKSPACE/tmp
           cd $GITHUB_WORKSPACE/SneakerNet
+          sed -i 's+/opt/kraken/full-20140723+/kraken-database+g' config/settings.conf
           #prove -lv t
           make
           make test
