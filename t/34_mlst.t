@@ -19,12 +19,13 @@ my $run = "$RealBin/M00123-18-001-asm";
 my $numcpus = 2;
 
 subtest 'Classic MLST' => sub{
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping assembly";
+  }
+
   diag `sn_mlst.pl --check-dependencies 2>&1`;
   if($?){
     plan 'skip_all' => "sn_mlst.pl dependency check failed";
-  }
-  if($ENV{CI}){
-    plan 'skip_all' => "Detected CI environment. Skipping assembly";
   }
 
 
