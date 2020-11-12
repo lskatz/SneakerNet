@@ -182,8 +182,8 @@ jobs:
       - name: install kraken1
         run:  |
           cd $GITHUB_WORKSPACE
-          wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz
-          tar -xzf v1.1.1.tar.gz 
+          wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz -O kraken-v1.1.1.tar.gz
+          tar -xvzf kraken-v1.1.1.tar.gzv1.1.1.tar.gz 
           cd kraken-1.1.1
           mkdir /opt/kraken
           ./install_kraken.sh /opt/kraken/
