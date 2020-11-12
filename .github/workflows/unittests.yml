@@ -65,7 +65,7 @@ jobs:
           rm -rf FLASH-1.2.11.tar.gz
           export PATH=$PATH:$GITHUB_WORKSPACE/FLASH-1.2.11
           echo "$GITHUB_WORKSPACE/FLASH-1.2.11" >> $GITHUB_PATH
-          tree "$GITHUB_WORKSPACE/FLASH-1.2.11"
+          ls -RlhS "$GITHUB_WORKSPACE/FLASH-1.2.11"
           which flash
       - name: install Mash
         run:  |
