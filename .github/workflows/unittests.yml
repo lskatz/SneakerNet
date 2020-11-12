@@ -100,14 +100,13 @@ jobs:
           kmc --help || true
       - name: install lighter
         run:  |
-          mkdir -v $GITHUB_WORKSPACE/lighter
-          cd $GITHUB_WORKSPACE/lighter
+          cd $GITHUB_WORKSPACE
           wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz
           tar -zvxf v1.1.1.tar.gz
           cd Lighter-1.1.1
           make
           chmod -v +x lighter
-          export PATH=$PATH:$GITHUB_WORKSPACE/lighter
+          export PATH=$PATH:$GITHUB_WORKSPACE/lighter-1.1.1
           echo "$GITHUB_WORKSPACE/lighter" >> $GITHUB_PATH
           which lighter
       - name: install megahit
