@@ -122,6 +122,8 @@ sub readMetricsWorker{
   my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
   while(defined(my $fastq=$Q->dequeue)){
     logmsg "read metrics for $fastq";
+    logmsg "  tempdir: $tempdir";
+    system("df -h $tempdir");
     eval{
       command("run_assembly_readMetrics.pl --numcpus 1 --fast $fastq >> $tempdir/readMetrics.tsv");
       return 1;
