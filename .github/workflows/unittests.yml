@@ -179,6 +179,17 @@ jobs:
           export PATH=$PATH:/opt/jellyfish-1.1.12/bin
           echo "/opt/jellyfish-1.1.12/bin" >> $GITHUB_PATH
           which jellyfish
+      - name: install kraken1
+        run:  |
+          cd $GITHUB_WORKSPACE
+          wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz
+          tar -xzf v1.1.1.tar.gz 
+          cd kraken-1.1.1
+          mkdir /opt/kraken
+          ./install_kraken.sh /opt/kraken/
+          export PATH=$PATH:/opt/kraken
+          echo "/opt/kraken/" >> $GITHUB_PATH
+          which kraken
       - name: install SPAdes
         run:  |
           wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
