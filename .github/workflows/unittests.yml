@@ -147,6 +147,7 @@ jobs:
           mv skesa.centos.7.7 skesa
           mv gfa_connector.centos7.7 gfa_connector 
           mv kmercounter.centos7.7 kmercounter
+          tree $GITHUB_WORKSPACE/skesa
           chmod +x skesa gfa_connector kmercounter
           sudo ln -sv skesa gfa_connector kmercounter /usr/local/bin
           which skesa
