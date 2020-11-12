@@ -271,6 +271,7 @@ jobs:
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-SneakerNet-repo
         run: |
+          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           cd $GITHUB_WORKSPACE/SneakerNet
           cat MYMETA.json
           echo;env;echo
