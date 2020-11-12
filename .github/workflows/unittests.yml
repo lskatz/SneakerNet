@@ -251,7 +251,10 @@ jobs:
       - name: install-makemaker
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib | perl -plane 's/export .*//' >> $GITHUB_ENV
+          #perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib | perl -plane 's/export .*//' >> $GITHUB_ENV
+          echo "PERL5LIB=$PERL5LIB" >> $GITHUB_ENV
+          echo "PERL_MB_OPT=$PERL_MB_OPT" >> $GITHUB_ENV
+          echo "PERL_MM_OPT=$PERL_MM_OPT" >> $GITHUB_ENV
           echo 
           echo GITHUG_ENV
           cat $GITHUB_ENV
