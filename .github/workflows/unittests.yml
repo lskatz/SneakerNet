@@ -169,12 +169,13 @@ jobs:
           wget https://github.com/ncbi/SKESA/releases/download/2.4.0/skesa.centos.7.7
           wget https://github.com/ncbi/SKESA/releases/download/2.4.0/gfa_connector.centos7.7
           wget https://github.com/ncbi/SKESA/releases/download/2.4.0/kmercounter.centos7.7
-          mv skesa.centos.7.7 skesa
-          mv gfa_connector.centos7.7 gfa_connector 
-          mv kmercounter.centos7.7 kmercounter
+          mv -v skesa.centos.7.7 skesa
+          mv -v gfa_connector.centos7.7 gfa_connector 
+          mv -v kmercounter.centos7.7 kmercounter
+          chmod -v +x skesa gfa_connector kmercounter
           tree $GITHUB_WORKSPACE/skesa
-          chmod +x skesa gfa_connector kmercounter
-          sudo ln -sv skesa gfa_connector kmercounter /usr/local/bin
+          export PATH=$PATH:$GITHUB_WORKSPACE/skesa
+          echo "$GITHUB_WORKSPACE/skesa" >> $GITHUB_PATH
           which skesa
           which gfa_connector
           which kmercounter
