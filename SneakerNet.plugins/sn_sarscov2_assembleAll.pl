@@ -8,6 +8,7 @@ use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
+use File::Spec;
 use Bio::SeqIO;
 use Bio::FeatureIO::gff;
 use List::Util qw/min max/;
@@ -34,6 +35,7 @@ sub main{
       #'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
       'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
       cat                             => 'cat --version | head -n 1',
+      # wget needed in SneakerNet.pm
       wget                            => 'wget --version | head -n 1',
       samtools                        => 'samtools 2>&1 | grep Version:',
       bcftools                        => 'bcftools 2>&1 | grep Version:',
@@ -41,7 +43,7 @@ sub main{
       seqtk                           => 'seqtk 2>&1 | grep -m 1 Version:',
       bgzip                           => 'bgzip --version | head -n1',
       tabix                           => 'tabix --version | head -n1',
-      'v-annotate.pl (VADR)'          => 'v-annotate.pl -h | grep -m 1 [0-9]'
+      #'v-annotate.pl (VADR)'          => 'v-annotate.pl -h | grep -m 1 [0-9]'
     }, $settings,
   );
 
@@ -82,7 +84,7 @@ sub assembleAll{
     logmsg "ASSEMBLE SAMPLE $sample";
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
-    my $outassembly="$outdir/$sample.bowtie2.bcftools.fasta";
+    my $outassembly=File::Spec->rel2abs("$outdir/$sample.bowtie2.bcftools.fasta");
     my $outgbk="$outdir/$sample.bowtie2.bcftools.gbk";
 
     # Run the assembly
@@ -111,46 +113,25 @@ sub assembleAll{
       mv("$asmMetricsFile.tmp", $asmMetricsFile) or die "ERROR: could not make $asmMetricsFile";
     }
 
-    # Genome annotation
-    #logmsg "PREDICT GENES FOR SAMPLE $sample";
-    my $vadrPass = "$outdir/vadr/vadr.vadr.pass.tbl";
-    my $vadrFail = "$outdir/vadr/vadr.vadr.fail.tbl";
-    if(!-e $vadrPass || !-e $vadrFail){
-      logmsg "ANNOTATE SAMPLE $sample";
-      my $tmpVadrDir=annotateFasta($sample,$outassembly,$settings);
-      mkdir("$outdir/vadr");
-      for(glob("$tmpVadrDir/*")){
-        next if(!-f $_);
-        cp($_, "$outdir/vadr/".basename($_)) or die "ERROR copying $_ to $outdir/vadr/: $!";
-      }
-    }
-    logmsg "Annotations can be found in $vadrPass and $vadrFail";
-
     my $cdsMetricsFile = "$outdir/predictionMetrics.tsv";
     if(!-e $cdsMetricsFile){
-      logmsg "Prediction metrics for $vadrPass";
-      my $passCds = readTbl($vadrPass, $settings);
-      #print Dumper $passCds;
-      logmsg "Prediction metrics for $vadrFail";
-      my $failCds = readTbl($vadrFail, $settings);
-      #print Dumper $failCds;
-
-      my $numPassed = $$passCds{numFeatures}{mat_peptide} || 0;
-      my $numFailed = $$failCds{numFeatures}{mat_peptide} || 0;
-
-      open(my $fh, ">", $cdsMetricsFile.".tmp") or die "ERROR: could not write to $cdsMetricsFile.tmp: $!";
-      print $fh join("\t", qw(File passCds failCds))."\n";
-      print $fh join("\t", $outassembly, $numPassed, $numFailed)."\n";
-      close $fh;
-      mv("$cdsMetricsFile.tmp", $cdsMetricsFile) or die "ERROR: could not mv $cdsMetricsFile.tmp => $cdsMetricsFile: $!";
+      my $tmppath = annotateFastaWithBioPerl($info, $outassembly, $settings);
+      mv($tmppath, $cdsMetricsFile) or die $!;
     }
     logmsg "Summary CDS info in $cdsMetricsFile";
 
     # Combine metrics
     my $annMetrics = readTsv($cdsMetricsFile, $settings);
     my $asmMetrics = readTsv($asmMetricsFile,$settings);
-    my %asmAnnMetrics = (%$annMetrics, %$asmMetrics);
-    while(my($filePath, $metricsHash) = each(%asmAnnMetrics)){
+
+    # Combine hashes into $$annMetrics
+    while(my($filePath, $metricsHash) = each(%$asmMetrics)){
+      while(my($metric, $value) = each(%$metricsHash)){
+        $$annMetrics{$filePath}{$metric} = $value;
+      }
+    }
+
+    while(my($filePath, $metricsHash) = each(%$annMetrics)){
       while(my($metric, $value) = each(%$metricsHash)){
         $sampleMetrics{$sample}{$metric} = $value;
       }
@@ -269,17 +250,85 @@ sub assembleSample{
   return $outdir
 }
 
-# annotate with vadr
-sub annotateFasta{
-  my($sample,$assembly,$settings)=@_;
-  my $outdir="$$settings{tempdir}/$sample/vadr";
-  system("rm -rf $outdir");
+sub annotateFastaWithBioPerl{
+  my($info, $outassembly, $settings) = @_;
 
-  mkdir "$$settings{tempdir}/$sample";
+  my $tempdir = File::Temp::tempdir("annotateWithBioperl.XXXXXX",DIR=>$$settings{tempdir},CLEANUP=>1);
 
-  command("v-annotate.pl -r -s --nomisc --lowsimterm 2 --mxsize 64000 --mdir $$settings{VADRMODELDIR} --mkey NC_045512 --fstlowthr 0.0 --alt_fail lowscore,fsthicnf,fstlocnf --lowsc 0.75 $assembly $outdir");
+  # annotation strategy: load up the reference genome
+  # with all its features. Replace the reference
+  # genome sequence with the new sequence. See how the
+  # CDS translations come out.
+  # Early stop genes are pseudogenes.
+  my %seq;
+  my $refSeqCdsCounter = 0;
+  my $refSeq = Bio::SeqIO->new(-file=>$$info{taxonRules}{reference_gbk});
+  while(my $seq = $refSeq->next_seq){
+    $seq{$seq->id} = $seq;
 
-  return $outdir;
+    for my $feat($seq->get_SeqFeatures){
+      # Filter for only CDS
+      next if($feat->primary_tag ne 'CDS');
+
+      my $refProtObj = $feat->seq->translate;
+      my $refAA = $refProtObj->seq;
+      $refAA =~ s/\**$//; # remove stop codons at the end
+      # If we don't see any stop codons, then let's
+      # call it a CDS. A really naive method but it
+      # should do the job for quick Q/C.
+      # For example, the SARS-CoV-2 ref1ab gene will
+      # probably not get counted here since it is a
+      # weird virus gene that gets split after the
+      # mRNA step.
+      if($refAA !~ /\*/){
+        $refSeqCdsCounter++;
+      }
+    }
+  }
+  $refSeq->close;
+
+  my $altSeqIn = Bio::SeqIO->new(-file=>$outassembly);
+  my $altSeqCdsCounter = 0;
+  while(my $altSeq = $altSeqIn->next_seq){
+    # replace the reference sequence with the alt
+    # sequence but keep the features.
+    my $seqid = $altSeq->id;
+    # strip the NCBI version number
+    $seqid =~ s/\.\d+$//;
+    my $altSequence = $altSeq->seq;
+    # add back in the reference features
+    for my $feat($seq{$seqid}->get_SeqFeatures){
+      $altSeq->add_SeqFeature($feat);
+    }
+
+    for my $feat($altSeq->get_SeqFeatures){
+      # Filter for only CDS
+      next if($feat->primary_tag ne 'CDS');
+
+      my $altProtObj = $feat->seq->translate;
+      my $altAA = $altProtObj->seq;
+      $altAA =~ s/\**$//; # remove stop codons at the end
+      if($altAA !~ /\*/){
+        $altSeqCdsCounter++;
+      }
+    }
+
+  }
+  $altSeqIn->close;
+  
+  # Calculate percentage of CDSs intact.
+  # Avoid divide by zero error by setting refCdsCount
+  # to a really high number if not set.
+  $refSeqCdsCounter ||= ~0;
+  my $percentCds = sprintf("%0.2f", $altSeqCdsCounter/$refSeqCdsCounter);
+
+  my $cdsMetricsFile = "$tempdir/prediction.tsv";
+  open(my $fh, ">", $cdsMetricsFile) or die "ERROR writing to $cdsMetricsFile: $!";
+  print $fh join("\t", qw(file refCdsCount altCdsCount expectedCdsPercentage))."\n";
+  print $fh join("\t", $outassembly, $refSeqCdsCounter, $altSeqCdsCounter, $percentCds)."\n";
+  close $fh;
+
+  return $cdsMetricsFile;
 }
 
 sub adapterTrim{
