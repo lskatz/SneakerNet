@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
+use File::Copy qw/mv/;
 #use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
@@ -536,13 +537,24 @@ sub samplesheetInfo_tsv{
     if(defined($ref_id)){
       my $dir = realpath($RealBin."/../db/fasta");
       my $ref = "$dir/$ref_id.fasta";
+      my $gbk = "$dir/$ref_id.gbk";
 
       if(!-e $ref){
-        logmsg "Did not find $ref_id in the SneakerNet installation. Downloading $ref_id into $ref";
-        logmsg "  Wget log can be found at $ref.log";
-        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=fasta' -O $ref 2> $ref.log ");
+        logmsg "Did not find $ref_id in the SneakerNet installation. Downloading $ref_id into $gbk and $ref";
+        logmsg "  Wget log can be found at $dir/*.log";
+        my $wgetxopts = "";
+        if($ENV{NCBI_API_KEY}){
+          $wgetxopts .= "&ncbi_api_key=$ENV{NCBI_API_KEY}";
+        }
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=gbwithparts&format=genbank$wgetxopts' -O $gbk 2> $gbk.log ");
+
+        # The file is downloaded into a .tmp file and then moved,
+        # so that it is clear when it is 100% downloaded.
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=fasta$wgetxopts' -O $ref.tmp 2> $ref.log ");
+        mv("$ref.tmp", $ref);
       }
 
+      $sample{$sampleName}{taxonRules}{reference_gbk}   = $gbk;
       $sample{$sampleName}{taxonRules}{reference_fasta} = $ref;
     }
   }
