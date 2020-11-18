@@ -238,8 +238,9 @@ sub assembleSample{
 
   my $mindepth = $$sampleInfo{taxonRules}{coverage};
   my $consensusfasta = "$outdir/consensus.fasta";
-  system("perl $RealBin/helper/vcf_mask_lowcoverage.pl --bam $sortedBam --vcf $vcf.gz --depth $mindepth --reference $ref --consout $consensusfasta");
-  die if $?;
+  my $cmd = "perl $RealBin/helper/vcf_mask_lowcoverage.pl --bam $sortedBam --vcf $vcf.gz --depth $mindepth --reference $ref --consout $consensusfasta";
+  logmsg "Using helper script\n  $cmd";
+  system($cmd); die if $?;
 
   # Some cleanup of needlessly large files that we just
   # want to make sure are gone
