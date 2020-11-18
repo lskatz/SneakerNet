@@ -226,6 +226,7 @@ sub assembleSample{
   my $mpileup   = "$outdir/samtools.mpileup";
   command("bowtie2 --sensitive-local -p $$settings{numcpus} -x $ref -1 $R1 -2 $R2 -S $sam 2>&1");
   command("samtools view --threads $samtoolsThreads -b $sam | samtools sort --threads $samtoolsThreads - -o $sortedBam 2>&1");
+  command("samtools index $sortedBam");
 
   logmsg "Calling variants from mapped reads";
   my $vcf = "$outdir/out.vcf";
