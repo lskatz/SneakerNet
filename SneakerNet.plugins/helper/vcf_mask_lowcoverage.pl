@@ -5,11 +5,16 @@
 # Outputs: modified VCF, modified reference and/or masked consensus
 # 
 # Author: Clint Paden <cpaden@cdc.gov> 
+# Modified: Lee Katz <gzu2@cdc.gov>
 
 use Getopt::Long;
 use warnings;
 use strict;
-my $VERSION = "200331";
+use File::Basename qw/basename/;
+
+our $VERSION = "201118";
+
+sub logmsg{my $f=basename($0); print STDERR "$f: @_\n";}
 
 
 my %opts;
@@ -21,6 +26,11 @@ my $vcfout;
 
 GetOptions(\%opts, qw(bam=s vcf=s reference=s refout=s vcfout=s consout=s depth=i qual=i help version)) or usage();
 usage(0) if ($opts{help});
+
+if(!$opts{reference}){
+  logmsg "ERROR need --reference\n"; # extra newline to separate usage
+  usage(1);
+}
 
 # Torstyverse dependency check
 if ($opts{version}) { print("vcf_mask_low_coverage v$VERSION\n"); exit;}
@@ -108,7 +118,7 @@ while(<$vcfh>) {
 close($vcfout);
 
 system("bcftools index $opts{vcfout}.gz");
-open(my $refout, ">", "$opts{refout}");
+open(my $refout, ">", "$opts{refout}") or die "ERROR: could not write to $opts{refout}";
 for my $ref (keys %refhash) {
 	printf($refout ">%s\n", $ref);
 	my $line;
@@ -122,9 +132,12 @@ for my $ref (keys %refhash) {
 }
 close($refout);
 
+# Print the consensus command to a file if requested
+# with --consout.
+my $conscmd = qq(cat $opts{refout} | bcftools consensus $opts{vcfout}.gz > $opts{consout});
+#   ... but print to STDERR anyway
+logmsg "Consensus command: $conscmd";
 if ($opts{consout}) {
-	my $conscmd = qq(cat $opts{refout} | bcftools consensus $opts{vcfout}.gz > $opts{consout});
-	print(STDERR "Consensus command: $conscmd\n");
 	system($conscmd);
 }
 
