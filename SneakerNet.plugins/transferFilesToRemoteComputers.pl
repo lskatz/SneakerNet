@@ -14,7 +14,7 @@ use POSIX qw/strftime/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
-our $VERSION = "1.6";
+our $VERSION = "1.7";
 our $CITATION= "Transfer files to remote computer plugin by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -107,11 +107,11 @@ sub transferFilesToRemoteComputers{
     my @route = (ref($$s{route}) eq 'ARRAY')?@{$$s{route}}:($$s{route});
 
     # If we are transferring...
-    if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
+    if($$settings{'force-transfer'} || (scalar(@route) > 1 && grep {/calcengine/i} @route) ){
       # if this sample fails at all, then NEXT!
       for my $reason(keys(%{ $$passfail{$sampleName} })){
         if($$passfail{$sampleName}{$reason} == 1){
-          logmsg "Failed $sampleName because $reason";
+          logmsg "Failed $sampleName because failed category $reason";
           next SAMPLE;
         }
       }

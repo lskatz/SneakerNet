@@ -135,5 +135,6 @@ Contributions are welcome for the following plugin documents.
 |[sn_crypto_gp60.pl](plugins/sn_crypto_gp60.pl.md)                  | Provides the gp60 profile for Cryptosporidium        |
 |[sn_parseSampleSheet.pl](plugins/sn_parseSampleSheet.pl.md)          | Turns the sample sheet for Illumina into SneakerNet format |
 |[sn_report.pl](plugins/sn_report.pl.md)                    | Creates an HTML report from all other plugins |
+|[sn_sarscov2_assembleAll.pl](plugins/sn_sarscov2_assembleAll.pl.md)              | Runs assembly for SARS-CoV-2 amplicon-based genomes |
 |[sn_saveFailedGenomes.pl](plugins/sn_saveFailedGenomes.pl.md)                    | Saves genomes into the destination folder, into a QC_Fails subfolder|
 

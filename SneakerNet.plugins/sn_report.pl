@@ -16,7 +16,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 
-our $VERSION = "2.5";
+our $VERSION = "2.6";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -224,7 +224,8 @@ sub makeSummaryTable{
   for my $row(@sortedRow){
     print $fh join("\t", @$row)."\n";
   }
-  print $fh "# Scores start at 100 percent and receive a 33 percent penalty for each: low coverage, low quality, or high contamination in the Kraken report.\n";
+  print $fh "# Scores start at 100 percent and receive an equal percent penalty for each: assembly, low coverage, low quality, high percentage of Ns in the assembly, or high contamination in the Kraken report. See documentation for sn_passfail.pl for more information.\n";
+  print $fh "# Current emoticons range from high score (100%) to low: ".join(" ",@$happiness);
   close $fh;
 }
 

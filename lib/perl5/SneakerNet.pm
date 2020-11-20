@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
+use File::Copy qw/mv/;
 #use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
@@ -31,7 +32,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.17.0';
+our $VERSION  = '0.19.0';
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -211,16 +212,31 @@ Returns:
 sub readConfig{
   my $settings={};
 
-  my @file=glob("$thisdir/../../config/*.conf");
+  #my %seenBasename = ();
+
+  my @file=glob("$thisdir/../../config/*.conf $thisdir/../../config.bak/*.conf");
   for my $file(@file){
+    # Look at the filename. If we've seen this filename,
+    # then skip. This will happen if the file exists
+    # in config/ and in config.bak/
+    #next if($seenBasename{basename($file)}++);
+
     my $cfg = new Config::Simple();
     if(!$cfg->read($file)){
       logmsg "WARNING: could not read $file: ".$cfg->error;
       next;
     }
     my %vars= $cfg->vars();
-    $$settings{$_}=$vars{$_} for(keys(%vars));
-    $$settings{obj}{basename($file)}=$cfg; # save the obj too
+    for my $key(keys(%vars)){
+      if(dirname($file) =~ /config.bak/){
+        if(!defined($$settings{$key})){
+          logmsg "WARNING: key $key was expected but was not found in your local config. I will use the value found in $file. Please edit in $thisdir/../../config/";
+        }
+      }
+
+      $$settings{$key} //= $vars{$key};
+    }
+    $$settings{obj}{basename($file)} //= $cfg; # save the obj too
   }
   return $settings;
 }
@@ -459,6 +475,7 @@ sub samplesheetInfo_tsv{
   open(my $fh, "<", $samplesheet) or croak "ERROR: reading $samplesheet";
   while(<$fh>){
     chomp;
+    next if(/^\s*$/);
     my @F = split /\t/;
     my($sampleName,$rules,$fastq)=@F;
     $fastq ||= "";
@@ -514,6 +531,32 @@ sub samplesheetInfo_tsv{
           last;
         }
       }
+    }
+
+    # Set the file path to the reference fasta if it exists
+    my $ref_id = $sample{$sampleName}{taxonRules}{reference_fasta_id};
+    if(defined($ref_id)){
+      my $dir = realpath($RealBin."/../db/fasta");
+      my $ref = "$dir/$ref_id.fasta";
+      my $gbk = "$dir/$ref_id.gbk";
+
+      if(!-e $ref){
+        logmsg "Did not find $ref_id in the SneakerNet installation. Downloading $ref_id into $gbk and $ref";
+        logmsg "  Wget log can be found at $dir/*.log";
+        my $wgetxopts = "";
+        if($ENV{NCBI_API_KEY}){
+          $wgetxopts .= "&ncbi_api_key=$ENV{NCBI_API_KEY}";
+        }
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=gbwithparts&format=genbank$wgetxopts' -O $gbk 2> $gbk.log ");
+
+        # The file is downloaded into a .tmp file and then moved,
+        # so that it is clear when it is 100% downloaded.
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=fasta$wgetxopts' -O $ref.tmp 2> $ref.log ");
+        mv("$ref.tmp", $ref);
+      }
+
+      $sample{$sampleName}{taxonRules}{reference_gbk}   = $gbk;
+      $sample{$sampleName}{taxonRules}{reference_fasta} = $ref;
     }
   }
   close $fh;
@@ -633,6 +676,7 @@ sub samplesheetInfo{
       }
 
       $sample{$F{sample_id}}=\%F;
+
       
     }
   }
@@ -792,6 +836,10 @@ sub recordProperties{
   my($runDir,$writeHash, $settings)=@_;
 
   my $propertiesFile = "$runDir/SneakerNet/properties.txt";
+  if(!-d "$runDir/SneakerNet"){
+    mkdir "$runDir/SneakerNet";
+  }
+
   my $writeString="";
   if(!-e $propertiesFile || (stat($propertiesFile))[7] == 0){
     $writeString.=join("\t", qw(plugin key value))."\n";

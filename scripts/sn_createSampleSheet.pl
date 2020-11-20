@@ -68,9 +68,19 @@ sub createSampleSheetOutOfThinAir{
   # for i in $(cat wgs-ids_detailed.txt); do R1=`realpath $(ls *$i*_R1*.fastq.gz)`; R2=`realpath $(ls *$i*_R2*.fastq.gz)`; wgsid=`basename $R1 ".fastq.gz" | cut -d '_' -f 1`; echo -e $wgsid"\ttaxon=Salmonella;route=calcengine\t"$R1";"$R2; done > M1234-19-004.tsv 
   open(my $outFh, ">", $outSamplesheet) or die "ERROR: could not write to $outSamplesheet: $!";
   for my $name(@sample){
-    my $R1 = (grep { $_=~/$name.*_R1/; } @fastq)[0];
+    my $R1 = (grep { $_=~/$name.*_R1|$name.*_1\.f.*q/; } @fastq)[0];
     my $R2 = $R1;
     $R2 =~ s/_R1/_R2/;
+
+    # If the substitution didn't work, then it might be a _1.fastq.gz format
+    if($R1 eq $R2){
+      $R2 =~ s/_1\./_2\./;
+    }
+
+    # If R1 and R2 are still the same then we have problems
+    if($R1 eq $R2){
+      die "ERROR: could not find the pair for R1 $R1";
+    }
 
     # Check that the keys exist
     if(!$fastq{$R1} && !$fastq{$R2}){
