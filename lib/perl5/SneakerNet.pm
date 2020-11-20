@@ -236,7 +236,7 @@ sub readConfig{
 
       $$settings{$key} //= $vars{$key};
     }
-    $$settings{obj}{basename($file)}=$cfg; # save the obj too
+    $$settings{obj}{basename($file)} //= $cfg; # save the obj too
   }
   return $settings;
 }
@@ -675,6 +675,7 @@ sub samplesheetInfo{
       }
 
       $sample{$F{sample_id}}=\%F;
+
       
     }
   }
@@ -834,6 +835,10 @@ sub recordProperties{
   my($runDir,$writeHash, $settings)=@_;
 
   my $propertiesFile = "$runDir/SneakerNet/properties.txt";
+  if(!-d "$runDir/SneakerNet"){
+    mkdir "$runDir/SneakerNet";
+  }
+
   my $writeString="";
   if(!-e $propertiesFile || (stat($propertiesFile))[7] == 0){
     $writeString.=join("\t", qw(plugin key value))."\n";
