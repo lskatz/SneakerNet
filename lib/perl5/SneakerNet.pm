@@ -475,6 +475,7 @@ sub samplesheetInfo_tsv{
   open(my $fh, "<", $samplesheet) or croak "ERROR: reading $samplesheet";
   while(<$fh>){
     chomp;
+    next if(/^\s*$/);
     my @F = split /\t/;
     my($sampleName,$rules,$fastq)=@F;
     $fastq ||= "";
