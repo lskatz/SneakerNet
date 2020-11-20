@@ -43,6 +43,8 @@ sub main{
       seqtk                           => 'seqtk 2>&1 | grep -m 1 Version:',
       bgzip                           => 'bgzip --version | head -n1',
       tabix                           => 'tabix --version | head -n1',
+      bowtie2                         => 'bowtie2 --version | grep -m 1 version',
+      'bowtie2-build'                   => 'bowtie2-build --version | grep -m 1 version',
       #'v-annotate.pl (VADR)'          => 'v-annotate.pl -h | grep -m 1 [0-9]'
     }, $settings,
   );
