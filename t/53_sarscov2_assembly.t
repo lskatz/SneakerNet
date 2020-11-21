@@ -15,6 +15,11 @@ use SneakerNet qw/readTsv/;
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-20-001-sarscov2";
 
+if($ENV{CI}){
+  pass("Skipping sars-cov-2 assembly test in CI environment");
+  exit 0;
+}
+
 subtest 'assembly' => sub {
 
   # Test for the older version of bgzip which we can't handle
