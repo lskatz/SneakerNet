@@ -17,9 +17,19 @@ my $run = "$RealBin/M00123-20-001-sarscov2";
 
 subtest 'assembly' => sub {
 
-  plan tests => 3;
+  # Test for the older version of bgzip which we can't handle
   diag `which bgzip tabix`;
+  diag `bgzip --help 2>&1`;
+  if($?){
+    plan 'skip_all' => "bgzip is an older version.";
+  }
+
   diag `sn_sarscov2_assembleAll.pl --check-dependencies 2>&1`;
+  if($?){
+    plan 'skip_all' => "Plugin sn_sarscov2_assembleAll.pl dependencies not met";
+  } else {
+    plan tests=>3;
+  }
   is $?, 0, "sn_sarscov2_assembleAll.pl dependency check";
 
   open(my $fh, "sn_sarscov2_assembleAll.pl --force --numcpus 12 $run 2>&1 | ");

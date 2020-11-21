@@ -17,8 +17,13 @@ my $run = "$RealBin/M00123-20-001-sarscov2";
 
 subtest 'addReadMetrics' => sub {
 
-  plan tests => 3;
   diag `addReadMetrics.pl --check-dependencies 2>&1`;
+  if($?){
+    plan 'skip_all' => "Plugin addReadMetrics.pl dependencies not met";
+  } else {
+    plan tests=>3;
+  }
+
   is $?, 0, "addReadMetrics.pl dependency check";
   my $readMetricsLog = `addReadMetrics.pl --numcpus 1 --force $run 2>&1`;
   is $?, 0, "Adding read metrics";
