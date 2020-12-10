@@ -50,8 +50,6 @@ sub main{
   );
 
   die usage() if($$settings{help} || !@ARGV);
-  $$settings{VADRMODELDIR} ||= die "ERROR: VADRMODELDIR needs to be defined under config/settings.conf.
-  Please see for more help: https://github.com/nawrockie/vadr/wiki/Coronavirus-annotation#how-to-annotate-sars-cov-2-sequences-with-vadr-1";
   $$settings{numcpus}||=1;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   logmsg "Temporary directory is at $$settings{tempdir}";
@@ -357,81 +355,6 @@ sub adapterTrim{
   command("cutadapt -j $threads -g GTTTCCCAGTCACGATA -G GTTTCCCAGTCACGATA -a TATCGTGACTGGGAAAC -A TATCGTGACTGGGAAAC -g ACACTCTTTCCCTACACGACGCTCTTCCGATCT -G ACACTCTTTCCCTACACGACGCTCTTCCGATCT -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -n 3 -m 75 -q 25 --interleaved $R1in $R2in 2>>$log | cutadapt -j $threads --interleaved -m 75 -u 30 -u -30 -U 30 -U -30 -o $R1out -p $R2out - >> $log 2>&1");
 
   return($R1out, $R2out);
-}
-
-# Read tbl format into a hash of features
-# https://www.ncbi.nlm.nih.gov/projects/Sequin/table.html
-sub readTbl{
-  my($infile, $settings) = @_;
-
-  # Variable for just feature information
-  my %feature;
-  # Variable for containing all features + meta information
-  my %uber;
-  # Contains counts of features by $featureKey
-  my %numFeatures;
-
-  my $currentSeqid = "UNKNOWN";
-  my $currentTableName = "UNKNOWN";
-  my ($featureStart, $featureStop, $featureKey);
-  open(my $fh, "<", $infile) or die "ERROR: could not read $infile: $!";
-  while(<$fh>){
-    chomp;
-
-    my @F = split(/\s+/, $_);
-    next if(/^\s*$/);
-
-    # get the contig information if it starts with >Feature
-    if($F[0] =~ /^>Feature/){
-      shift(@F); # Removes ">Feature" from array
-      ($currentSeqid, $currentTableName) = @F;
-      die "ERROR: it seems like there should be a sequence identifer but there wasn't one in $infile" if(!$currentSeqid);
-      next;
-    }
-    
-    # Get gene location information
-    #   This is a three column format with start/stop/featureKey
-    if(defined($F[0]) && $F[0] ne ""){
-      
-      # In VADR, there can be a line after all features saying
-      #   Additional note(s) to submitter
-      # This clues us into that all the rest of the text is not
-      # part of the format.
-      if($F[0] =~ /^\s*Additional note/i){
-        last;
-      }
-
-      ($featureStart, $featureStop, $featureKey) = @F;
-      if(!defined($featureKey)){
-        $featureKey = "UNTYPED_FEATURE";
-      }
-      $numFeatures{$featureKey}++;
-      next;
-    }
-
-    # Get qualifier key and value.
-    # This line type is indented with threee empty columns.
-
-    my($qualifierKey, $qualifierValue) = grep {/./} @F;
-
-    # This is the structure of the features hash.
-    # It's not necessary to explicitly define it like this but
-    # it's also possibly confusing.
-    $feature{$currentSeqid} //= {};
-    $feature{$currentSeqid}{$featureStart}{$featureStop} //= {};
-    $feature{$currentSeqid}{$featureStart}{$featureStop}{$featureKey} //= {};
-
-    $feature{$currentSeqid}{$featureStart}{$featureStop}{$featureKey}{$qualifierKey} = $qualifierValue;
-
-    #print Dumper [[$featureStart, $featureStop, $featureKey], [$qualifierKey, $qualifierValue]];
-  }
-
-  %uber = (
-    features    => \%feature,
-    numFeatures => \%numFeatures,
-  );
-
-  return \%uber;
 }
 
 sub usage{
