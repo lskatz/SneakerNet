@@ -237,7 +237,7 @@ sub assembleSample{
   command("bgzip $vcf");
   command("tabix $vcf.gz");
 
-  my $mindepth = $$sampleInfo{taxonRules}{coverage};
+  my $mindepth = $$sampleInfo{taxonRules}{per_base_coverage} || 1;
   my $consensusfasta = "$outdir/consensus.fasta";
   my $cmd = "perl $RealBin/helper/vcf_mask_lowcoverage.pl --bam $sortedBam --vcf $vcf.gz --depth $mindepth --reference $ref --consout $consensusfasta";
   logmsg "Using helper script\n  $cmd";
