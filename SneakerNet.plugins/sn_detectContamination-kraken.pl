@@ -143,7 +143,7 @@ sub guessTaxon{
 
   # If sn_kraken did not complete, a file will not be present
   if(!-e $taxfile){
-    logmsg "WARNING: kraken report not found at $taxfile";
+    logmsg "WARNING: kraken report not found at $taxfile. It is possible that sn_kraken.pl or kraken was not run on this sample yet.";
     return {}; # return empty hash because that is the var type expected
   }
 
