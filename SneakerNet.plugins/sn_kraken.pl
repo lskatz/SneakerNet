@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION= "Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
@@ -203,6 +203,8 @@ sub runKrakenAsm{
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
+  filterReport($sampledir, $settings);
+
   command("ktImportText -o $html $sampledir/kraken.taxonomy,$sampleName");
 
   unlink("$sampledir/kraken.out");
@@ -242,6 +244,8 @@ sub runKrakenSE{
   ");
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  filterReport($sampledir, $settings);
+
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -299,6 +303,8 @@ sub runKrakenPE{
   ");
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  filterReport($sampledir, $settings);
+
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -322,6 +328,28 @@ sub runKrakenPE{
   }
 
   return 1;
+}
+
+sub filterReport{
+  my($sampledir, $settings) = @_;
+
+  # Also filter the kraken report to remove small percentages
+  # in pure perl to make it more portable
+  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not open $sampledir/kraken.report: $!";
+  open(my $filteredFh, ">", "$sampledir/kraken.filtered.report") or die "ERROR: could not write to $sampledir/kraken.filtered.report: $!";
+  while(<$reportFh>){
+    # Just check out the first digits and don't sweat the decimals.
+    if(/(\d+)/){
+      my $percentageInt = $1;
+      next if($percentageInt < 1);
+
+      print $filteredFh $_;
+    }
+  }
+  close $reportFh;
+  close $filteredFh;
+
+  return "$sampledir/kraken.filtered.report";
 }
 
 sub usage{
