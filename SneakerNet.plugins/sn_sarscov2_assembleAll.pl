@@ -144,18 +144,24 @@ sub assembleAll{
       }
       
       ## Add more metrics for this sample
-      # percentage of Ns
       my %ntCounter;
       my $totalNt = 0;
+      my @contiguous;
       my $seqin = Bio::SeqIO->new(-file=>$outassembly);
       while(my $seq = $seqin->next_seq){
         my $sequence = $seq->seq;
+        # percentage of Ns
         while($sequence =~ /(.)/g){
           $ntCounter{uc($1)}++;
         }
+        
+        # Longest contiguous section. GISAID(?) wants >10kb
+        push(@contiguous, split(/[Nn]{1,}/, $sequence));
         $totalNt += length($sequence);
       }
       $seqin->close;
+      my $longestContiguous = (sort{$b<=>$a} map{length($_)} @contiguous)[0];
+      $sampleMetrics{$sample}{longestContiguous} = $longestContiguous;
 
       $totalNt ||= ~0; # avoid divide by zero error by setting this number to something really high if zero.
       $sampleMetrics{$sample}{percentNs} = sprintf("%0.2f", $ntCounter{N} / $totalNt);
