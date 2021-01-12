@@ -20,8 +20,11 @@ use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "SARS-CoV-2 assembly plugin by Lee Katz.";
+
+# A message to show in the report if any
+my $warningMsg="";
 
 local $0=fileparse $0;
 exit(main());
@@ -45,7 +48,6 @@ sub main{
       tabix                           => 'tabix --version | head -n1',
       bowtie2                         => 'bowtie2 --version | grep -m 1 version',
       'bowtie2-build'                   => 'bowtie2-build --version | grep -m 1 version',
-      #'v-annotate.pl (VADR)'          => 'v-annotate.pl -h | grep -m 1 [0-9]'
     }, $settings,
   );
 
@@ -68,7 +70,11 @@ sub main{
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
 
-  recordProperties($dir,{version=>$VERSION,table=>$metricsOut});
+  recordProperties($dir,{
+    version  => $VERSION,
+    table    => $metricsOut,
+    warnings => $warningMsg,
+  });
 
   return 0;
 }
@@ -79,6 +85,7 @@ sub assembleAll{
   # Find information about each genome
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
   my %sampleMetrics = ();
+  my $cdsOverabundance = 0; # if any sample has > 100% CDS
   while(my($sample,$info)=each(%$sampleInfo)){
     next if(ref($info) ne "HASH");
     logmsg "ASSEMBLE SAMPLE $sample";
@@ -152,8 +159,18 @@ sub assembleAll{
 
       $totalNt ||= ~0; # avoid divide by zero error by setting this number to something really high if zero.
       $sampleMetrics{$sample}{percentNs} = sprintf("%0.2f", $ntCounter{N} / $totalNt);
+
+      if($sampleMetrics{$sample}{expectedCdsPercentage} > 1){
+        $cdsOverabundance = 1;
+      }
+
+      # remove any extraneous fields
+      delete($sampleMetrics{$sample}{file});
     }
 
+  }
+  if($cdsOverabundance){
+    $warningMsg .= "Some samples have reported >100% CDS. ";
   }
 
   my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
