@@ -18,6 +18,8 @@ use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfi
 our $VERSION = "1.1";
 our $CITATION= "Kraken plugin by Lee Katz.  Uses Kraken1.";
 
+my %errors = ();
+
 # Get the executable directories
 my $tmpSettings=readConfig();
 
@@ -58,7 +60,8 @@ sub main{
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}});
+  my $errorsMsg = join(" ", keys(%errors));
+  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
 
   return 0;
 }
@@ -85,8 +88,26 @@ sub runKrakenOnDir{
     logmsg "  Database: $$settings{KRAKEN_DEFAULT_DB}";
     my $krakenWorked=runKraken($s,$sampledir,$settings);
 
+    # Check for anything odd in the report
+    if(-e "$sampledir/kraken.report"){
+      open(my $fh, "<", "$sampledir/kraken.report") or logmsg "Could not open $sampledir/kraken.report: $!";
+      while(<$fh>){
+        # Just look at the first integer and ignore decimals
+        # for the sake of simplicity
+        if(/(\d+)/){
+          my $percentMatch = $1;
+          if($percentMatch > 100){
+            $errors{"Internal error: There is at least one sample that has at least 100% of the hits"}++;
+            last;
+          }
+        }
+      }
+      close $fh;
+    }
+
     if(!$krakenWorked){
       logmsg "Kraken was not completed successfully on $sampleName. I will not output results for $sampleName";
+      $errors{"Kraken did not complete successfully for at least one sample"}++;
       next;
     }
 
