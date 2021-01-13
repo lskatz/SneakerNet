@@ -28,6 +28,7 @@ Creates files under runDir/SneakerNet/kraken/sampleName:
   * A rank code, indicating (U)nclassified, (D)omain, (K)ingdom, (P)hylum, (C)lass, (O)rder, (F)amily, (G)enus, or (S)pecies. All other ranks are simply '-'.
   * NCBI taxonomy ID
   * indented scientific name
+* kraken.filtered.report - the same as above, but all hits < 1% are removed
 * kraken.taxonomy - a tab-delimited file
   * first column is the number of reads
   * second column, and all subsequent columns are the taxonomy starting with root and going down as far as possible, e.g., scientific name.
