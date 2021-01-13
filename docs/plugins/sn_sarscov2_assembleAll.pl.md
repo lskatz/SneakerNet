@@ -59,5 +59,7 @@ Table with columns
 * altCdsCount - number of CDS in new assembly
 * refCdsCount - number of CDS in reference assembly
 * expectedCdsPercentage - altCdsCount / refCdsCount
+* longestContiguous - the longest contiguous part of the genome between any two Ns
+
 
 
