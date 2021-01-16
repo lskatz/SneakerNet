@@ -6,7 +6,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use File::Temp qw/tempdir/;
+use File::Temp qw/tempdir tempfile/;
 use File::Copy qw/mv cp/;
 use File::Spec;
 use Bio::SeqIO;
@@ -203,16 +203,28 @@ sub assembleAll{
 sub assembleSample{
   my($sample,$sampleInfo,$settings)=@_;
 
-  my($R1,$R2) = @{ $$sampleInfo{fastq} };
+  my($R1orig,$R2orig) = @{ $$sampleInfo{fastq} };
 
-  if(!$R1 || !-e $R1){
+  if(!$R1orig || !-e $R1orig){
     logmsg "Could not find R1 for $sample. Skipping.";
     return "";
   }
-  if(!$R2 || !-e $R2){
+  if(!$R2orig || !-e $R2orig){
     logmsg "Could not find R2 for $sample. Skipping.";
     return "";
   }
+
+  # Get the reference ready
+  my $ref = $$sampleInfo{taxonRules}{reference_fasta};
+  # Check for bowtie2 index files
+  if(!-e "$ref.1.bt2"){
+    my $log = "$ref.bowtie2-build.log";
+    logmsg "Index not found. bowtie2-build log can be found at $log";
+    command("bowtie2-build $ref $ref 2> $log");
+  }
+
+  # Filter to reads that map to the reference
+  my($R1,$R2) = readsThatMapTo($ref, $R1orig, $R2orig, $settings);
 
   # Dealing with a small file size
   # TODO look at read metrics instead
@@ -231,16 +243,11 @@ sub assembleSample{
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
   mkdir $outdir;
 
-  my $ref = $$sampleInfo{taxonRules}{reference_fasta};
-
-  # Check for bowtie2 index files
-  if(!-e "$ref.1.bt2"){
-    my $log = "$ref.bowtie2-build.log";
-    logmsg "Index not found. bowtie2-build log can be found at $log";
-    command("bowtie2-build $ref $ref 2> $log");
+  my $primersBed = $$sampleInfo{taxonRules}{primers_bed};
+  if(!defined($primersBed)){
+    die "ERROR: the primers_bed file is not defined. This is usually derived from the primers_bed_url key found in taxonProperties.conf.";
   }
-
-  ($R1, $R2) = adapterTrim($R1, $R2, $settings);
+  ($R1, $R2) = adapterTrim($R1, $R2, $primersBed, $ref, $settings);
 
   logmsg "Mapping reads from $sample to $ref";
   my $samtoolsThreads = $$settings{numcpus}-1;
@@ -273,6 +280,30 @@ sub assembleSample{
   unlink("$outdir/out.vcf.gz.tbi");
 
   return $outdir
+}
+
+# Filter to just reads that map to a reference
+# The magic behind this is mapping and then samtools -F 4 -F 8
+#   => read not unmapped and mate not unmapped
+sub readsThatMapTo{
+  my($ref, $R1orig, $R2orig, $settings) = @_;
+
+  my $workingDir = File::Temp::tempdir("readsThatMapTo.XXXXXX", DIR=>$$settings{tempdir});
+
+  my $samtoolsThreads = $$settings{numcpus}-1;
+  my $sam = "$workingDir/bowtie2.sam";
+  my ($fhR1, $R1new) = tempfile("R1.XXXXXX", SUFFIX=>".fastq", DIR=>$workingDir);
+  my ($fhR2, $R2new) = tempfile("R2.XXXXXX", SUFFIX=>".fastq", DIR=>$workingDir);
+
+  command("bowtie2 --very-fast-local -p $$settings{numcpus} -x $ref -1 $R1orig -2 $R2orig -S $sam 2>&1");
+  command("samtools fastq -F 12 $sam -1 $R1new -2 $R2new --threads $samtoolsThreads");
+  command("gzip $R1new");
+  command("gzip $R2new");
+
+  # Moderate cleanup before tempdir is destroyed anyway
+  unlink($sam);
+
+  return("$R1new.gz", "$R2new.gz");
 }
 
 sub annotateFastaWithBioPerl{
@@ -356,29 +387,68 @@ sub annotateFastaWithBioPerl{
   return $cdsMetricsFile;
 }
 
+# Pure perl adapter trimming with a bed file so that
+# I don't have to use trimmomatic
 sub adapterTrim{
-  my($R1in, $R2in, $settings) = @_;
-  #my($read1, $read2, $settings) = @_;
+  my($R1in, $R2in, $primersBed, $ref, $settings) = @_;
   my $threads = $$settings{numcpus};
 
-  #my $R1in  = "$$settings{tempdir}/in.".basename($read1);
-  #my $R2in  = "$$settings{tempdir}/in.".basename($read2);
+  # Need to get sequences from reference with bed coordinates
+  my $seqin = Bio::SeqIO->new(-file=>$ref);
+  my %seq;
+  while(my $seq=$seqin->next_seq){
+    $seq{$seq->id} = $seq;
+  }
+  $seqin->close;
+
+  open(my $bedFh, $primersBed) or die "ERROR: could not read from $primersBed: $!";
+  my @primerSeq;
+  while(<$bedFh>){
+    chomp;
+    my($chrom, $start, $stop, $name, $score, $strand) = split(/\t/);
+    my $seq = $seq{$chrom}->subseq($start+1,$stop);
+    
+    if($strand eq '-'){
+      $seq = reverse($seq);
+      $seq =~ tr/ACGTacgt/TGCAtgca/;
+    }
+
+    push(@primerSeq, $seq);
+  }
+  close($bedFh);
+
+  my $regexStr = join("|",@primerSeq);
+  my $regex = qr/^($regexStr)/i;
+
   my $R1out = "$$settings{tempdir}/".basename($R1in);
   my $R2out = "$$settings{tempdir}/".basename($R2in);
 
-  #cp($read1, $R1in) or die $!;
-  #cp($read2, $R2in) or die $!;
-
-  my $log = "$$settings{tempdir}/cutadapt.log";
-  open(my $logFh, ">", $log) or die "ERROR: could not write to $log: $!";
-  close $logFh;
-
-  logmsg "Cutadapt log file: $log";
-
-  command("cutadapt -j $threads -g GTTTCCCAGTCACGATA -G GTTTCCCAGTCACGATA -a TATCGTGACTGGGAAAC -A TATCGTGACTGGGAAAC -g ACACTCTTTCCCTACACGACGCTCTTCCGATCT -G ACACTCTTTCCCTACACGACGCTCTTCCGATCT -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -n 3 -m 75 -q 25 --interleaved $R1in $R2in 2>>$log | cutadapt -j $threads --interleaved -m 75 -u 30 -u -30 -U 30 -U -30 -o $R1out -p $R2out - >> $log 2>&1");
+  trimOneFastq($R1in, $R1out, $regex, $settings);
+  print Dumper $R1in, $R1out;
+  sleep 444444;
+  die;
 
   return($R1out, $R2out);
 }
+
+sub trimOneFastq{
+  my($in, $out, $regex, $settings) = @_;
+
+  my $lineCounter = 0;
+  open(my $fh, "zcat $in |") or die "ERROR: could not open $in: $!";
+  open(my $fhOut, " | gzip -c > $out") or die "ERROR: could not pipe to $out: $!";
+  while(<$fh>){
+    $lineCounter++;
+    if($lineCounter % 4 == 2){
+      s/$regex//;
+    }
+    print $fhOut $_;
+  }
+  close $fhOut;
+  close $fh;
+  return 1;
+}
+    
 
 sub usage{
   print "Assemble all genomes
