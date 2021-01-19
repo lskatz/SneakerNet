@@ -19,8 +19,10 @@ use Thread::Queue;
 use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
+use GD; # for fonts
+use GD::Graph::lines;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION= "SARS-CoV-2 assembly plugin by Lee Katz.";
 
 # A message to show in the report if any
@@ -42,7 +44,7 @@ sub main{
       wget                            => 'wget --version | head -n 1',
       samtools                        => 'samtools 2>&1 | grep Version:',
       bcftools                        => 'bcftools 2>&1 | grep Version:',
-      cutadapt                        => 'cutadapt --version',
+      'trimmomatic'                   => 'trimmomatic -version 2>&1 | grep -v _JAVA',
       seqtk                           => 'seqtk 2>&1 | grep -m 1 Version:',
       bgzip                           => 'bgzip --version | head -n1',
       tabix                           => 'tabix --version | head -n1',
@@ -243,6 +245,7 @@ sub assembleSample{
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
   mkdir $outdir;
 
+  logmsg "Trimming adapters";
   my $primersBed = $$sampleInfo{taxonRules}{primers_bed};
   if(!defined($primersBed)){
     die "ERROR: the primers_bed file is not defined. This is usually derived from the primers_bed_url key found in taxonProperties.conf.";
@@ -278,6 +281,36 @@ sub assembleSample{
   unlink($sam);
   unlink("$outdir/out.vcf.gz");
   unlink("$outdir/out.vcf.gz.tbi");
+
+  # make a graph
+  my $png = "$outdir/plot.png";
+  my @depthOfContig = ();
+  open(my $fh, "samtools depth -aa $sortedBam |") or die "ERROR: could not run samtools depth on $sortedBam: $!";
+  while(<$fh>){
+    chomp;
+    my($contig, $pos, $depth) = split /\t/;
+    $depthOfContig[$pos] = $depth;
+  }
+  close $fh;
+
+  my $graph = new GD::Graph::lines();
+  $graph->set(
+    title  => "Coverage of $sample",
+    x_label => "pos",
+    y_label => "depth",
+  );
+
+  $graph->set_legend_font(GD::Font->Small);
+
+  my $gd = $graph->plot([
+    [1..scalar(@depthOfContig)],
+    \@depthOfContig,
+  ]);
+  
+  open(my $pngFh, ">", $png) or die "ERROR: could not write to $png: $!";
+  binmode($pngFh);
+  print $pngFh $gd->png;
+  close $pngFh;
 
   return $outdir
 }
@@ -393,7 +426,8 @@ sub adapterTrim{
   my($R1in, $R2in, $primersBed, $ref, $settings) = @_;
   my $threads = $$settings{numcpus};
 
-  # Need to get sequences from reference with bed coordinates
+  ## Need to get sequences from reference with bed coordinates
+  # get reference contigs
   my $seqin = Bio::SeqIO->new(-file=>$ref);
   my %seq;
   while(my $seq=$seqin->next_seq){
@@ -401,8 +435,11 @@ sub adapterTrim{
   }
   $seqin->close;
 
+  # get correct sequences of primers
+  my $PRIMERS = "$$settings{tempdir}/primers.fasta";
+  open(my $seqout, '>', $PRIMERS) or die "ERROR: could not write to $PRIMERS: $!";
   open(my $bedFh, $primersBed) or die "ERROR: could not read from $primersBed: $!";
-  my @primerSeq;
+  #my @primerSeq;
   while(<$bedFh>){
     chomp;
     my($chrom, $start, $stop, $name, $score, $strand) = split(/\t/);
@@ -413,41 +450,44 @@ sub adapterTrim{
       $seq =~ tr/ACGTacgt/TGCAtgca/;
     }
 
-    push(@primerSeq, $seq);
+    print $seqout ">$name\n$seq\n";
+    #push(@primerSeq, $seq);
   }
+  close($seqout);
   close($bedFh);
 
-  my $regexStr = join("|",@primerSeq);
-  my $regex = qr/^($regexStr)/i;
+  #my $regexStr = join("|",@primerSeq);
+  #my $regex = qr/^($regexStr)/i;
 
   my $R1out = "$$settings{tempdir}/".basename($R1in);
   my $R2out = "$$settings{tempdir}/".basename($R2in);
 
-  trimOneFastq($R1in, $R1out, $regex, $settings);
-  print Dumper $R1in, $R1out;
-  sleep 444444;
-  die;
+  my $MIN_BQ=3;
+  my $TRIMOPT = "ILLUMINACLIP:$PRIMERS:1:30:11 LEADING:$MIN_BQ TRAILING:$MIN_BQ MINLEN:30 TOPHRED33";
+  command("trimmomatic PE -threads $threads -phred33 \Q$R1in\E \Q$R2in\E \Q$R1out\E /dev/null \Q$R2out\E /dev/null $TRIMOPT 2>&1");
 
   return($R1out, $R2out);
 }
 
-sub trimOneFastq{
-  my($in, $out, $regex, $settings) = @_;
-
-  my $lineCounter = 0;
-  open(my $fh, "zcat $in |") or die "ERROR: could not open $in: $!";
-  open(my $fhOut, " | gzip -c > $out") or die "ERROR: could not pipe to $out: $!";
-  while(<$fh>){
-    $lineCounter++;
-    if($lineCounter % 4 == 2){
-      s/$regex//;
-    }
-    print $fhOut $_;
-  }
-  close $fhOut;
-  close $fh;
-  return 1;
-}
+## Trim a fastq file with just a compiled regex like
+# $regex = qr/^(AAA|AAT|ATG)/
+#sub trimOneFastq{
+#  my($in, $out, $regex, $settings) = @_;
+#
+#  my $lineCounter = 0;
+#  open(my $fh, "zcat $in |") or die "ERROR: could not open $in: $!";
+#  open(my $fhOut, " | gzip -c > $out") or die "ERROR: could not pipe to $out: $!";
+#  while(<$fh>){
+#    $lineCounter++;
+#    if($lineCounter % 4 == 2){
+#      s/$regex//;
+#    }
+#    print $fhOut $_;
+#  }
+#  close $fhOut;
+#  close $fh;
+#  return 1;
+#}
     
 
 sub usage{
