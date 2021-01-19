@@ -32,7 +32,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.19.2';
+our $VERSION  = '0.19.3';
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -557,6 +557,18 @@ sub samplesheetInfo_tsv{
 
       $sample{$sampleName}{taxonRules}{reference_gbk}   = $gbk;
       $sample{$sampleName}{taxonRules}{reference_fasta} = $ref;
+    }
+
+    # Get the primers bed file if it doesn't exist
+    my $primers = $sample{$sampleName}{taxonRules}{primers_bed_url};
+    if(defined($primers)){
+      my $dir = realpath($RealBin."/../db/fasta");
+      my $bed = "$dir/".basename($primers);
+      if(!-e $bed){
+        logmsg "Did not find local bed and so I am downloading $primers to $bed";
+        command("wget '$primers' -O $bed");
+      }
+      $sample{$sampleName}{taxonRules}{primers_bed} = $bed;
     }
   }
   close $fh;
