@@ -71,6 +71,8 @@ WriteMakefile(
     'Moo'            => 0,
     'List::MoreUtils'=> 0,
     'JSON'           => 0,
+    'GD'             => 0,
+    'GD::Graph::lines'=>0,
   },
   BUILD_REQUIRES => {
     'Test::More'     => 0.47,

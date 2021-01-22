@@ -22,7 +22,7 @@ use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfi
 use GD; # for fonts
 use GD::Graph::lines;
 
-our $VERSION = "1.3";
+our $VERSION = "1.4";
 our $CITATION= "SARS-CoV-2 assembly plugin by Lee Katz.";
 
 # A message to show in the report if any
@@ -71,6 +71,8 @@ sub main{
 
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
+
+  my $imagePath = makeCoverageGraph($dir, $settings);
 
   recordProperties($dir,{
     version  => $VERSION,
@@ -202,6 +204,66 @@ sub assembleAll{
   return $metricsOut;
 }
 
+sub makeCoverageGraph{
+  my($dir,$settings)=@_;
+
+  my $png = "$dir/SneakerNet/forEmail/depth.png";
+  my $maxPos = 0; # what is the max coordinate of any assembly
+  my %depth; # depth{sample}[pos] = depthInt
+  
+  # Find information about each genome
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
+  my %sampleMetrics = ();
+  while(my($sample,$info)=each(%$sampleInfo)){
+    next if(ref($info) ne "HASH");
+
+    my $depthFile = "$dir/SneakerNet/assemblies/$sample/consensus/depth.tsv";
+
+    # TODO account for genomes with multiple contigs
+    my @depthOfContig = ();
+    open(my $fh, $depthFile) or die "ERROR: could not read $depthFile: $!";
+    while(<$fh>){
+      chomp;
+      my($contig, $pos, $depth) = split /\t/;
+      $depthOfContig[$pos] = $depth;
+    }
+    close $fh;
+    $maxPos = max($maxPos, scalar(@depthOfContig));
+    
+    $depth{$sample} = \@depthOfContig;
+  }
+
+  my $graph = new GD::Graph::lines();
+  $graph->set(
+    title  => "Depth of reads per sample",
+    x_label => "pos",
+    y_label => "depth",
+  );
+
+  $graph->set_legend_font(GD::Font->Small);
+
+  # get those samples into a set of arrays
+  my @graphAmplitude;
+  my @sampleName = sort keys %$sampleInfo;
+  for(my $i=0;$i<@sampleName;$i++){
+    $graphAmplitude[$i] = $depth{$sampleName[$i]};
+  }
+
+  $graph->set_legend(@sampleName);
+
+  my $gd = $graph->plot([
+    [1..$maxPos],
+    @graphAmplitude,
+  ]);
+  
+  open(my $pngFh, ">", $png) or die "ERROR: could not write to $png: $!";
+  binmode($pngFh);
+  print $pngFh $gd->png;
+  close $pngFh;
+
+  return $png;
+}
+
 sub assembleSample{
   my($sample,$sampleInfo,$settings)=@_;
 
@@ -282,37 +344,9 @@ sub assembleSample{
   unlink("$outdir/out.vcf.gz");
   unlink("$outdir/out.vcf.gz.tbi");
 
-  # make a graph
-  my $png = "$outdir/plot.png";
-  my @depthOfContig = ();
-  open(my $fh, "samtools depth -aa $sortedBam |") or die "ERROR: could not run samtools depth on $sortedBam: $!";
-  while(<$fh>){
-    chomp;
-    my($contig, $pos, $depth) = split /\t/;
-    $depthOfContig[$pos] = $depth;
-  }
-  close $fh;
+  command("samtools depth -aa $sortedBam > $outdir/depth.tsv");
+  return $outdir;
 
-  my $graph = new GD::Graph::lines();
-  $graph->set(
-    title  => "Coverage of $sample",
-    x_label => "pos",
-    y_label => "depth",
-  );
-
-  $graph->set_legend_font(GD::Font->Small);
-
-  my $gd = $graph->plot([
-    [1..scalar(@depthOfContig)],
-    \@depthOfContig,
-  ]);
-  
-  open(my $pngFh, ">", $png) or die "ERROR: could not write to $png: $!";
-  binmode($pngFh);
-  print $pngFh $gd->png;
-  close $pngFh;
-
-  return $outdir
 }
 
 # Filter to just reads that map to a reference

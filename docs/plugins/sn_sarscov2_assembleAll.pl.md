@@ -41,6 +41,13 @@ and produces assembly metrics.
 
 Assemblies are found in `SneakerNet/assemblies/[samplename]/*.fasta`
 
+Some intermediate files are in `SneakerNet/assemblies/[samplename]/consensus
+* depth.tsv - output of `samtools depth`
+* out.vcf.gz.masked.vcf.gz and related `csi` file
+* sorted.bam and related `bai` file
+
+A graph of all depths of coverage in `SneakerNet/forEmail/depth.png`
+
 Table with columns
 
 * File - the sample name with some file extensions
