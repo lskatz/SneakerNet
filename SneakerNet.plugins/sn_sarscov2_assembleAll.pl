@@ -22,7 +22,7 @@ use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfi
 use GD; # for fonts
 use GD::Graph::lines;
 
-our $VERSION = "1.4";
+our $VERSION = "1.5";
 our $CITATION= "SARS-CoV-2 assembly plugin by Lee Katz.";
 
 # A message to show in the report if any
@@ -78,6 +78,7 @@ sub main{
     version  => $VERSION,
     table    => $metricsOut,
     warnings => $warningMsg,
+    image    => $imagePath,
   });
 
   return 0;
