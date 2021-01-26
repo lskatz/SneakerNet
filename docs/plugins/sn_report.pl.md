@@ -19,10 +19,17 @@ is used.
 
 ## tables
 
-If the key is `table`, then the corresponding table is 
+If the value has a suffix `.csv` or `.tsv`, then the corresponding table is 
 converted to HTML and included in the report. All other
 key/value combinations are included in the HTML report,
 under their corresponding plugins.
+
+## images
+
+_For this plugin version >= 2.7_
+
+If the value has a suffix `.png` or `.gif`, then the corresponding
+file path will be converted to base64 and embedded in the HTML report.
 
 # Outputs
 
