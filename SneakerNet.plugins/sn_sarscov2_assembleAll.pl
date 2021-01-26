@@ -220,6 +220,8 @@ sub makeCoverageGraph{
     my $depthFile = "$dir/SneakerNet/assemblies/$sample/consensus/depth.tsv";
 
     # TODO account for genomes with multiple contigs
+    # As of now, coordinates will restart with each new contig
+    # which is not an issue if there is only one contig.
     my @depthOfContig = ();
     open(my $fh, $depthFile) or die "ERROR: could not read $depthFile: $!";
     while(<$fh>){
@@ -233,13 +235,13 @@ sub makeCoverageGraph{
     $depth{$sample} = \@depthOfContig;
   }
 
+  # Start a canvas for a line graph
   my $graph = new GD::Graph::lines();
   $graph->set(
     title  => "Depth of reads per sample",
     x_label => "pos",
     y_label => "depth",
   );
-
   $graph->set_legend_font(GD::Font->Small);
 
   # get those samples into a set of arrays
