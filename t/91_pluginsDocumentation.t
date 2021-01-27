@@ -36,10 +36,10 @@ while(my $file = readdir($dh)){
 }
 closedir($dh);
 
+my $plugins_md = "$RealBin/../docs/PLUGINS.md";
 subtest 'All plugins listed in PLUGINS.md' => sub{
   plan tests => scalar(@plugin);
 
-  my $plugins_md = "$RealBin/../docs/PLUGINS.md";
   diag "Reading from $plugins_md";
   open(my $fh, $plugins_md) or BAIL_OUT("ERROR: could not read $plugins_md: $!");
   my @plugins_md_content = <$fh>;
@@ -49,14 +49,14 @@ subtest 'All plugins listed in PLUGINS.md' => sub{
   for my $plugin(@plugin){
     my $exe = basename($plugin);
     my @documentationLine = grep {/$exe/i} @plugins_md_content;
-    cmp_ok(scalar(@documentationLine), '>', 0, "$exe mentioned at least once in $plugins_md");
+    cmp_ok(scalar(@documentationLine), '>', 0, "$exe mentioned at least once in PLUGINS.md");
   }
 };
 
 subtest 'All plugins have a documentation page' => sub{
-  plan tests => 1;
+  plan tests => 2;
 
-  pass("This test only shows warnings");
+  pass("This test only shows warnings, and they would be after this message");
 
   for my $plugin(@plugin){
     my $exe = basename($plugin);
@@ -65,5 +65,6 @@ subtest 'All plugins have a documentation page' => sub{
       note "WARNING: could not find a documentation page for $exe under $md";
     }
   }
+  pass("If any warnings were produced for this test, then they are above this line");
 };
 

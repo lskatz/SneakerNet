@@ -2,6 +2,10 @@
 
 We have containerized SneakerNet into a docker image that is publicly available on [dockerhub](https://hub.docker.com/repository/docker/lskatz/sneakernet).
 
+Some test data can be found in this repository in
+t/M00123-18-001-test/
+and is generally what the variable `INDIR` would hold in this document.
+
 ## Requirements
 Docker, Singularity,  or another Docker-compatible container software must be installed e.g. shifter (untested)
 
@@ -13,12 +17,12 @@ An example path is given in the instructions below, with `KRAKEN_DEFAULT_DB`.
 ```bash
 KRAKEN_DEFAULT_DB=$HOME/db/kraken1/minikraken_20171013_4GB
 mkdir -pv $KRAKEN_DEFAULT_DB
-cd $KRAKEN_DEFAULT_DB
+pushd $KRAKEN_DEFAULT_DB
 cd ..
 wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
 tar -zxvf minikraken_20171019_4GB.tgz
 rm -vf minikraken_20171019_4GB.tgz
-cd -
+popd
 ```
 
 ## Singularity
@@ -41,7 +45,7 @@ Navigate into a directory where you would like your Singularity image to be stor
 Build the image with `singularity build`.
 
     cd your/containers/directory/
-    singularity build sneakernet.simg docker://lskatz/sneakernet:latest
+    singularity build sneakernet.sif docker://lskatz/sneakernet:latest
 
 ### Running SneakerNet using Singularity
 
@@ -59,8 +63,8 @@ An example is below, where file transfer and email is disabled.
     [[ -e "$KRAKEN_DEFAULT_DB" ]] || echo "ERROR: please set KRAKEN_DEFAULT_DB"
     
     # this assumes $MISEQ and $INDIR are in your $PWD
-    singularity exec -B $PWD:/data sneakernet.simg SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
-    singularity exec -B $PWD:/data -B $KRAKEN_DEFAULT_DB:/kraken-database sneakernet.simg SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
+    singularity exec -B $PWD:/data sneakernet.sif SneakerNet.roRun.pl /data/$MISEQ -o /data/$INDIR
+    singularity exec -B $PWD:/data -B $KRAKEN_DEFAULT_DB:/kraken-database sneakernet.sif SneakerNetPlugins.pl --numcpus 12 --no email --no transfer --no save /data/$INDIR
 
 ## Docker
 

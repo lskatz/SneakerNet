@@ -26,7 +26,7 @@ See below for samples.tsv, if SampleSheet.csv is not found.
 
 #### samples.tsv
 
-This file can be created from SampleSheet.csv by the plugin [sn_parseSampleSheet.pl](../docs/plugins/sn_parseSampleSheet.pl.md), from `SneakerNet.ro.pl --createsamplesheet`, from `sn_createSampleSheet.pl`, or manually.
+This file can be created from SampleSheet.csv by the plugin [sn_parseSampleSheet.pl](../docs/plugins/sn_parseSampleSheet.pl.md), from `SneakerNet.roRun.pl --createsamplesheet`, from `sn_createSampleSheet.pl`, or manually.
 It has three columns, separated by tab: 
 
 * sample - Name for a sample

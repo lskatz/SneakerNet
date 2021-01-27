@@ -15,8 +15,10 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 our $CITATION= "Kraken plugin by Lee Katz.  Uses Kraken1.";
+
+my %errors = ();
 
 # Get the executable directories
 my $tmpSettings=readConfig();
@@ -58,7 +60,8 @@ sub main{
   
   my $outdir=runKrakenOnDir($dir,$settings);
 
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}});
+  my $errorsMsg = join(" ", keys(%errors));
+  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
 
   return 0;
 }
@@ -85,8 +88,26 @@ sub runKrakenOnDir{
     logmsg "  Database: $$settings{KRAKEN_DEFAULT_DB}";
     my $krakenWorked=runKraken($s,$sampledir,$settings);
 
+    # Check for anything odd in the report
+    if(-e "$sampledir/kraken.report"){
+      open(my $fh, "<", "$sampledir/kraken.report") or logmsg "Could not open $sampledir/kraken.report: $!";
+      while(<$fh>){
+        # Just look at the first integer and ignore decimals
+        # for the sake of simplicity
+        if(/(\d+)/){
+          my $percentMatch = $1;
+          if($percentMatch > 100){
+            $errors{"Internal error: There is at least one sample that has at least 100% of the hits"}++;
+            last;
+          }
+        }
+      }
+      close $fh;
+    }
+
     if(!$krakenWorked){
       logmsg "Kraken was not completed successfully on $sampleName. I will not output results for $sampleName";
+      $errors{"Kraken did not complete successfully for at least one sample"}++;
       next;
     }
 
@@ -203,6 +224,8 @@ sub runKrakenAsm{
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
 
+  filterReport($sampledir, $settings);
+
   command("ktImportText -o $html $sampledir/kraken.taxonomy,$sampleName");
 
   unlink("$sampledir/kraken.out");
@@ -242,6 +265,8 @@ sub runKrakenSE{
   ");
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  filterReport($sampledir, $settings);
+
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -299,6 +324,8 @@ sub runKrakenPE{
   ");
 
   command("kraken-report --db $$settings{KRAKEN_DEFAULT_DB} $sampledir/kraken.out > $sampledir/kraken.report");
+  filterReport($sampledir, $settings);
+
 
   # To capture unclassified reads, we can get the third
   # column of the first row of the report file. This
@@ -322,6 +349,28 @@ sub runKrakenPE{
   }
 
   return 1;
+}
+
+sub filterReport{
+  my($sampledir, $settings) = @_;
+
+  # Also filter the kraken report to remove small percentages
+  # in pure perl to make it more portable
+  open(my $reportFh, "<", "$sampledir/kraken.report") or die "ERROR: could not open $sampledir/kraken.report: $!";
+  open(my $filteredFh, ">", "$sampledir/kraken.filtered.report") or die "ERROR: could not write to $sampledir/kraken.filtered.report: $!";
+  while(<$reportFh>){
+    # Just check out the first digits and don't sweat the decimals.
+    if(/(\d+)/){
+      my $percentageInt = $1;
+      next if($percentageInt < 1);
+
+      print $filteredFh $_;
+    }
+  }
+  close $reportFh;
+  close $filteredFh;
+
+  return "$sampledir/kraken.filtered.report";
 }
 
 sub usage{

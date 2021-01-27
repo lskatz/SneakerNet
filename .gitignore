@@ -35,6 +35,8 @@ t/M00123-18-001-test/samples.tsv
 t/M00123-18-001-test/contaminated_1.fastq.gz
 t/M00123-18-001-test/contaminated_2.fastq.gz
 
+db/fasta/*
+
 # Added on from other gitignore
 !Build/
 .last_cover_stats

@@ -19,7 +19,7 @@ contamination.
 
 # Outputs
 
-Table with columns
+Table with columns `mlst-contamination-detection.tsv`
 
 * sample
 * Scheme - scheme that this script estimates to be the correct scheme

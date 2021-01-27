@@ -15,12 +15,14 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "4.2";
+our $VERSION = "4.3";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
 my $tmpSettings=readConfig();
 my @contaminatedSamples; # list of potentially contaminated samples
+my $warningsMsg = ""; # for warnings on the html report
+my $errorsMsg   = ""; # for errors on the html report
 
 local $0=fileparse $0;
 exit(main());
@@ -56,11 +58,16 @@ sub main{
   cp("$outdir/report.tsv", "$dir/SneakerNet/forEmail/kraken.tsv");
   #command("cd $dir/SneakerNet/forEmail && zip -v9 kraken.zip *.kraken.html && rm -v *.kraken.html");
 
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},table=>"$dir/SneakerNet/forEmail/kraken.tsv"});
-  # also record if there are any potentially contaminated samples
   if(@contaminatedSamples){
-    recordProperties($dir,{warnings=>"There is at least one potentially contaminated sample ( >=$$settings{minwarning}%)"});
+    $warningsMsg .= "There is at least one potentially contaminated sample ( >=$$settings{minwarning}%) ";
   }
+  recordProperties($dir,{
+    version        => $VERSION,
+    krakenDatabase => $$settings{KRAKEN_DEFAULT_DB},
+    table          => "$dir/SneakerNet/forEmail/kraken.tsv",
+    warnings       => $warningsMsg,
+  });
+  # also record if there are any potentially contaminated samples
 
   return 0;
 }
@@ -143,7 +150,7 @@ sub guessTaxon{
 
   # If sn_kraken did not complete, a file will not be present
   if(!-e $taxfile){
-    logmsg "WARNING: kraken report not found at $taxfile";
+    logmsg "WARNING: kraken report not found at $taxfile. It is possible that sn_kraken.pl or kraken was not run on this sample yet.";
     return {}; # return empty hash because that is the var type expected
   }
 

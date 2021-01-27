@@ -11,9 +11,9 @@ use FindBin;
 use List::Util qw/sum/;
 
 use lib "$FindBin::RealBin/../lib/perl5";
-use SneakerNet qw/@rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
+use SneakerNet qw/readTsv @rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "5.0";
+our $VERSION = "6.1";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -110,6 +110,24 @@ sub identifyBadRuns{
     logmsg "WARNING: readMetrics.tsv was not found. Unknown whether samples pass or fail by coverage and quality.";
   }
 
+  # Assembly metrics
+  my %assemblyMetrics = ();
+  if(-e "$dir/SneakerNet/forEmail/assemblyMetrics.tsv"){
+    my $assemblyMetricsTmp = readTsv("$dir/SneakerNet/forEmail/assemblyMetrics.tsv"); 
+
+    # Remove extensions on the key to help with compatibility
+    # down the line.
+    # For example, either of these keys would be valid:
+    #     SRR12530732.bowtie2.bcftools
+    #     SRR12530732
+    while(my($key, $metrics) = each(%$assemblyMetricsTmp)){
+      my $newKey = $key;
+      $newKey =~ s/\..*$//; # remove extension
+      $assemblyMetrics{$key} = $metrics;
+      $assemblyMetrics{$newKey} = $metrics;
+    }
+  }
+
   # Understand for each sample whether it passed or failed
   # on each category
   for my $samplename(keys(%$sampleInfo)){
@@ -122,6 +140,7 @@ sub identifyBadRuns{
       coverage=>-1,
       quality => 0, # by default passes
       kraken  => -1,
+      assembly=> -1,# collapse any issues with assembly into one category
     );
 
     # Skip anything that says undetermined.
@@ -227,10 +246,88 @@ sub identifyBadRuns{
       # If we made it through all filters, then we have reached
       # the point where we can call it contaminated.
       $fail{kraken} = 1;
-      last; # no need to test any further because it has failed
+      last; # no need to test any further ranks because it has failed
     }
+
+    # Did it pass by kraken / read classification
+    # Start with a stance that we do not know (value: -1)
+
+    #die Dumper [\%assemblyMetrics, {%{$assemblyMetrics{$samplename}}}, $samplename];
+    my $minNs = $$sampleInfo{$samplename}{taxonRules}{assembly_percentN};
+    my $longestContigThreshold = $$sampleInfo{$samplename}{taxonRules}{longest_contig};
+    if(defined($minNs) && defined($longestContigThreshold)){
+      # Set up a subtest for the assembly.
+      # If any of these assembly metrics fail, then
+      # the assembly fails QC.
+      # If all are unknown, then the assembly QC is unknown.
+      # If all pass, then assembly QC passes.
+      # Definitions:
+      #   -1: unknown
+      #    0: passes
+      #    1: fails
+      my %failAssembly = (
+        minNs         => -1,
+        longestContig => -1,
+      );
+
+      # QC for minimum number of Ns allowed
+      my $percentNs = $assemblyMetrics{$samplename}{percentNs};
+      if(!defined($percentNs)){
+        $failAssembly{minNs} = -1;
+      }
+      elsif($percentNs > $minNs){
+        $failAssembly{minNs} = 1;
+      }
+      elsif($percentNs <= $minNs){
+        $failAssembly{minNs} = 0;
+      }
+
+      # QC for longest contig
+      my $longestContig = $assemblyMetrics{$samplename}{longestContiguous};
+      if(!defined($longestContig)){
+        $failAssembly{longestContig} = -1;
+      }
+      elsif($longestContig >= $longestContigThreshold){
+        $failAssembly{longestContig} = 0;
+      }
+      elsif($longestContig <  $longestContigThreshold){
+        $failAssembly{longestContig} = 1;
+      }
+
+      # Compile assembly failure codes into a single code
+      my $numFailed = 0;
+      my $numTests  = 0;
+      while(my($why, $failCode) = each(%failAssembly)){
+        if($failCode==1){
+          $numFailed++;
+        }
+        elsif($failCode==-1){
+          next;
+        }
+        $numTests++;
+      }
+      if($numTests < 1){
+        $fail{assembly} = -1;
+      }
+      else{
+        if($numFailed > 0){
+          $fail{assembly} = 1;
+        } else {
+          $fail{assembly} = 0;
+        }
+      }
+
+    }
+    # If assembly thresholds are not defined, then it is
+    # unknown whether this sample passed.
+    else {
+      $fail{assembly} = -1;
+    }
+
+    # Save the culmination of pass/fail for this sample
     $whatFailed{$samplename} = \%fail;
   }
+
 
   return \%whatFailed;
 }

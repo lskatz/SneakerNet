@@ -1,0 +1,74 @@
+# https://docs.github.com/en/actions/reference/encrypted-secrets#using-encrypted-secrets-in-a-workflow
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+# https://docs.github.com/en/actions/guides/publishing-docker-images
+name: github-docker
+on: 
+  push:
+    branches:
+      - docker-multistage
+
+env:      
+  DOCKER_PASSWORD:   ${{  secrets.DOCKER_PASSWORD }}
+  DOCKER_USERNAME:   lskatz
+  #DOCKER_USERNAME_SECRET:  ${{  secrets.DOCKER_USERNAME }}
+  CI_PROJECT_NAME:   sneakernet
+  github_repository: lskatz/sneakernet
+  #SLUG:              ${{ format('lskatz/sneakernet:{0}', GITHUB_SHA ) }}
+  #LOCAL_TAG_LATEST:  ${{ format('sneakernet:{0}', ${{ env.GITHUB_SHA }} ) }}
+
+jobs:
+  push_to_registry_v1:
+    name: Push Docker image to multiple registries v1
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: lskatz/sneakernet
+          tags: |
+            latest
+            ${{ github.GITHUB_SHA }}
+          #tag_with_ref: true
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: lskatz/sneakernet/sneakernet
+          tags: |
+            latest
+            ${{ github.GITHUB_SHA }}
+          #tag_with_ref: true
+  push_to_registry_v2:
+    name: Push Docker image to multiple registries v2
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          pull: true
+          push: true
+          #build-args:
+          cache-from: type=registry,ref=lskatz/sneakernet
+          cache-to:   type=registry,ref=lskatz/sneakernet
+          tags:  lskatz/sneakernet:latest
+#           lskatz/sneakernet:${{ github.GITHUB_SHA }}
+#           docker.pkg.github.com/lskatz/sneakernet:latest
+#           docker.pkg.github.com/lskatz/sneakernet:${{ github.GITHUB_SHA }}
+#

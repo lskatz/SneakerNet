@@ -1,22 +1,113 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 
-LABEL base.image="ubuntu:xenial"
-LABEL container.version="1"
+LABEL base.image="ubuntu:bionic"
+LABEL dockerfile.version="1.0.0"
 LABEL software="SneakerNet"
-LABEL software.version="0.11.4"
-LABEL description="QA/QC pipeline for a MiSeq/HiSeq/Ion Torrent run"
+LABEL software.version="0.14.0"
+LABEL description="SneakerNet QA/QC system for primary genomic data"
 LABEL website="https://github.com/lskatz/SneakerNet"
-LABEL license="https://github.com/lskatz/SneakerNet/blob/master/LICENSE"
-LABEL maintainer="Curtis Kapsak"
-LABEL maintainer.email="pjx8@cdc.gov"
+LABEL license="https://github.com/lskatz/SneakerNet/LICENSE.md"
+LABEL maintainer1="Lee Katz"
+LABEL maintainer1.email="gzu2@cdc.gov"
+LABEL maintainer2="Curtis Kapsak"
+LABEL maintainer2.email="pjx8@cdc.gov"
 
-### install dependencies ###
-# libexpat1-dev needed for cpanm to install XML::Parser and other perl modules
-RUN apt-get update && apt-get -y --no-install-recommends install \
+# https://github.com/StaPH-B/docker-builds/blob/master/mash/2.2/Dockerfile
+FROM staphb/mash:2.2 AS mash
+# https://github.com/StaPH-B/docker-builds/blob/master/skesa/2.4.0/Dockerfile
+FROM staphb/skesa:2.4.0 AS skesa
+# etc on the URL sources
+FROM staphb/kraken:1.1.1-no-db AS kraken
+FROM staphb/mlst:2.19.0 AS mlst
+FROM staphb/prokka:1.14.5 AS prokka
+FROM staphb/shovill:1.1.0 AS shovill
+FROM staphb/seqtk:1.3 AS seqtk
+#FROM staphb/staramr:0.7.1 AS staramr
+FROM staphb/salmid:0.1.23 AS salmid
+#FROM rust:1.46.0-slim-buster AS rust
+
+# Other sources
+FROM mgibio/samtools:1.9 AS samtools
+FROM flowcraft/krona:2.7-1 AS krona
+#FROM mickaelsilva/chewbbaca_py3 AS chewbbaca
+
+# EDIT: this bioperl container uses perl/5.18 which doesn't match our perl v5.26.1
+# Bring in libraries
+#FROM bioperl/bioperl:release-1-7-2 AS bioperl
+
+# "Import" ubuntu:bionic one more time as a hack.
+# I hope this step kind of clears the slate so that the COPY
+# commands don't fubar.
+FROM ubuntu:bionic
+
+# Let's get all the executables into our path
+COPY --from=mash      /mash-Linux64-v2.2/* /usr/local/bin/
+COPY --from=skesa     /skesa/*             /usr/local/bin/
+COPY --from=kraken    /opt/kraken/*        /usr/local/bin/
+COPY --from=kraken    /opt/bin/*           /usr/local/bin/
+COPY --from=mlst      /mlst-2.19.0         /mlst-2.19.0    
+COPY --from=mlst      /usr/local/bin/any2fasta              /usr/local/bin/
+COPY --from=prokka    /bedtools2/bin       /usr/local/bin/
+COPY --from=prokka    /prokka-1.14.5/bin   /usr/local/bin/
+COPY --from=prokka    /barrnap-0.9/bin     /usr/local/bin/
+COPY --from=seqtk     /seqtk-1.3           /usr/local/bin/
+#COPY --from=staramr   /usr/local/bin       /usr/local/bin/
+#COPY --from=salmid    /usr/local/bin       /usr/local/bin/
+COPY --from=samtools  /opt/samtools/bin/samtools            /usr/local/bin/
+COPY --from=krona     /NGStools/KronaTools-2.7              /NGStools/KronaTools-2.7
+#COPY --from=chewbbaca /NGStools/clustalw-2.1-linux-x86_64-libcppstatic  /NGStools
+#COPY --from=chewbbaca /NGStools/Prodigal                                /NGStools
+#COPY --from=chewbbaca /NGStools/prodigal_training_files                 /NGStools
+#COPY --from=chewbbaca /usr/local/bin/*     /usr/local/bin/
+COPY --from=mlst      /ncbi-blast-2.9.0+   /ncbi-blast-2.9.0+/
+
+#COPY --from=rust      /usr/local/rustup    /usr/local/rustup
+#COPY --from=rust      /usr/local/cargo     /usr/local/cargo
+
+# Libraries
+#COPY --from=staramr   /usr/local/lib/python3.6             /usr/local/lib/python3.6/
+#COPY --from=blast     /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
+#COPY --from=blast     /lib64               /lib64
+#COPY --from=blast     /usr/lib/x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu
+
+# Taking a risk using python3.5 libraries in a python3.6 folder
+#COPY --from=salmid    /usr/local/lib/python3.5             /usr/local/lib/python3.6/
+#COPY --from=chewbbaca /usr/local/lib/python3.5             /usr/local/lib/python3.6/
+#COPY --from=bioperl   /usr/lib/            /usr/lib
+#COPY --from=bioperl   /usr/local/lib/      /usr/local/lib
+#COPY --from=bioperl   /usr/share           /usr/share
+
+# Tons of Shovill executables
+COPY --from=shovill   /usr/local/bin/       /usr/local/bin/
+COPY --from=shovill   /SPAdes-3.14.1-Linux  /SPAdes-3.14.1-Linux
+COPY --from=shovill   /kmc                 /usr/local/bin/
+COPY --from=shovill   /Lighter-1.1.1       /usr/local/bin/
+COPY --from=shovill   /trimmomatic         /trimmomatic
+COPY --from=shovill   /bwa/bwa-0.7.17      /usr/local/bin/
+COPY --from=shovill   /megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin       /usr/local/bin/
+COPY --from=shovill   /velvet/velvet-1.2.10                 /usr/local/bin/
+COPY --from=shovill   /flash/FLASH-1.2.11  /usr/local/bin/
+COPY --from=shovill   /shovill/shovill-1.1.0                /shovill/shovill-1.1.0
+COPY --from=shovill   /pilon               /pilon
+COPY --from=shovill   /samclip             /usr/local/bin/
+
+
+# System installations that I think I need
+# https://gist.github.com/ryanwilsonperkin/0daf26385813196291bf32492802a4ca
+# https://github.com/ilikenwf/apt-fast
+#RUN echo deb http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main >> /etc/apt/sources.list.d/apt-fast.list && \
+# echo deb-src http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main >> /etc/apt/sources.list.d/apt-fast.list && \
+# apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B && \
+# apt-get update && \
+# apt-get install -y apt-fast
+
+RUN apt-get update && \
+ apt-get  install -y --no-install-recommends \
  perl \
  git \
  rsync \
  vim \
+ less \
  ssh \
  wget \
  curl \
@@ -32,7 +123,6 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  zlib1g-dev \
  g++ \ 
  gawk \
- bioperl \
  libexpat1-dev \
  sendmail \ 
  zip \
@@ -46,7 +136,7 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  pigz \
  gcc \
  libpthread-stubs0-dev \
- openjdk-9-jre \
+  default-jre \
  unzip \
  bzip2 \
  libncurses5-dev \
@@ -54,213 +144,54 @@ RUN apt-get update && apt-get -y --no-install-recommends install \
  liblzma-dev \
  libcurl4-gnutls-dev \
  libssl-dev \
- libfindbin-libs-perl && \
- apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/* 
+ libfindbin-libs-perl \
+ psmisc \
+ libatlas-base-dev \
+ mafft \
+ libpython3-dev \
+ locales \
+ && \
+ apt-get autoclean && rm -rf /var/lib/apt/lists/* 
+#python-matplotlib ipython python-pandas python-sympy python-nose
+# python-numpy python-scipy  \
 
-### install perl modules as root w cpanm ###
-# kraken1: Getopt::Std
-# SN: Config::Simple local::lib version::vpp Bio::FeatureIO XML::DOM XML::Parser XML::DOM::XPath
-RUN cpanm --notest --force Getopt::Std \
- Config::Simple \
- local::lib \
- version::vpp \
- XML::DOM \
- XML::Parser \
- XML::DOM::XPath \
- Bio::FeatureIO 
+# Set LC_ALL env
+# https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
+RUN echo "LC_ALL=en_US.UTF-8" >> /etc/environment && \
+ echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
+ echo "LANG=en_US.UTF-8" > /etc/locale.conf && \
+ locale-gen en_US.UTF-8
 
-# CG-Pipeline 
-# again can't download because CDC spoofs security certificates which causes errors...GRRRRR
-# let's try without the prefix: GIT_SSL_NO_VERIFY=true
+
+# Perl libraries
+RUN cpanm --force --notest \
+  LWP::Protocol::https \
+  IO::Socket::SSL \
+  DBD::SQLite \
+  DBI \
+  File::Which 
+
+# Unsure if I need these
+#  Bio::Sketch::Mash \
+#  Bio::Kmer \
+ 
+# All the manual installations I have to do go after this line
+
 RUN git clone https://github.com/lskatz/CG-Pipeline.git
 
-# Jellyfish 1.1.12 (kraken dep)
-# apt deps: gawk
-RUN wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz && \
- tar -zxf jellyfish-1.1.12.tar.gz && \
- rm -rf jellyfish-1.1.12.tar.gz && \
- cd jellyfish-1.1.12 && \
- ./configure --prefix=/opt/ && \
- make -j 4 && \
- make install
+# SneakerNet version (corresponds to github version and $VERSION)
+# TODO I'd rather set this in .gitlab-ci.yml and so here is a parameter expansion format
+#ENV SNVER=${SNVER:-0.14.0}
 
-# Kraken 1.1.1
-# apt deps: wget zlib1g-dev make g++ rsync cpanminus
-# cpan deps: Getopt::Std
-RUN wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz && \
- tar -xzf v1.1.1.tar.gz && \
- rm -rf v1.1.1.tar.gz && \
- cd kraken-1.1.1 && \
- mkdir /opt/kraken && \
- ./install_kraken.sh /opt/kraken/
-
-# Krona 2.7.1
-# apt deps: curl
-RUN wget https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar && \
- tar -xf KronaTools-2.7.1.tar && \
- rm KronaTools-2.7.1.tar && \
- cd KronaTools-2.7.1 && \
- ./install.pl --prefix . && \
- ./updateTaxonomy.sh
-
-# Skesa 2.3.0 - DL binary and rename as 'skesa'
-RUN mkdir skesa && \
- cd skesa && \
- wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
- mv skesa.centos6.10 skesa && \
- chmod +x skesa
-
-# Prodigal - 2.6.2 via apt
-
-# Seqtk 1.3 (shovill dep)
-RUN wget https://github.com/lh3/seqtk/archive/v1.3.tar.gz && \
- tar -zxf v1.3.tar.gz && \
- rm v1.3.tar.gz && \
- cd seqtk-1.3/ && \
- make && \
- make install
-
-# SPAdes 3.14.0 (needed for shovill and metagenomics workflow)
-# apt deps: python
-RUN wget http://cab.spbu.ru/files/release3.14.0/SPAdes-3.14.0-Linux.tar.gz && \
- tar -xzf SPAdes-3.14.0-Linux.tar.gz && \
- rm -r SPAdes-3.14.0-Linux.tar.gz
-
-# Mash 2.2 (shovill dep)
-RUN wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar && \
- tar -xvf mash-Linux64-v2.2.tar && \
- rm -rf mash-Linux64-v2.2.tar
-
-# lighter 1.1.1 (shovill dep)
-RUN wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz && \
- tar -zxf v1.1.1.tar.gz && \
- rm -rf v1.1.1.tar.gz && \
- cd Lighter-1.1.1 && \
- make
-
-# trimmomatic 0.38 (shovill dep)
-RUN mkdir trimmomatic && \
- cd trimmomatic && \
- wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip && \
- unzip Trimmomatic-0.38.zip && \
- rm -rf Trimmomatic-0.38.zip && \
- chmod +x Trimmomatic-0.38/trimmomatic-0.38.jar && \
- echo "#!/bin/bash" >> trimmomatic && \
- echo "exec java -jar /trimmomatic/Trimmomatic-0.38/trimmomatic-0.38.jar """"$""@"""" " >> trimmomatic && \
- chmod +x trimmomatic
-
-# BWA 0.7.17 (shovill dep)
-RUN wget https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2 && \
- tar -xjf bwa-0.7.17.tar.bz2 && \
- rm bwa-0.7.17.tar.bz2 && \
- cd bwa-0.7.17 && \
- make
-
-# Samtools 1.9 (shovill dep)
-RUN wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
- tar -xjf samtools-1.9.tar.bz2 && \
- rm samtools-1.9.tar.bz2 && \
- cd samtools-1.9 && \
- ./configure && \
- make && \
- make install
-
-# MEGAHIT 1.1.4 (shovill dep)
-RUN mkdir megahit && \
- cd megahit && \
- wget https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
- tar -xzf megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
- rm megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
-
-# Velvet 1.2.10 (shovill dep)
-RUN wget https://github.com/dzerbino/velvet/archive/v1.2.10.tar.gz && \
- tar -xzf v1.2.10.tar.gz && \
- rm -rf v1.2.10.tar.gz && \
- cd velvet-1.2.10 && \
- make
-
-# Flash 1.2.11 (shovill dep)
-RUN wget https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz && \
- tar -zxf FLASH-1.2.11.tar.gz && \
- rm -rf FLASH-1.2.11.tar.gz && \
- cd FLASH-1.2.11 && \
- make
-
-# Pilon 1.22 (shovill dep)
-RUN mkdir pilon && \
- cd pilon && \
- wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar && \
- chmod +x pilon-1.22.jar && \
- echo "#!/bin/bash" >> pilon && \
- echo "exec java -jar /pilon/pilon-1.22.jar """"$""@"""" " >> pilon && \
- chmod +x pilon
-
-# Samclip
-RUN mkdir samclip && \
- cd samclip && \
- wget https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
- chmod +x samclip
-
-# Shovill 1.0.4
-# apt deps: pigz zlib1g-dev make gcc g++ libpthread-stubs0-dev openjdk-9-jre unzip bzip2 libncurses5-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libfindbin-libs-perl
-RUN wget https://github.com/tseemann/shovill/archive/v1.0.4.tar.gz && \
- tar -xzf v1.0.4.tar.gz && \
- rm v1.0.4.tar.gz
-
-# mlst 2.16.2 
-# (had to downgrade since later versions of mlst require perl 5.26.0 which is not available on apt for ubuntu:xenial)
-# dependencies in apt: libmoo-perl liblist-moreutils-perl libjson-perl gzip file
-# other dependencies: any2fasta ncbi-blast+
-RUN wget https://github.com/tseemann/mlst/archive/v2.16.2.tar.gz &&\
- tar -xzf v2.16.2.tar.gz &&\
- rm v2.16.2.tar.gz
-
-# any2fasta
-RUN cd /usr/local/bin && \
- wget https://raw.githubusercontent.com/tseemann/any2fasta/master/any2fasta && \
- chmod +x any2fasta
-
-# ncbi-blast+ 2.9.0
-# blast version in apt for ubuntu:xenial is 2.2.31 (from 2014?)
-RUN wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.9.0/ncbi-blast-2.9.0+-x64-linux.tar.gz && \
- tar -xzf ncbi-blast-2.9.0+-x64-linux.tar.gz && \
- rm ncbi-blast-2.9.0+-x64-linux.tar.gz
-
-# staramr 0.5.1
-# apt deps: python3 python3-pip python3-setuptools git ncbi-blast+ (blast installed manually)
-# update pip3 and install staramr 0.5.1
-RUN python3 -m pip install -U pip && \
- pip3 install biopython==1.76 staramr==0.5.1
-
-# ColorID 1.4.3
-RUN mkdir colorid && \
- cd colorid && \
- wget https://github.com/hcdenbakker/colorid/releases/download/v0.1.4.3/colorid_Linux64v0.1.4.3 && \
- mv colorid_Linux64v0.1.4.3 colorid && \
- chmod +x colorid
-
-# SalmID 0.1.23
-# apt deps: python-setuptools python3 python3-pip curl build-essential file git python3-venv
-RUN pip3 install poetry && \
- git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
- cd SalmID && \
- poetry build -vvv && \
- pip3 install dist/salmid*.whl
-
-# chewBBACA 2.1.0
-# apt deps: prodigal
-# BLAST 2.5.0+ or above required
-# python deps (installed via pip3 cmd below) numpy scipy biopython plotly SPARQLWrapper
-RUN pip3 install chewbbaca==2.1.0
-
-# Get SneakerNet 0.11.4 and make /data
+# Get SneakerNet and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
 # perl modules listed in cpanm comments above (some installed there, remaining installed w cpanm command below)
 # 
 # The command at the end t/00_env.t sets up an environment including generating contaminated reads
 # for further unit testing.
-ENV SNVER=0.11.4
-RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
+RUN export SNVER=${SNVER:-0.14.0} && \
+ echo "SNVER is $SNVER" && \
+ wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  tar -zxf v${SNVER}.tar.gz && \
  rm v${SNVER}.tar.gz && \
  cd /SneakerNet-${SNVER} && \
@@ -271,43 +202,73 @@ RUN wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  mkdir /data /kraken-database && \
  perl t/00_env.t
 
-# minikraken db
-#RUN mkdir /kraken-database && \
-# cd /kraken-database && \
-# wget  https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz && \
-# tar -zxf minikraken_20171019_4GB.tgz && \
-# rm -rf minikraken_20171019_4GB.tgz 
-
-# set PATH and perl local settings
 ENV PATH="${PATH}:\
-/mlst-2.16.2/bin:\
-/ncbi-blast-2.9.0+/bin:\
-/skesa:\
-/opt/kraken:\
-/opt/bin:\
 /CG-Pipeline/scripts:\
 /KronaTools-2.7.1/bin:\
-/SPAdes-3.14.0-Linux/bin:\
-/mash-Linux64-v2.2:\
-/Lighter-1.1.1:\
-/trimmomatic:\
-/bwa-0.7.17:\
-/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin:\
-/velvet-1.2.10:\
-/FLASH-1.2.11:\
-/pilon:\
-/samclip:\
-/shovill-1.0.4/bin:\
+/SneakerNet-${SNVER:-0.14.0}/scripts:/SneakerNet-${SNVER:-0.14.0}/SneakerNet.plugins:\
+/mlst-2.19.0/bin/:\
+/NGStools/KronaTools-2.7/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
+/NGStools/chewBBACA:/NGStools/chewBBACA/utils:/NGStools/prodigal_training_files:/NGStools/clustalw-2.1-linux-x86_64-libcppstatic:\
+/usr/local/bin/Trimmomatic-0.38:\
 /colorid:\
-/SneakerNet-${SNVER}/scripts:\
-/SneakerNet-${SNVER}/SneakerNet.plugins\
-" \
- LC_ALL=C
+/pilon:\
+/trimmomatic:\
+/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
+/shovill/shovill-1.1.0/bin:\
+/SPAdes-3.14.1-Linux/bin:\
+/ncbi-blast-2.9.0+/bin:\
+"\
+ LC_ALL=en_US.UTF-8 \
+ RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo RUST_VERSION=1.46.0 \
+ BLASTDB=/blast/blastdb 
 
-# check SN dependencies for each workflow
-RUN ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl default && \
- ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl metagenomics && \
- ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl cryptosporidium && \
- ./SneakerNet-${SNVER}/scripts/SneakerNet.checkdeps.pl iontorrent
+## pip installations after this line
+RUN python3 -m pip install --upgrade pip
+
+# Staramr: lifting the code from staphb
+# https://github.com/StaPH-B/docker-builds/blob/master/staramr/0.7.1/Dockerfile
+RUN pip3 install staramr==0.7.1 pandas==0.25.3 && \
+  staramr db update -d && \
+  staramr db info
+
+# Pip installations after I set the path
+# SalmID 0.1.23
+# apt deps: python-setuptools python3 python3-pip curl build-essential file git python3-venv
+RUN pip3 install poetry && \
+ git clone https://github.com/hcdenbakker/SalmID.git --branch 0.1.23 --single-branch && \
+ cd SalmID && \
+ poetry build -vvv && \
+ pip3 install dist/salmid*.whl
+
+# Chewbbaca
+# Taking code from here: https://hub.docker.com/r/mickaelsilva/chewbbaca_py3/dockerfile
+WORKDIR /NGStools/
+#GET training files and Prodigal 
+RUN git clone https://github.com/hyattpd/Prodigal.git && \
+  pip3 install biopython plotly SPARQLWrapper chewbbaca && \
+  cd /NGStools/Prodigal && \
+  make install
+WORKDIR /NGStools/
+RUN git clone https://github.com/mickaelsilva/prodigal_training_files && \
+  wget www.clustal.org/download/current/clustalw-2.1-linux-x86_64-libcppstatic.tar.gz && \
+  tar -zxf clustalw-2.1-linux-x86_64-libcppstatic.tar.gz && \
+  rm clustalw-2.1-linux-x86_64-libcppstatic.tar.gz
+# Reset the working directory after chewbbaca installation
+WORKDIR /
+
+# Rust for at least colorid
+#RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+
+# colorid: the correct version is not versioned but is at this hash
+RUN mkdir colorid && \
+  cd colorid && \
+  wget --no-check-certificate https://github.com/hcdenbakker/colorid/releases/download/v0.1.4.3/colorid_Linux64v0.1.4.3 && \
+  chmod +x colorid_Linux64v0.1.4.3 && \
+  mv colorid_Linux64v0.1.4.3 /usr/local/bin/colorid
+
+# Trying to avoid an error where LC_ALL gets somehow undefined before this step
+#   bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+ENV LC_ALL=en_US.UTF-8
 
 WORKDIR /data
+

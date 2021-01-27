@@ -19,10 +19,17 @@ is used.
 
 ## tables
 
-If the key is `table`, then the corresponding table is 
+If the value has a suffix `.csv` or `.tsv`, then the corresponding table is 
 converted to HTML and included in the report. All other
 key/value combinations are included in the HTML report,
 under their corresponding plugins.
+
+## images
+
+_For this plugin version >= 2.7_
+
+If the value has a suffix `.png` or `.gif`, then the corresponding
+file path will be converted to base64 and embedded in the HTML report.
 
 # Outputs
 
@@ -35,6 +42,7 @@ The table has columns:
 
 * sample - sample name
 * emoji - reflective of the score.  Happiest emojis reflect 100%.
+  * As of v0.15, emoticons range from &#128515; (best), &#129320;, &#128556;, and &#128561; (worst).
 * score - a percentage, starting from 100.  Each item under the failure_code column subtracts an equal percentage from 100%.  These possible failures are shown as columns in the [passfail plugin](sn_passfail.pl.md).  If there are three possible items, then each penalty is 33%.  By default in SneakerNet version 0.10, there are three possible items: coverage, quality, and kraken.
 * qual - quality scores of R1 and R2, separated by space.
 * cov - genome coverages of R1 and R2, separated by space.

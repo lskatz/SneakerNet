@@ -1,0 +1,47 @@
+language: perl
+os: linux
+perl:
+  - "5.24-shrplib"
+script: true
+install:
+  - echo "Just testing docker on this branch"
+
+after_success:
+  - CI_PROJECT_NAME=sneakernet
+  - docker build -t $CI_PROJECT_NAME:$TRAVIS_COMMIT .
+  - SLUG=$(echo "$TRAVIS_REPO_SLUG" | tr '[:upper:]' '[:lower:]')
+  - echo "$CI_PROJECT_NAME"
+  - echo $SLUG
+  - echo $REPOSITORY_URL
+  - echo $TRAVIS_COMMIT
+  - DOCKER_PASSWORD=${{secrets.DOCKER_PASSWORD}}
+  - DOCKER_USERNAME=${{secrets.DOCKER_USERNAME}}
+  - echo $DOCKER_USERNAME
+  - echo docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:$TRAVIS_COMMIT
+  -      docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:$TRAVIS_COMMIT
+  -      docker tag $CI_PROJECT_NAME:$TRAVIS_COMMIT $SLUG:latest
+  - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin 
+  - docker push $CI_PROJECT_NAME:$TRAVIS_COMMIT
+  - docker push $CI_PROJECT_NAME:latest 
+
+#https://stackoverflow.com/a/58505735
+before_install:
+#  - rm -rvf $HOME/dockerImages.stdout $HOME/docker/*
+  - for file in $HOME/docker/*.tar.gz; do if [ ! -e "$file" ]; then continue; fi; echo "loading $file"; zcat "$file" | docker load; done
+before_cache:
+  - mkdir -p $HOME/docker
+  - docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}' > $HOME/dockerImages.stdout
+  - cat $HOME/dockerImages.stdout
+  - if [[ -s $HOME/dockerImages.stdout ]]; then xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz' < $HOME/dockerImages.stdout; fi
+cache:
+  bundler: true
+  directories:
+    - $HOME/docker
+    
+# deploying to dockerhub
+#deploy:
+#  provider: script
+#  script: bash .travis-ci/docker_push
+#  on:
+#    branch: $TRAVIS_BRANCH
+

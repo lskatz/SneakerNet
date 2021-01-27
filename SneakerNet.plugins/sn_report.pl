@@ -15,8 +15,9 @@ use List::Util qw/min max/;
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
+use MIME::Base64 qw/encode_base64/;
 
-our $VERSION = "2.5";
+our $VERSION = "2.7";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -224,10 +225,13 @@ sub makeSummaryTable{
   for my $row(@sortedRow){
     print $fh join("\t", @$row)."\n";
   }
-  print $fh "# Scores start at 100 percent and receive a 33 percent penalty for each: low coverage, low quality, or high contamination in the Kraken report.\n";
+  print $fh "# Scores start at 100 percent and receive an equal percent penalty for each: assembly, low coverage, low quality, high percentage of Ns in the assembly, or high contamination in the Kraken report. See documentation for sn_passfail.pl for more information.\n";
+  print $fh "# Current emoticons range from high score (100%) to low: ".join(" ",@$happiness);
   close $fh;
 }
 
+# This function has the meat of the report for a given plugin
+# and returns the html string to put inside of the div splash.
 sub report{
   my($dir, $plugin, $p, $settings) = @_;
 
@@ -246,15 +250,48 @@ sub report{
 
   for my $key(@sortedKeys){
     my $value = $$p{$plugin}{$key};
+    # This is usually if a key is 'table'
+    # but I don't want to stop a plugin from having 
+    # two tables that collide with each other over
+    # the same key 'table'
     if($value =~ /\.(tsv|csv)$/i){
       my $type = $1;
       $html .= tableHtml($dir, $plugin, $key, $value, $type);
+    }
+    # Show an image if it is given. Currently only
+    # supports png or gif.
+    elsif($value =~ /\.(png|gif)$/i){
+      my $type = $1;
+      $html .= imageDiv($dir, $plugin, $key, $value, $type);
     }
     else{
       $html .= genericHtml($plugin, $key, $value);
     }
   }
 
+  return $html;
+}
+
+sub imageDiv{
+  my($dir, $plugin, $key, $value, $type) = @_;
+  my $abspath = File::Spec->rel2abs($value, $dir);
+
+  # Start off the html with a div and some text
+  my $html = "<div style='padding:5px; margin:5px; border:1px solid blue'>\n";
+  #$html .= "<p>Path: $abspath</p>\n";
+  
+  # open the image
+  local $/=undef;
+  open(my $fh, $abspath) or return "";
+  my $imgBinary = <$fh>;
+  close $fh;
+  
+  # Convert to base64
+  my $imgEncoded = encode_base64($imgBinary);
+  # add in the image
+  $html .= "<img src='data:image/$type;base64, $imgEncoded' alt='image for plugin $plugin' />\n";
+
+  $html .= "</div>";
   return $html;
 }
 

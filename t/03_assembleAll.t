@@ -16,10 +16,14 @@ use lib "$RealBin/../lib/perl5";
 my $numcpus = 2;
 #note "DEBUG"; $numcpus=24;
 
+if($ENV{CI}){
+  plan 'skip_all' => "Detected CI environment. Skipping assembly";
+}
+
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
-diag `assembleAll.pl --check-dependencies 2>&1`;
+diag `assembleAll.pl --check-dependencies 2>&1 | sort`;
 if($?){
   plan 'skip_all' => "Plugin assembleAll.pl dependencies not met";
 } else {

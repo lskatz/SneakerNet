@@ -6,6 +6,12 @@ Therefore, any given plugin can run independently of the others (aside
 from any prerequisite files, e.g., genome assemblies from a previous
 plugin).
 
+Quick table of contents:
+- [Workflows](#workflows)
+- [Which plugins are running?](#workflows-and-their-plugins)
+- [Plugins on the command line](#command-line)
+- [Plugins catalog](#catalog)
+
 # Workflows
 
 SneakerNet workflows define a particular order for the plugins to run.
@@ -14,6 +20,19 @@ are present before analyzed or enforcing that a report is generated only
 after all plugins have created their outputs.
 
 Workflows are defined in [plugins.conf](../config.bak/plugins.conf).
+
+The exact order of plugins for all workflows can be found by running the command `SneakerNet.checkdeps.pl --list`.
+
+To make your own custuom workflow, edit the file under `config/plugins.conf`.
+Plugins are run in the order specified for any given workflow.  For example:
+
+    default = pluginA.pl, pluginB.pl, pluginZ.pl
+
+In this example, in the default workflow, 
+if `pluginB` has a dependency on `pluginZ`, you might want to change the order
+so that `pluginB` runs last.
+
+    default = pluginA.pl, pluginZ.pl, pluginB.pl
 
 ## Default
 
@@ -31,6 +50,40 @@ For metagenomics runs.
 ## Assembly
 
 For assembly-only runs (ie, only assemblies and not raw reads in the folder).
+
+## sarscov2
+
+For running the SARS-CoV-2 workflow. Plugin(s) are prefixed with `sn_sars_`.
+
+# Workflows and their plugins
+
+Workflows in SneakerNet are defined by which plugins are run and in which order.
+You can run `SneakerNet.checkdeps.pl --list` to see which plugins are run and in which order, for any workflow.
+This script pulls from `config/plugins.conf`. 
+Below is the output for SneakerNet version 0.11.2.
+By default, only `default` will be run in a SneakerNet analysis, but other workflows are available.
+The pseudo-workflow `all` is an alphabetical listing of all available plugins.
+
+    $ SneakerNet.checkdeps.pl --list
+        all
+        addReadMetrics.pl, assembleAll.pl, baseBalance.pl, emailWhoever.pl, sn_assemblyWorkflow_init.pl, sn_crypto_assembleAll.pl, sn_crypto_gp60.pl, sn_detectContamination-kraken.pl, sn_detectContamination-mlst.pl, sn_detectContamination.pl, sn_helloWorld.pl, sn_helloWorld.py, sn_helloWorld.sh, sn_immediateStatus.pl, sn_iontorrent_assembleAll.pl, sn_kraken-metagenomics.pl, sn_kraken.pl, sn_mlst.pl, sn_mlst-wg.pl, sn_parseSampleSheet.pl, sn_passfail.pl, sn_report.pl, sn_SalmID.pl, sn_saveFailedGenomes.pl, sn_staramr.pl, transferFilesToRemoteComputers.pl
+
+        assembly
+        sn_assemblyWorkflow_init.pl, sn_mlst.pl, sn_staramr.pl, sn_passfail.pl, sn_kraken.pl, sn_detectContamination-kraken.pl, sn_report.pl, emailWhoever.pl
+
+        cryptosporidium
+        sn_parseSampleSheet.pl, addReadMetrics.pl, sn_crypto_assembleAll.pl, sn_mlst.pl, sn_kraken.pl, sn_detectContamination-kraken.pl, sn_passfail.pl, transferFilesToRemoteComputers.pl, emailWhoever.pl
+
+        default
+        sn_parseSampleSheet.pl, addReadMetrics.pl, assembleAll.pl, sn_mlst.pl, sn_kraken.pl, sn_detectContamination-kraken.pl, sn_detectContamination-mlst.pl, baseBalance.pl, sn_staramr.pl, sn_passfail.pl, transferFilesToRemoteComputers.pl, sn_report.pl, emailWhoever.pl
+
+        iontorrent
+        addReadMetrics.pl, sn_iontorrent_assembleAll.pl, sn_mlst.pl, sn_kraken.pl, sn_detectContamination-kraken.pl, sn_passfail.pl, sn_staramr.pl, transferFilesToRemoteComputers.pl, emailWhoever.pl
+
+        metagenomics
+        sn_parseSampleSheet.pl, addReadMetrics.pl, sn_kraken.pl, sn_kraken-metagenomics.pl, sn_passfail.pl, sn_report.pl
+
+![Default workflow](/docs/images/defaultworkflow.png)
 
 # Command line
 
@@ -56,7 +109,6 @@ The plugins are not specific to any one language, although the majority
 are in Perl.
 
 Contributions are welcome for the following plugin documents.
-Some links might not be valid at this time.
 
 | Plugin                         | description |
 |:-------------------------------|:------------|
@@ -87,5 +139,6 @@ Some links might not be valid at this time.
 |[sn_crypto_gp60.pl](plugins/sn_crypto_gp60.pl.md)                  | Provides the gp60 profile for Cryptosporidium        |
 |[sn_parseSampleSheet.pl](plugins/sn_parseSampleSheet.pl.md)          | Turns the sample sheet for Illumina into SneakerNet format |
 |[sn_report.pl](plugins/sn_report.pl.md)                    | Creates an HTML report from all other plugins |
+|[sn_sarscov2_assembleAll.pl](plugins/sn_sarscov2_assembleAll.pl.md)              | Runs assembly for SARS-CoV-2 amplicon-based genomes |
 |[sn_saveFailedGenomes.pl](plugins/sn_saveFailedGenomes.pl.md)                    | Saves genomes into the destination folder, into a QC_Fails subfolder|
 
