@@ -51,6 +51,10 @@ For metagenomics runs.
 
 For assembly-only runs (ie, only assemblies and not raw reads in the folder).
 
+## sarscov2
+
+For running the SARS-CoV-2 workflow. Plugin(s) are prefixed with `sn_sars_`.
+
 # Workflows and their plugins
 
 Workflows in SneakerNet are defined by which plugins are run and in which order.
