@@ -15,7 +15,7 @@ use Bio::SeqIO;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.3.1";
+our $VERSION = "1.3.2";
 our $CITATION= "Contamination detection by Eshaw Vidyaprakash and Lee Katz.  Uses ColorID by Henk den Bakker.";
 
 local $0=fileparse $0;
