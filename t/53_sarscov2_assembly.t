@@ -53,14 +53,14 @@ subtest 'assembly' => sub {
     my $obs = readTsv("$run/SneakerNet/forEmail/assemblyMetrics.tsv");
     my %expected = (
       'SRR11826835.bowtie2.bcftools.fasta' => {
-        altCdsCount   => 10.00,
+        altCdsCount   => 9.00,
         refCdsCount   => 9.00,
-        percentNs     => 1.00,
+        percentNs     => 0.01,
       },
       'SRR12530737.bowtie2.bcftools.fasta' => {
         altCdsCount   => 9.00,
         refCdsCount   => 9.00,
-        percentNs     => 0.61,
+        percentNs     => 0.01,
       },
     );
 
