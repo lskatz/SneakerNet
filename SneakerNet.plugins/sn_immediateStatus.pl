@@ -16,7 +16,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 use Text::Fuzzy;
 use Email::Stuffer;
 
-our $VERSION = "1.6";
+our $VERSION = "1.7";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -24,7 +24,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version emails=s citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -83,7 +83,11 @@ sub main{
   }
 
   my @to = ();
-  if(ref($$settings{'default.emails'}) eq 'ARRAY'){
+  if($$settings{emails}){
+    my @tmp = split(/,/, $$settings{emails});
+    push(@to, @tmp);
+  }
+  elsif(ref($$settings{'default.emails'}) eq 'ARRAY'){
     push(@to, @{ $$settings{'default.emails'} });
   } else {
     push(@to, $$settings{'default.emails'})
