@@ -317,7 +317,8 @@ sub createSampleSheetOutOfThinAir{
 
 sub usage{
   "'SneakerNet-read-only': Parses an unaltered Illumina run and formats it
-  into something usable for SneakerNet
+  into something usable for SneakerNet. Fastq files must be in the format of
+  _R1_ and _R2_ instead of _1 and _2 for this particular script.
 
   Usage: $0 illuminaDirectory [illuminaDirectory2...]
   
