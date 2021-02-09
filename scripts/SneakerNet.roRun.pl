@@ -210,7 +210,7 @@ sub cp{
   if(! -e $to){
     logmsg "Target file was not found: $to";
     logmsg "Creating a blank file instead";
-    open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
+    open(my $fh, ">>", $to) or die "ERROR: could not make zero byte file $to: $!";
     close $fh;
   }
   return $return;
