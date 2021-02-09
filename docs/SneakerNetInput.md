@@ -7,6 +7,8 @@ Usually you can run this script to import a MiSeq run:
     SneakerNet.roRun.pl path/to/dir -o SneakerNetDir --createsamplesheet
 
 where `SneakerNetDir` is a properly formatted directory for SneakerNet.
+For this particular script, fastq filenames must be in the format of
+`_R1_`/`_R2_` instead of `_1`/`_2`.
 
 ## Building from scratch
 

@@ -237,11 +237,15 @@ sub makeCoverageGraph{
   }
 
   # Start a canvas for a line graph
-  my $graph = new GD::Graph::lines();
+  my $graphHeight = 300 + (10 * scalar(keys(%$sampleInfo)));
+  logmsg "Graph height will be $graphHeight";
+  my $graph = new GD::Graph::lines(1000, $graphHeight);
   $graph->set(
     title  => "Depth of reads per sample",
     x_label => "pos",
     y_label => "depth",
+    correct_width => 0,
+    x_tick_number => 'auto',
   );
   $graph->set_legend_font(GD::Font->Small);
 
@@ -258,6 +262,12 @@ sub makeCoverageGraph{
     [1..$maxPos],
     @graphAmplitude,
   ]);
+  if(!$gd){
+    my $err = $graph->error;
+    logmsg $err;
+    $warningMsg .= "Could not graph depth into an image: $err ";
+    return "";
+  }
   
   open(my $pngFh, ">", $png) or die "ERROR: could not write to $png: $!";
   binmode($pngFh);

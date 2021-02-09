@@ -10,7 +10,7 @@ and produces assembly metrics.
 * Bowtie2
 * samtools
 * bcftools
-* cutadapt
+* trimmomatic
 * seqtk
 
 # Algorithm
@@ -25,7 +25,7 @@ and produces assembly metrics.
 ## Assembly
 
 * Downloads the reference genome into your installation directory
-* Trims adapters with cutadapt
+* Trims adapters with trimmomatic
 * Maps reads against genome with bowtie2
 * Calls SNPs with samtools
 * Filters SNPs
