@@ -18,7 +18,7 @@ use SneakerNet qw/readConfig command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "2.1";
+our $VERSION = "2.2";
 
 local $0=fileparse $0;
 
