@@ -203,9 +203,16 @@ sub cp{
   }
   logmsg "cp $from to $to";
   my $return = link($from, $to) ||
-    File::Copy::cp($from,$to) or warn "WARNING: could not copy $from to $to: $!\n  Making a blank file instead.";
-  open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
-  close $fh;
+    File::Copy::cp($from,$to) or warn "WARNING: could not copy $from to $to: $!";
+
+  # If the target file still does not exist, make a zero
+  # byte file.
+  if(! -e $to){
+    logmsg "Target file was not found: $to";
+    logmsg "Creating a blank file instead";
+    open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
+    close $fh;
+  }
   return $return;
 }
 
