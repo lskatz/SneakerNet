@@ -155,6 +155,9 @@ RUN apt-get update && \
 #python-matplotlib ipython python-pandas python-sympy python-nose
 # python-numpy python-scipy  \
 
+# separate installation so that I can take advantage of cache while testing
+RUN apt-get install -y --no-install-recommends gd
+
 # Set LC_ALL env
 # https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
 RUN echo "LC_ALL=en_US.UTF-8" >> /etc/environment && \
