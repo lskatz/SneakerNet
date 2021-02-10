@@ -156,7 +156,8 @@ RUN apt-get update && \
 # python-numpy python-scipy  \
 
 # separate installation so that I can take advantage of cache while testing
-RUN apt-get install -y --no-install-recommends libgd-perl
+RUN apt-get update && \
+ apt-get install -y libgd-perl
 
 # Set LC_ALL env
 # https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
