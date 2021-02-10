@@ -156,7 +156,7 @@ RUN apt-get update && \
 # python-numpy python-scipy  \
 
 # separate installation so that I can take advantage of cache while testing
-RUN apt-get install -y --no-install-recommends gd
+RUN apt-get install -y --no-install-recommends libgd-dev
 
 # Set LC_ALL env
 # https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
