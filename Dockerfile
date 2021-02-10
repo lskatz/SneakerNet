@@ -157,7 +157,7 @@ RUN apt-get update && \
 
 # separate installation so that I can take advantage of cache while testing
 RUN apt-get update && \
- apt-get install -y libgd-perl
+ apt-get install -y libgd-perl libgd-dev
 
 # Set LC_ALL env
 # https://github.com/hpcng/singularity/issues/11#issuecomment-325235446
