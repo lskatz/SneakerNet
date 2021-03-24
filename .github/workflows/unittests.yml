@@ -164,7 +164,7 @@ jobs:
         run:  |
           sudo apt-get update
           sudo apt-get -y install libgd-dev
-          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus 
+          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus curl 
           sudo apt-get -y install build-essential bioperl-run ncbi-blast+ prodigal sendmail python3 python3-pip
           # shovill things
           sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
@@ -201,7 +201,8 @@ jobs:
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
-          sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          #sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          curl https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz --output minikraken_20171019_4GB.tgz
           sudo tar -zxf minikraken_20171019_4GB.tgz 
           sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
           sudo ls -lhSR /kraken-database
