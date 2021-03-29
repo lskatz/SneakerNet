@@ -171,7 +171,7 @@ jobs:
           make
           make test
           sudo make install
-          sudo mv /usr/local/bin/openssl /usr/local/bin/openssl.bak
+          sudo mv /usr/bin/openssl /usr/bin/openssl.bak
           sudo ln -s /usr/local/bin/openssl /usr/bin/openssl
           sudo ldconfig
           openssl version
