@@ -159,28 +159,11 @@ jobs:
           chmod -v +x trimmomatic
           export PATH="$PATH:$GITHUB_WORKSPACE/Trimmomatic-0.38"
           echo "$GITHUB_WORKSPACE/Trimmomatic-0.38" >> $GITHUB_PATH
-          which trimmomatic
-      - name: install openssl
-        run:  |
-          # https://askubuntu.com/a/1102966
-          mkdir openssl.tmp
-          pushd openssl.tmp
-          wget https://www.openssl.org/source/openssl-1.1.1g.tar.gz
-          tar -zxf openssl-1.1.1g.tar.gz && cd openssl-1.1.1g
-          ./config
-          make
-          make test
-          sudo make install
-          sudo mv /usr/bin/openssl /usr/bin/openssl.bak
-          sudo ln -s /usr/local/bin/openssl /usr/bin/openssl
-          sudo ldconfig
-          openssl version
-          echo "hopefully the version states 'OpenSSL 1.1.1g  21 Apr 2020'"
-          popd          
+          which trimmomatic       
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install libgd-dev
+          sudo apt-get -y install libgd-dev ca-certificates
           sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus curl 
           sudo apt-get -y install build-essential bioperl-run ncbi-blast+ prodigal sendmail python3 python3-pip
           # shovill things
