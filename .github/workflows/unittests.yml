@@ -206,26 +206,6 @@ jobs:
           sudo tar -zxf minikraken_20171019_4GB.tgz 
           sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
           sudo ls -lhSR /kraken-database
-      - name: build small kraken database
-        run: |
-          sudo mkdir -pv /kraken-database/{taxonomy,tmp}
-          sudo chmod -Rv 777 /kraken-database
-          pushd /kraken-database/taxonomy
-          wget https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
-          tar zxvf taxdump.tar.gz
-          cd ../tmp
-          wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=CP019629&rettype=fasta' -O CP019629.fasta.bak
-          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/006/113/225/GCF_006113225.1_ASM611322v2/GCF_006113225.1_ASM611322v2_genomic.fna.gz' -O - | zcat > bongori.fasta.bak
-          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/166/455/GCF_000166455.1_ASM16645v2/GCF_000166455.1_ASM16645v2_genomic.fna.gz' -O - | zcat > vcholerae.fasta.bak
-          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/001/941/585/GCF_001941585.1_ASM194158v1/GCF_001941585.1_ASM194158v1_genomic.fna.gz' -O - | zcat > legionella.fasta.bak
-          perl -plane 's/(>\S+).*/$1|kraken:taxid|54736/' < bongori.fasta.bak > bongori.fasta
-          perl -plane 's/(>\S+).*/$1|kraken:taxid|562/' < CP019629.fasta.bak > CP019629.fasta
-          perl -plane 's/(>\S+).*/$1|kraken:taxid|446/' < legionella.fasta.bak > legionella.fasta
-          perl -plane 's/(>\S+).*/$1|kraken:taxid|914149/' < vcholerae.fasta.bak > vcholerae.fasta
-          cd ..
-          find tmp -name '*.fasta' -exec kraken-build --add-to-library {} --db /kraken-database \;
-          kraken-build --build --db /kraken-database
-          popd
       - name: install SPAdes
         run:  |
           wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
