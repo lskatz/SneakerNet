@@ -201,7 +201,7 @@ jobs:
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
-          sudo wget --secure-protocol=SSLv2 --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo wget --secure-protocol=SSLv3 --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
           # sudo curl https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz --output minikraken_20171019_4GB.tgz
           sudo tar -zxf minikraken_20171019_4GB.tgz 
           sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
