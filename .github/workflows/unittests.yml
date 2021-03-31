@@ -197,6 +197,15 @@ jobs:
           export PATH=$PATH:/opt/kraken
           echo "/opt/kraken/" >> $GITHUB_PATH
           which kraken
+      - name: install minikraken
+        run: |
+          sudo mkdir -v /kraken-database
+          cd /kraken-database
+          sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo tar -zxf minikraken_20171019_4GB.tgz 
+          sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
+          sudo ls -lhSR /kraken-database
       - name: build small kraken database
         run: |
           sudo mkdir -pv /kraken-database/{taxonomy,tmp}
