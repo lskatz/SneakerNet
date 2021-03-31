@@ -215,7 +215,7 @@ jobs:
           perl -plane 's/(>\S+).*/$1|kraken:taxid|914149/' < vcholerae.fasta.bak > vcholerae.fasta
           cd ..
           find tmp -name '*.fasta' -exec kraken-build --add-to-library {} --db /kraken-database \;
-          kraken-build --build --db /kraken-database
+          kraken-build --build --work-on-disk --db /kraken-database
           popd
       - name: install SPAdes
         run:  |
