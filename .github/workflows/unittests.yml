@@ -197,15 +197,21 @@ jobs:
           export PATH=$PATH:/opt/kraken
           echo "/opt/kraken/" >> $GITHUB_PATH
           which kraken
-      - name: install minikraken
+      - name: build small kraken database
         run: |
           sudo mkdir -v /kraken-database
-          cd /kraken-database
-          sudo wget --secure-protocol=SSLv3 --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          # sudo curl https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz --output minikraken_20171019_4GB.tgz
-          sudo tar -zxf minikraken_20171019_4GB.tgz 
-          sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
-          sudo ls -lhSR /kraken-database
+          sudo chmod 777 /kraken-database
+          kraken-build --download-taxonomy --db /kraken-database
+          mkdir -v /kraken-database/tmp
+          pushd /kraken-database/tmp
+          wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=CP019629&rettype=fasta' -O CP019629.fasta
+          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/006/113/225/GCF_006113225.1_ASM611322v2/GCF_006113225.1_ASM611322v2_genomic.fna.gz' -O - | zcat > bongori.fasta
+          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/166/455/GCF_000166455.1_ASM16645v2/GCF_000166455.1_ASM16645v2_genomic.fna.gz' -O - | zcat > vcholerae.fasta
+          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/001/941/585/GCF_001941585.1_ASM194158v1/GCF_001941585.1_ASM194158v1_genomic.fna.gz' -O - | zcat > legionella.fasta
+          cd ..
+          find tmp -name '*.fasta' -exec kraken-build --add-to-library {} --db /kraken-database \;
+          kraken-build --build --db /kraken-database
+          popd
       - name: install SPAdes
         run:  |
           wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
