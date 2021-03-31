@@ -200,7 +200,7 @@ jobs:
       - name: build small kraken database
         run: |
           sudo mkdir -pv /kraken-database/{taxonomy,tmp}
-          sudo chmod 777 /kraken-database
+          sudo chmod -Rv 777 /kraken-database
           pushd /kraken-database/taxonomy
           wget https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
           tar zxvf taxdump.tar.gz
