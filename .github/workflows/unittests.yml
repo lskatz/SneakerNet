@@ -199,15 +199,20 @@ jobs:
           which kraken
       - name: build small kraken database
         run: |
-          sudo mkdir -v /kraken-database
+          sudo mkdir -pv /kraken-database/{taxonomy,tmp}
           sudo chmod 777 /kraken-database
-          kraken-build --download-taxonomy --db /kraken-database
-          mkdir -v /kraken-database/tmp
-          pushd /kraken-database/tmp
-          wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=CP019629&rettype=fasta' -O CP019629.fasta
-          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/006/113/225/GCF_006113225.1_ASM611322v2/GCF_006113225.1_ASM611322v2_genomic.fna.gz' -O - | zcat > bongori.fasta
-          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/166/455/GCF_000166455.1_ASM16645v2/GCF_000166455.1_ASM16645v2_genomic.fna.gz' -O - | zcat > vcholerae.fasta
-          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/001/941/585/GCF_001941585.1_ASM194158v1/GCF_001941585.1_ASM194158v1_genomic.fna.gz' -O - | zcat > legionella.fasta
+          pushd /kraken-database/taxonomy
+          wget https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+          tar zxvf taxdump.tar.gz
+          cd ../tmp
+          wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=CP019629&rettype=fasta' -O CP019629.fasta.bak
+          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/006/113/225/GCF_006113225.1_ASM611322v2/GCF_006113225.1_ASM611322v2_genomic.fna.gz' -O - | zcat > bongori.fasta.bak
+          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/166/455/GCF_000166455.1_ASM16645v2/GCF_000166455.1_ASM16645v2_genomic.fna.gz' -O - | zcat > vcholerae.fasta.bak
+          wget 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/001/941/585/GCF_001941585.1_ASM194158v1/GCF_001941585.1_ASM194158v1_genomic.fna.gz' -O - | zcat > legionella.fasta.bak
+          perl -plane 's/(>\S+).*/$1|kraken:taxid|54736/' < bongori.fasta.bak > bongori.fasta
+          perl -plane 's/(>\S+).*/$1|kraken:taxid|562/' < CP019629.fasta.bak > CP019629.fasta
+          perl -plane 's/(>\S+).*/$1|kraken:taxid|446/' < legionella.fasta.bak > legionella.fasta
+          perl -plane 's/(>\S+).*/$1|kraken:taxid|914149/' < vcholerae.fasta.bak > vcholerae.fasta
           cd ..
           find tmp -name '*.fasta' -exec kraken-build --add-to-library {} --db /kraken-database \;
           kraken-build --build --db /kraken-database
