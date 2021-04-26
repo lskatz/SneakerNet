@@ -107,6 +107,7 @@ sub transferFilesToRemoteComputers{
     my @route = (ref($$s{route}) eq 'ARRAY')?@{$$s{route}}:($$s{route});
 
     # If we are transferring...
+    # addressing issue #58
     if($$settings{'force-transfer'} || grep {/calcengine/i} @route ){
       # if this sample fails at all, then NEXT!
       for my $reason(keys(%{ $$passfail{$sampleName} })){

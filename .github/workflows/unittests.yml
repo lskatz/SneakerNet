@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-latest' ]
+        os: ['ubuntu-18.04' ]
         perl: [ '5.32' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
@@ -159,11 +159,12 @@ jobs:
           chmod -v +x trimmomatic
           export PATH="$PATH:$GITHUB_WORKSPACE/Trimmomatic-0.38"
           echo "$GITHUB_WORKSPACE/Trimmomatic-0.38" >> $GITHUB_PATH
-          which trimmomatic
+          which trimmomatic       
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus
+          sudo apt-get -y install libgd-dev ca-certificates
+          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus curl 
           sudo apt-get -y install build-essential bioperl-run ncbi-blast+ prodigal sendmail python3 python3-pip
           # shovill things
           sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
@@ -201,6 +202,7 @@ jobs:
           sudo mkdir -v /kraken-database
           cd /kraken-database
           sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
           sudo tar -zxf minikraken_20171019_4GB.tgz 
           sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
           sudo ls -lhSR /kraken-database

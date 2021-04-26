@@ -42,8 +42,15 @@ affiliations:
 
 # Summary
 
+Laboratories that run Whole Genome Sequencing (WGS) produce a tremendous amount of data,
+up to 10 gigabytes for some common instruments.
+There is a need to standardize the quality assurance and quality control process (QA/QC).
+Therefore we have created SneakerNet to automate the QA/QC for WGS.
+
+# Statement of need
+
 Receiving a set of primary data from whole genome sequencing or metagenomics sequencing has become commonplace and perhaps ubiquitous in bioinformatics.
-However, there is a need to standardize the quality assurance and quality control process (QA/QC).
+For a laboratory that performs WGS several times a week, some automation is necessary for both consistency and high throughput.
 
 There are very few published workflows for performing an analysis on primary sequence data that span the breadth of initial standardized QA/QC (e.g., sequence yields, contamination checks, and subtyping).
 For example, the Pandoo pipeline can be given a set of genomes to run analyses: species inference, 7-gene multilocus sequence typing (MLST), resistance gene profile, plasmid profile, virulence profile, and raw read QC [@Pandoo].

@@ -18,7 +18,7 @@ use SneakerNet qw/readConfig command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "2.1";
+our $VERSION = "2.2";
 
 local $0=fileparse $0;
 
@@ -203,9 +203,16 @@ sub cp{
   }
   logmsg "cp $from to $to";
   my $return = link($from, $to) ||
-    File::Copy::cp($from,$to) or warn "WARNING: could not copy $from to $to: $!\n  Making a blank file instead.";
-  open(my $fh, ">>", $to) or die "ERROR: could not write to $to: $!";
-  close $fh;
+    File::Copy::cp($from,$to) or warn "WARNING: could not copy $from to $to: $!";
+
+  # If the target file still does not exist, make a zero
+  # byte file.
+  if(! -e $to){
+    logmsg "Target file was not found: $to";
+    logmsg "Creating a blank file instead";
+    open(my $fh, ">>", $to) or die "ERROR: could not make zero byte file $to: $!";
+    close $fh;
+  }
   return $return;
 }
 
@@ -317,7 +324,8 @@ sub createSampleSheetOutOfThinAir{
 
 sub usage{
   "'SneakerNet-read-only': Parses an unaltered Illumina run and formats it
-  into something usable for SneakerNet
+  into something usable for SneakerNet. Fastq files must be in the format of
+  _R1_ and _R2_ instead of _1 and _2 for this particular script.
 
   Usage: $0 illuminaDirectory [illuminaDirectory2...]
   

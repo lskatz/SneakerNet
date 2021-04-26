@@ -73,6 +73,7 @@ To create the project, you can use `SneakerNet.roRun.pl`.  For example,
 
 M01234-19-01-test is a project folder name, where it is dash-delimited and contains
 machine name, year, ordinal, and optionally a name.
+Fastq files must be in the format of `_R1_` instead of `_1` and `_R2_` instead of `_2` for this particular script to parse the files properly.
 
 ### Running SneakerNet
 
