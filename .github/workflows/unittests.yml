@@ -1,7 +1,5 @@
 name: unit-tests
-on:
-  push:
-    branches: [master, dev, unit-test]
+on: [push]
 
 env:
   spadesVer: 3.14.1
