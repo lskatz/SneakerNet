@@ -3,7 +3,7 @@ FROM ubuntu:bionic
 LABEL base.image="ubuntu:bionic"
 LABEL dockerfile.version="1.0.0"
 LABEL software="SneakerNet"
-LABEL software.version="0.19.6"
+LABEL software.version="0.19.8"
 LABEL description="SneakerNet QA/QC system for primary genomic data"
 LABEL website="https://github.com/lskatz/SneakerNet"
 LABEL license="https://github.com/lskatz/SneakerNet/LICENSE.md"
@@ -185,7 +185,7 @@ RUN git clone https://github.com/lskatz/CG-Pipeline.git
 
 # SneakerNet version (corresponds to github version and $VERSION)
 # TODO I'd rather set this in .gitlab-ci.yml and so here is a parameter expansion format
-#ENV SNVER=${SNVER:-0.19.6}
+#ENV SNVER=${SNVER:-0.19.8}
 
 # Get SneakerNet and make /data
 # apt deps: sendmail-base zip bsdmainutils (for column command)
@@ -193,7 +193,7 @@ RUN git clone https://github.com/lskatz/CG-Pipeline.git
 # 
 # The command at the end t/00_env.t sets up an environment including generating contaminated reads
 # for further unit testing.
-RUN export SNVER=${SNVER:-0.19.6} && \
+RUN export SNVER=${SNVER:-0.19.8} && \
  echo "SNVER is $SNVER" && \
  wget https://github.com/lskatz/SneakerNet/archive/v${SNVER}.tar.gz && \
  tar -zxf v${SNVER}.tar.gz && \
@@ -209,7 +209,7 @@ RUN export SNVER=${SNVER:-0.19.6} && \
 ENV PATH="${PATH}:\
 /CG-Pipeline/scripts:\
 /KronaTools-2.7.1/bin:\
-/SneakerNet-${SNVER:-0.19.6}/scripts:/SneakerNet-${SNVER:-0.19.6}/SneakerNet.plugins:\
+/SneakerNet-${SNVER:-0.19.8}/scripts:/SneakerNet-${SNVER:-0.19.8}/SneakerNet.plugins:\
 /mlst-2.19.0/bin/:\
 /NGStools/KronaTools-2.7/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:\
 /NGStools/chewBBACA:/NGStools/chewBBACA/utils:/NGStools/prodigal_training_files:/NGStools/clustalw-2.1-linux-x86_64-libcppstatic:\

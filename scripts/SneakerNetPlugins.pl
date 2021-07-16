@@ -114,10 +114,12 @@ sub main{
           push(@to, $$settings{'default.emails'});
         }
         my $to = join(",",@to);
+        my $body = "Failed for ".realpath($dir)."\n\n";
+        $body .= "Plugin that failed was $e: $@";
         my $email=Email::Stuffer->from($from)
                                 ->subject($subject)
                                 ->to($to)
-                                ->text_body(realpath($dir));
+                                ->text_body($body);
         if($email->send){
           logmsg "Email sent to $to";
         } else {
