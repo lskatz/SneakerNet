@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.5";
+our $VERSION = "2.5.1";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -82,7 +82,9 @@ sub main{
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
 
-  recordProperties($dir,{version=>$VERSION,table=>$metricsOut});
+  recordProperties($dir,{version=>$VERSION,table=>$metricsOut,
+    "Minimum contig length for assembly metrics" => "500bp",
+  });
 
   return 0;
 }
