@@ -32,6 +32,7 @@ if($?){
 
 my $tsv = "$run/SneakerNet/forEmail/assemblyMetrics.tsv";
 unlink($tsv); # ensure that assembleAll.pl doesn't skimp
+#note "DEBUG"; is system("assembleAll.pl --numcpus $numcpus $run"), 0, "Assembling all";
 is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all";
 
 # Double check assembly metrics.
@@ -40,33 +41,36 @@ is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all"
 subtest "Expected assembly stats" => sub {
   #plan tests => 20; # number of tests will change depending on whether 00_env.t was run first
   my %genomeLength = (
-    "2010EL-1786.shovill.skesa"      => 2955394,
-    "Philadelphia_CDC.shovill.skesa" => 3328163,
-    "FA1090.shovill.skesa"           => 1918813,
-    "contaminated.shovill.skesa"     => 5782258,
-    "LT2.shovill.skesa"              => 4820055,
+    "2010EL-1786"      => 2955394,
+    "Philadelphia_CDC" => 3328163,
+    "FA1090"           => 1918813,
+    "contaminated"     => 5782258,
+    "LT2"              => 4820055,
   );
   my %CDS = (
-    "2010EL-1786.shovill.skesa"      => 2714,
-    "Philadelphia_CDC.shovill.skesa" => 3096,
-    "FA1090.shovill.skesa"           => 2017,
-    "contaminated.shovill.skesa"     => 8949,
-    "LT2.shovill.skesa"              => 4802,
+    "2010EL-1786"      => 2714,
+    "Philadelphia_CDC" => 3096,
+    "FA1090"           => 2017,
+    "contaminated"     => 8949,
+    "LT2"              => 4802,
   );
   my %depth = (
-    "2010EL-1786.shovill.skesa"      => 4.56,
-    "Philadelphia_CDC.shovill.skesa" => 4.60,
-    "FA1090.shovill.skesa"           => 6.31,
-    "contaminated.shovill.skesa"     => 5.17,
-    "LT2.shovill.skesa"              => 4.76,
+    "2010EL-1786"      => 4.56,
+    "Philadelphia_CDC" => 4.60,
+    "FA1090.shovill"           => 6.31,
+    "contaminated"     => 5.17,
+    "LT2"              => 4.76,
   );
   diag `echo;column -t $tsv`;
   open(my $fh, "$tsv") or die "ERROR reading $tsv: $!";
   while(<$fh>){
     chomp;
-    my ($file,$genomeLength,$CDS,$N50,$longestContig,$numContigs,$avgContigLength,$assemblyScore,$minContigLength,$expectedGenomeLength,$kmer21,$GC,$effectiveCoverage)
+    s/\%//g; # remove percentage symbols
+    #my ($file,$genomeLength,$CDS,$N50,$longestContig,$numContigs,$avgContigLength,$assemblyScore,$minContigLength,$expectedGenomeLength,$kmer21,$GC,$effectiveCoverage)
+    my ($file, $CDS, $GC, $N50, $assemblyScore, $avgContigLength, $effectiveCoverage, $expectedGenomeLength, $genomeLength, $kmer21, $longestContig, $minContigLength, $numContigs)
         = split(/\t/, $_);
     
+    diag "Testing $file stats";
     next if(!$genomeLength{$file}); # avoid header
 
     # Tolerance of 10k assembly length diff

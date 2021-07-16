@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.0";
+our $VERSION = "2.5";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -146,7 +146,8 @@ sub assembleAll{
   }
   
   command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
-  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
+  #command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
+  command("tail -q -n +2 $$settings{tempdir}/worker.*/metrics.tsv | sort >> $metricsOut");
   
   return $metricsOut;
 }
@@ -154,14 +155,18 @@ sub assembleAll{
 sub predictionMetricsWorker{
   my($Q,$settings)=@_;
   my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
-  my $predictionOut ="$tempdir/predictionMetrics.tsv";
-  my $assemblyOut   ="$tempdir/assemblyMetrics.tsv";
   my $metricsOut    ="$tempdir/metrics.tsv";  # Combined metrics
-  my $coverageOut   ="$tempdir/effectiveCoverage.tsv";
-  command("touch $predictionOut $assemblyOut");
+
+  #command("touch $predictionOut $assemblyOut");
 
   my $numMetrics=0;
   while(defined(my $gbk=$Q->dequeue)){
+    my $dir = dirname($gbk);
+    my $predictionOut ="$dir/predictionMetrics.tsv";
+    my $assemblyOut   ="$dir/assemblyMetrics.tsv";
+    my $coverageOut   ="$dir/depth.tsv.gz";
+    my $effectiveCoverage = "$dir/effectiveCoverage.tsv";
+
     # Metrics for the fasta: the fasta file has the same
     # base name but with a fasta extension
     my $fasta=$gbk;
@@ -177,79 +182,65 @@ sub predictionMetricsWorker{
     }
     
     logmsg "gbk metrics for $gbk";
-    command("run_prediction_metrics.pl $gbk >> $predictionOut");
+    command("run_prediction_metrics.pl $gbk > $predictionOut");
     logmsg "asm metrics for $fasta";
-    command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta >> $assemblyOut");
-    logmsg "Effective coverage for $bam";
+    command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta > $assemblyOut");
+    logmsg "Coverage for $bam";
+    command("samtools depth -aa $bam | gzip -c > $coverageOut");
 
-    my $total=0;
-    my $numSites=0;
-    for my $line(`samtools depth -aa '$bam'`){
+    logmsg "Effective coverage for $bam";
+    my $total = 0;
+    my $numSites = 0;
+    open(my $fh, "zcat $coverageOut |") or die "ERROR: could not zcat $coverageOut: $!";
+    while(my $line = <$fh>){
       chomp($line);
       my(undef, undef, $depth) = split(/\t/, $line);
       $total+=$depth;
       $numSites++;
     }
-    open(my $tmpFh, ">", $coverageOut) or die "ERROR: could not write to $coverageOut: $!";
-    print $tmpFh join("\t", qw(File effectiveCoverage))."\n";
-    print $tmpFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
-    close $tmpFh;
-    command("samtools depth -aa $bam >> $coverageOut");
+    close $fh;
+    open(my $outFh, ">", $effectiveCoverage) or die "ERROR: could not write to $effectiveCoverage: $!";
+    print $outFh join("\t", qw(File effectiveCoverage))."\n";
+    print $outFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
+    close $outFh;
+
+    # Combine the metrics into one file
+    # We know that each file is one header and one values line
+    my %metric;
+    for my $file ($predictionOut, $effectiveCoverage, $assemblyOut){
+      open(my $metricsFh, $file) or die "ERROR: could not read file $file: $!";
+      my $header = <$metricsFh>;
+      my $values = <$metricsFh>;
+      chomp($header, $values);
+      close $metricsFh;
+
+      # Header and value match up
+      my @header = split(/\t/, $header);
+      my @value  = split(/\t/, $values);
+      for(my $i=0;$i<@header;$i++){
+        $metric{$header[$i]} = $value[$i];
+      }
+      # Remove the directory and suffix of the filename
+      $metric{File} = basename($metric{File}, qw(.shovill.skesa.fasta .shovill.skesa.gbk .shovill.skesa.bam));
+    }
+    # Combine the metrics
+    # Alphabetize the header but take care of Filename separately
+    my $filename = $metric{File};
+    my @header = sort keys(%metric);
+    @header = grep{!/File/} @header;
+
+    # Write combined metrics to file
+    open(my $combinedFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
+    print $combinedFh join("\t", "File", @header)."\n";
+    print $combinedFh $metric{File};
+    for my $h(@header){
+      print $combinedFh "\t" . $metric{$h};
+    }
+    print $combinedFh "\n";
+    close $combinedFh;
+
     $numMetrics++;
   }
-
-  # Don't do any combining if no metrics were performed
-  return if($numMetrics==0);
-
-  # Combine the files
-  open(my $predFh,$predictionOut) or die "ERROR: could not read $predictionOut: $!";
-  open(my $assemblyFh, $assemblyOut) or die "ERROR: could not read $assemblyOut: $!";
-  open(my $coverageFh, $coverageOut) or die "ERROR: could not read $coverageOut: $!";
-  open(my $metricsFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
-
-  # Get and paste the header into the output metrics file
-  my $predHeader=<$predFh>;
-  my $assemblyHeader=<$assemblyFh>;
-  my $coverageHeader=<$coverageFh>;
-  chomp($predHeader,$assemblyHeader,$coverageHeader);
-  my @predHeader=split(/\t/,$predHeader);
-  my @assemblyHeader=split(/\t/,$assemblyHeader);
-  my @coverageHeader=split(/\t/, $coverageHeader);
-  print $metricsFh "File\tgenomeLength";
-  for(@predHeader, @assemblyHeader, @coverageHeader){
-    next if($_ =~ /File|genomeLength/);
-    print $metricsFh "\t".$_;
-  }
-  print $metricsFh "\n";
-
-  # Get and paste the metrics from asm and pred into the output file
-  while(my $predLine=<$predFh>){
-    my $assemblyLine=<$assemblyFh>;
-    my $coverageLine=<$coverageFh>;
-    chomp($predLine,$assemblyLine,$coverageLine);
-    
-    my %F;
-    @F{@predHeader}=split(/\t/,$predLine);
-    @F{@assemblyHeader}=split(/\t/,$assemblyLine);
-    @F{@coverageHeader}=split(/\t/,$coverageLine);
-    # In case there was no assembly or predictions, add in a default value
-    for(@predHeader,@assemblyHeader, @coverageHeader){
-      $F{$_} //= 'NA';
-    }
-    # Also take care of genomeLength specifically
-    $F{genomeLength} //= "NA";
-    $F{File}=basename($F{File},qw(.gbk .fasta .bam));
-
-    print $metricsFh $F{File}."\t".$F{genomeLength};
-    for(@predHeader, @assemblyHeader, @coverageHeader){
-      next if($_ =~ /File|genomeLength/);
-      print $metricsFh "\t".$F{$_}
-    }
-    print $metricsFh "\n";
-  }
-  close $_ for($predFh,$assemblyFh,$coverageFh,$metricsFh);
-
-  system("ls $metricsOut; cat $metricsOut"); die "DJFKDJFKDJ" if $?;
 }
 
 

@@ -53,3 +53,12 @@ Table with columns
 * GC
 * effectiveCoverage - the number of mapped base pairs against the assembly. Will be lower than the coverage noted in readMetrics.
 
+Starting with v2.5, four more output files are found in
+`SneakerNet/assemblies/[samplename]/` but not included in the final report.
+These files are used to make the aforementioned combined metrics table.
+
+* predictionMetrics.tsv - gene prediction metrics such as CDS count
+* assemblyMetrics.tsv - N50, genomeLength, etc
+* depth.tsv.gz - `samtools depth` output: a three column file with contig, pos, depth of coverage
+* effectiveCoverage.tsv - contains effective coverage
+
