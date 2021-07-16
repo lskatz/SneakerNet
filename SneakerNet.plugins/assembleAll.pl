@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.0";
+our $VERSION = "2.1";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -145,19 +145,23 @@ sub assembleAll{
     $_->join;
   }
   
-  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
-  command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
+  # Get the first line of one of the files as the header
+  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut");
+  # Get the contents of the assembly metrics files minus the header
+  command("tail -q -n +2 $$settings{tempdir}/worker.*/metrics.tsv | sort >> $metricsOut");
   
   return $metricsOut;
 }
 
+# This subroutine is used in a multithread call to run
+# assembly and prediction metrics on genomes.
 sub predictionMetricsWorker{
   my($Q,$settings)=@_;
   my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
   my $predictionOut ="$tempdir/predictionMetrics.tsv";
   my $assemblyOut   ="$tempdir/assemblyMetrics.tsv";
   my $metricsOut    ="$tempdir/metrics.tsv";  # Combined metrics
-  my $coverageOut   ="$tempdir/effectiveCoverage.tsv";
+  my $coverageOut   ="$tempdir/effectiveCoverage.tsv.gz";
   command("touch $predictionOut $assemblyOut");
 
   my $numMetrics=0;
@@ -190,11 +194,16 @@ sub predictionMetricsWorker{
       $total+=$depth;
       $numSites++;
     }
-    open(my $tmpFh, ">", $coverageOut) or die "ERROR: could not write to $coverageOut: $!";
+    logmsg "Writing to $coverageOut";
+    # The resulting file is a sort of merge:
+    # First line is a header with file and coverage
+    # Second line contains those values
+    # Third and on are positional depths
+    open(my $tmpFh, " | gzip -c > $coverageOut") or die "ERROR: could not write to $coverageOut: $!";
     print $tmpFh join("\t", qw(File effectiveCoverage))."\n";
     print $tmpFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
     close $tmpFh;
-    command("samtools depth -aa $bam >> $coverageOut");
+    #command("samtools depth -aa $bam | gzip -c >> $coverageOut");
     $numMetrics++;
   }
 
@@ -204,7 +213,7 @@ sub predictionMetricsWorker{
   # Combine the files
   open(my $predFh,$predictionOut) or die "ERROR: could not read $predictionOut: $!";
   open(my $assemblyFh, $assemblyOut) or die "ERROR: could not read $assemblyOut: $!";
-  open(my $coverageFh, $coverageOut) or die "ERROR: could not read $coverageOut: $!";
+  open(my $coverageFh, 'zcat $coverageOut | ') or die "ERROR: could not zcat $coverageOut: $!";
   open(my $metricsFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
 
   # Get and paste the header into the output metrics file
@@ -227,6 +236,10 @@ sub predictionMetricsWorker{
     my $assemblyLine=<$assemblyFh>;
     my $coverageLine=<$coverageFh>;
     chomp($predLine,$assemblyLine,$coverageLine);
+
+    if(!$coverageLine){
+      logmsg "No coverage for $predLine";
+    }
     
     my %F;
     @F{@predHeader}=split(/\t/,$predLine);
@@ -249,7 +262,7 @@ sub predictionMetricsWorker{
   }
   close $_ for($predFh,$assemblyFh,$coverageFh,$metricsFh);
 
-  system("ls $metricsOut; cat $metricsOut"); die "DJFKDJFKDJ" if $?;
+  command("ls $metricsOut; cat $metricsOut");
 }
 
 
