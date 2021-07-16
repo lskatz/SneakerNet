@@ -32,6 +32,7 @@ In version 2, Shovill was added and many requirements were added
 
 Assembles genomes with Skesa, predicts genes with prodigal,
 then produces assembly and gene prediction metrics.
+Contigs with length < 500 are not considered in the assembly metrics.
 
 # Outputs
 
