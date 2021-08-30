@@ -32,7 +32,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.19.8';
+our $VERSION  = '0.19.9';
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -535,23 +535,25 @@ sub samplesheetInfo_tsv{
 
     # Set the file path to the reference fasta if it exists
     my $ref_id = $sample{$sampleName}{taxonRules}{reference_fasta_id};
+    my $ref_name = join("", @$ref_id);
+    my $ref_commas=join(",", @$ref_id);
     if(defined($ref_id)){
       my $dir = realpath($RealBin."/../db/fasta");
-      my $ref = "$dir/$ref_id.fasta";
-      my $gbk = "$dir/$ref_id.gbk";
+      my $ref = "$dir/$ref_name.fasta";
+      my $gbk = "$dir/$ref_name.gbk";
 
       if(!-e $ref){
-        logmsg "Did not find $ref_id in the SneakerNet installation. Downloading $ref_id into $gbk and $ref";
+        logmsg "Did not find @$ref_id in the SneakerNet installation. Downloading @$ref_id into $gbk and $ref";
         logmsg "  Wget log can be found at $dir/*.log";
         my $wgetxopts = "";
         if($ENV{NCBI_API_KEY}){
           $wgetxopts .= "&ncbi_api_key=$ENV{NCBI_API_KEY}";
         }
-        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=gbwithparts&format=genbank$wgetxopts' -O $gbk 2> $gbk.log ");
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=$ref_commas&rettype=gbwithparts&format=genbank$wgetxopts' -O $gbk 2> $gbk.log ");
 
         # The file is downloaded into a .tmp file and then moved,
         # so that it is clear when it is 100% downloaded.
-        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=MN908947.3&rettype=fasta$wgetxopts' -O $ref.tmp 2> $ref.log ");
+        command("wget 'https://www.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=$ref_commas&rettype=fasta$wgetxopts' -O $ref.tmp 2> $ref.log ");
         mv("$ref.tmp", $ref);
       }
 

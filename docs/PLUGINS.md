@@ -140,5 +140,6 @@ Contributions are welcome for the following plugin documents.
 |[sn_parseSampleSheet.pl](plugins/sn_parseSampleSheet.pl.md)          | Turns the sample sheet for Illumina into SneakerNet format |
 |[sn_report.pl](plugins/sn_report.pl.md)                    | Creates an HTML report from all other plugins |
 |[sn_sarscov2_assembleAll.pl](plugins/sn_sarscov2_assembleAll.pl.md)              | Runs assembly for SARS-CoV-2 amplicon-based genomes |
+|[sn_assembleAll_reference.pl.md](plugins/sn_assembleAll_reference.pl.md)              | Runs reference assembly |
 |[sn_saveFailedGenomes.pl](plugins/sn_saveFailedGenomes.pl.md)                    | Saves genomes into the destination folder, into a QC_Fails subfolder|
 
