@@ -117,6 +117,11 @@ You will need to edit some files for configuration before using SneakerNet.
 Some settings are necessary to change in the config/\*.conf files.
 Please edit these files accordingly.
 
+Special variables are allowed and have a __VAR__ format.
+These are the variables currently allowed
+
+* `__BASE__` evaluates to the installation directory of SneakerNet. Useful for file paths, e.g., location of where a bed file is.
+
 ### emails
 
 List any emails here, comma-separated. These emails will be sent reports by default for each
