@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv @rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "6.1";
+our $VERSION = "6.2";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -23,7 +23,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version tempdir=s citation check-dependencies help debug force numcpus=i)) or die $!;
+  GetOptions($settings,qw(version verbose tempdir=s citation check-dependencies help debug force numcpus=i)) or die $!;
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -161,18 +161,19 @@ sub identifyBadRuns{
       # Coverage
       $$fastqMetrics{coverage} //= '.';    # by default, dot.
       if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
+        logmsg "Coverage calculation undefined for $samplename" if($$settings{debug});
         $totalCoverage = -1; # -1 means 'unknown' coverage
       } else {
         $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
         $totalCoverage += $$fastqMetrics{coverage};
-        logmsg "Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
+        logmsg "Coverage calculation: Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
       }
 
       $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
       # If avgQual is missing, then -1 for unknown pass status
       $$fastqMetrics{avgQuality} //= '.';
       if($$fastqMetrics{avgQuality} eq '.'){
-        logmsg "$samplename/".basename($fastq)." qual is $$fastqMetrics{avgQuality}" if($$settings{debug});
+        #logmsg "$samplename/".basename($fastq)." qual is $$fastqMetrics{avgQuality}" if($$settings{debug});
         $is_passing_quality{$fastq} = -1;
       }
       # Set whether this fastq passes quality by the > comparison:
@@ -180,21 +181,21 @@ sub identifyBadRuns{
       else {
         $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
         $is_passing_quality{$fastq} += 0; # force to int/boolean
-        logmsg "$samplename/".basename($fastq)." passes quality?  $is_passing_quality{$fastq} (boolean)" if($$settings{debug});
+        #logmsg "$samplename/".basename($fastq)." passes quality?  $is_passing_quality{$fastq} (boolean)" if($$settings{debug});
       }
     }
 
     # Set whether the sample fails coverage
     #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
     if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
-      logmsg "  I will fail this sample $samplename" if($$settings{debug});
+      logmsg "  I will fail this sample for coverage: $samplename" if($$settings{debug});
       $fail{coverage} = 1;
     } else {
-      logmsg "  I will not fail this sample $samplename" if($$settings{debug});
+      logmsg "  I will not fail this sample for coverage: $samplename" if($$settings{debug});
       $fail{coverage} = 0;
     }
     if($totalCoverage == -1){
-      logmsg "  ==> -1" if($$settings{debug});
+      logmsg "  Calculation for the coverage for this sample is undefined: $samplename" if($$settings{debug});
       $fail{coverage} = -1;
     }
 
@@ -273,12 +274,15 @@ sub identifyBadRuns{
       # QC for minimum number of Ns allowed
       my $percentNs = $assemblyMetrics{$samplename}{percentNs};
       if(!defined($percentNs)){
+        logmsg "Percent Ns: I cannot tell if I need to fail $samplename" if($$settings{debug});
         $failAssembly{minNs} = -1;
       }
       elsif($percentNs > $minNs){
+        logmsg "Percent Ns: I will fail $samplename because it has $percentNs percent Ns" if($$settings{debug});
         $failAssembly{minNs} = 1;
       }
       elsif($percentNs <= $minNs){
+        logmsg "Percent Ns: I will not fail $samplename because it has $percentNs percent Ns" if($$settings{debug});
         $failAssembly{minNs} = 0;
       }
 
@@ -336,6 +340,7 @@ sub usage{
   print "Passes or fails a run based on available information
   Usage: $0 MiSeq_run_dir
   --version
+  --debug    Explain why things fail
 ";
   exit(0);
 }
