@@ -572,6 +572,7 @@ sub samplesheetInfo_tsv{
       }
       $sample{$sampleName}{taxonRules}{primers_bed} = $bed;
     }
+    $sample{$sampleName}{taxonRules}{primers_bed} //= "";
     $sample{$sampleName}{taxonRules}{primers_bed} =~ s|__BASE__|$thisdir/../..|g;
   }
   close $fh;
