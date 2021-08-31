@@ -10,7 +10,9 @@ plugins.
 
 # Algorithm
 
-`TODO`
+transforms the SampleSheet.csv file into samples.tsv
+
+* Skips samples with the keyword 'empty'
 
 # Outputs
 

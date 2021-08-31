@@ -15,7 +15,7 @@ use Config::Simple;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "Sample sheet parsing by Lee Katz";
 
 my $snVersion=version();
@@ -143,6 +143,10 @@ sub sampleHashToTsv{
   my $tsv = "";
   for my $sample(sort{ $a cmp $b } keys(%$sampleHash)){
     next if(ref($$sampleHash{$sample}) ne 'HASH');
+    if($sample =~ /empty/i){
+      logmsg "NOTE: skipping sample $sample because it has the keyword 'empty': $sample";
+      next;
+    }
 
     # Column 3: fastq files
     my $fastq = join(";",@{ $$sampleHash{$sample}{fastq} });
