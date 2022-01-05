@@ -17,6 +17,14 @@ Workflows are described in [PLUGINS.md](/docs/PLUGINS.md).
 Each workflow's plugins and the order of plugins
 are determined by `plugins.conf`, documented in [PLUGINS.md](/docs/PLUGINS.md).
 
+## Passing of flags
+
+Some options are passed onto the plugin scripts
+
+* `--force`
+* `--numcpus`
+* `--tempdir`
+
 # Outputs
 
 Virtually all workflows create:
