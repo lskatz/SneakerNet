@@ -15,8 +15,11 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.3";
+our $VERSION = "1.4";
 our $CITATION = "Save failed genomes by Lee Katz";
+
+# For any warnings in the SN report
+my $warningsMsg = "";
 
 local $0=fileparse $0;
 exit(main());
@@ -47,7 +50,11 @@ sub main{
 
   my $table = saveGenomes($dir, $settings);
 
-  recordProperties($dir,{version=>$VERSION, table=>$table});
+  recordProperties($dir,{
+    version=>$VERSION,
+    table=>$table,
+    warnings => $warningsMsg,
+  });
 
   return 0;
 }
@@ -100,6 +107,10 @@ sub saveGenomes{
       $saved{$samplename} = \@file;
     }
   }
+
+  # Mark whether any samples are going to be "saved" with
+  # a warning message
+  $warningsMsg .= "There is at least one sample that had to be saved into a QC_fails subfolder\n";
 
   # Save the samples with an rsync
   for my $samplename(keys(%saved)){
