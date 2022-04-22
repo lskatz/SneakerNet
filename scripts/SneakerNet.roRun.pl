@@ -222,7 +222,8 @@ sub createSampleSheet{
   my $numSamples=0;
   my $samplesheet = "$outdir/SampleSheet.csv";
   if(-e $samplesheet){
-    die "ERROR: was going to create a samplesheet but it already exists at $samplesheet";
+    logmsg "WARNING: was going to create a samplesheet but it already exists at $samplesheet";
+    return $samplesheet;
   }
   open(my $fh, ">", $samplesheet) or die "ERROR: could not write to $samplesheet: $!";
   print $fh "[Data]\n";
