@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.5.1";
+our $VERSION = "2.5.2";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -278,7 +278,7 @@ sub assembleSample{
   system("rm -rf '$outdir'"); # make sure any previous runs are gone
 
   eval{
-    command("shovill --outdir $outdir --R1 $R1 --R2 $R2 --assembler skesa --cpus $$settings{numcpus} --keepfiles");
+    command("shovill --outdir $outdir --R1 $R1 --R2 $R2 --ram 64 --assembler skesa --cpus $$settings{numcpus} --keepfiles");
   };
   if($@){
     logmsg "shovill failed!\n$@";
