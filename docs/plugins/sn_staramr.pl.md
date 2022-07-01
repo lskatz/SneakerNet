@@ -24,7 +24,7 @@ only these are supported: salmonella, campylobacter, enterococcus faecalis and e
 
 # Algorithm
 
-Runs StarAMR on genome assemblies.  Pointfinder is not currently enabled.
+Runs StarAMR on genome assemblies with Pointfinder.
 
 # Outputs
 
