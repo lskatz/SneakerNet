@@ -45,7 +45,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y skesa krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl
+          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -105,32 +105,10 @@ jobs:
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
-          sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          sudo tar -zxf minikraken_20171019_4GB.tgz 
-          sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
+          sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
+          sudo tar -zxf minikraken_20171101_4GB_dustmasked.tar.gz
+          sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
           sudo ls -lhSR /kraken-database
-      - name: install SPAdes
-        run:  |
-          wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
-          tar -xzf SPAdes-${spadesVer}-Linux.tar.gz
-      - name: install skesa
-        run:  |
-          mkdir $GITHUB_WORKSPACE/skesa
-          cd $GITHUB_WORKSPACE/skesa 
-          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/skesa.centos.7.7
-          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/gfa_connector.centos7.7
-          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/kmercounter.centos7.7
-          mv -v skesa.centos.7.7 skesa
-          mv -v gfa_connector.centos7.7 gfa_connector 
-          mv -v kmercounter.centos7.7 kmercounter
-          chmod -v +x skesa gfa_connector kmercounter
-          tree $GITHUB_WORKSPACE/skesa
-          export PATH=$PATH:$GITHUB_WORKSPACE/skesa
-          echo "$GITHUB_WORKSPACE/skesa" >> $GITHUB_PATH
-          which skesa
-          which gfa_connector
-          which kmercounter
       - name: configure cpanm
         run:  |
           cpanm --local-lib=$HOME/perl5 local::lib
