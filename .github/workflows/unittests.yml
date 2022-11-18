@@ -14,8 +14,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-18.04' ]
+        os: ['ubuntu-20.04' ]
         perl: [ '5.34' ]
+        python: [ '3.7' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
       - name: add some paths to PATH
@@ -29,6 +30,21 @@ jobs:
           echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
           echo
           cat $GITHUB_PATH
+      - name: set up conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          use-mamba: true
+          channels: conda-forge,bioconda,defaults
+          mamba-version: "*"
+      - name: conda installations
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+          mamba install skesa krona shovill
+          conda list
       - name: Set up perl
         uses: shogo82148/actions-setup-perl@v1
         with:
