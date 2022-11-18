@@ -45,7 +45,11 @@ jobs:
           conda config --show
           mamba install -y skesa krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic
           conda list
+      - name: test conda
+        shell: bash -el {0}
+        run: |
           skesa --help
+          shovill --help
       - name: Set up perl
         uses: shogo82148/actions-setup-perl@v1
         with:
