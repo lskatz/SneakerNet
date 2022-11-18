@@ -174,9 +174,7 @@ jobs:
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
-          cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
-          echo "installing deps to default place"
-          cpanm --installdeps . --verbose --notest --force
+          cpanm --installdeps . -l /usr/share/miniconda --verbose --notest --force
           perl -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
