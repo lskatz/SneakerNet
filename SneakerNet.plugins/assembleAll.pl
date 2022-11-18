@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.5.2";
+our $VERSION = "2.6.0";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -101,6 +101,7 @@ sub assembleAll{
     my $outdir="$dir/SneakerNet/assemblies/$sample";
     my $outassembly="$outdir/$sample.shovill.skesa.fasta";
     my $outgbk="$outdir/$sample.shovill.skesa.gbk";
+    my $outgraph="$outdir/$sample.shovill.skesa.gfa";
     #my $outassembly="$outdir/$sample.megahit.fasta";
     #my $outgbk="$outdir/$sample.megahit.gbk";
 
@@ -122,6 +123,10 @@ sub assembleAll{
       cp($assembly, $outassembly) or die "ERROR copying $assembly => $outassembly\n  $!";
 
       mkdir "$outdir/prodigal"; # just make this directory right away
+    }
+    if(!-e $outgraph){
+      my $graphdir = skesaToGraph($sample,$info,$outassembly,$settings);
+      cp("$graphdir/contigs.gfa", $outgraph) or die "ERROR copying $graphdir/contigs.gfa => $outgraph\n  $!";
     }
 
     # Genome annotation
@@ -286,6 +291,21 @@ sub assembleSample{
   }
 
   return $outdir
+}
+
+sub skesaToGraph{
+  my($sample,$sampleInfo,$contigs,$settings)=@_;
+
+  my($R1,$R2) = @{ $$sampleInfo{fastq} };
+  my $outdir="$$settings{tempdir}/$sample";
+  mkdir($outdir);
+
+  logmsg "Creating gfa file for $sample";
+  command("gfa_connector --cores $$settings{numcpus} --reads $R1 $R2 --contigs $contigs --gfa $outdir/contigs.gfa --csv $outdir/contigs.csv --kmer 75 > $outdir/gfa_connecter.log 2>&1");
+  command("echo === $outdir/gfa_connecter.log ===; echo ...; tail $outdir/gfa_connecter.log");
+
+  return $outdir;
+
 }
 
 # I _would_ use prokka, except it depends on having an up to date tbl2asn

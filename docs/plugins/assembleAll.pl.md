@@ -22,7 +22,7 @@ In version 2, Shovill was added and many requirements were added
   * Samclip
   * Samtools
   * Seqtk
-  * Skesa
+  * Skesa v2.11 or greater
   * Trimmomatic
   * Velvet  (not used but checked when shovill runs)
 * CG-Pipeline
@@ -62,4 +62,7 @@ These files are used to make the aforementioned combined metrics table.
 * assemblyMetrics.tsv - N50, genomeLength, etc
 * depth.tsv.gz - `samtools depth` output: a three column file with contig, pos, depth of coverage
 * effectiveCoverage.tsv - contains effective coverage
+
+Starting with v2.6, a graph file is also created with an extension `.gfa`.
+This can be loaded into the Bandage software.
 
