@@ -106,7 +106,7 @@ jobs:
           sudo mkdir -v /kraken-database
           cd /kraken-database
           sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
-          sudo tar -zxf minikraken_20171101_4GB_dustmasked.tar.gz
+          sudo tar -zxf minikraken_20171101_4GB_dustmasked.tgz
           sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
           sudo ls -lhSR /kraken-database
       - name: configure cpanm
