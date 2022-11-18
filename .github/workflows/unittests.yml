@@ -45,7 +45,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl
+          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl jellyfish==1.1.12
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -70,7 +70,7 @@ jobs:
             }}
         env:
           # Increase this value to reset cache if etc/example-environment.yml has not changed
-          CACHE_NUMBER: 0
+          CACHE_NUMBER: 1
       - name: checkout my repo
         uses: actions/checkout@v2
         with:
@@ -95,18 +95,6 @@ jobs:
           sudo update-alternatives --set python /usr/bin/python3
           python --version
           pip3 --version
-      - name: install jellyfish1
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
-          tar -zxf jellyfish-1.1.12.tar.gz
-          cd jellyfish-1.1.12
-          ./configure --prefix=/opt/jellyfish-1.1.12
-          make -j 2
-          sudo make install
-          export PATH=$PATH:/opt/jellyfish-1.1.12/bin
-          echo "/opt/jellyfish-1.1.12/bin" >> $GITHUB_PATH
-          which jellyfish
       - name: install kraken1
         run:  |
           cd $GITHUB_WORKSPACE
@@ -149,6 +137,7 @@ jobs:
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           env
       - name: install-makemaker
+        shell: bash -el {0}
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           #perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib | perl -plane 's/export .*//' >> $GITHUB_ENV
@@ -166,6 +155,7 @@ jobs:
         shell: bash -el {0}
         run:  |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          export PERL5LIB=$PERL5LIB:/usr/share/miniconda/lib/perl5
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
