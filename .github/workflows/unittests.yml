@@ -45,7 +45,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl jellyfish==1.1.12
+          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl jellyfish==1.1.12 kraken==1.1.1
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -95,17 +95,6 @@ jobs:
           sudo update-alternatives --set python /usr/bin/python3
           python --version
           pip3 --version
-      - name: install kraken1
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz -O kraken-v1.1.1.tar.gz
-          tar -xvzf kraken-v1.1.1.tar.gz
-          cd kraken-1.1.1
-          mkdir /opt/kraken
-          ./install_kraken.sh /opt/kraken/
-          export PATH=$PATH:/opt/kraken
-          echo "/opt/kraken/" >> $GITHUB_PATH
-          which kraken
       - name: install minikraken
         run: |
           sudo mkdir -v /kraken-database
