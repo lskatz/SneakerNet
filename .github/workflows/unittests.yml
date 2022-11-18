@@ -153,6 +153,10 @@ jobs:
           perl Makefile.PL
           make
           cpanm --installdeps . -l /usr/share/miniconda --verbose --notest --force
+          cpanm -l /usr/share/miniconda --verbose --notest --force -MFile::Slurp 
+          echo
+          find -/usr/share/miniconda -name Slurp.pm
+          echo
           perl -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
