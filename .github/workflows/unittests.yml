@@ -37,6 +37,8 @@ jobs:
           use-mamba: true
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
+          auto-activate-base: true
+          activate-environment: ""
       - name: conda installations
         run: |
           conda info
@@ -48,6 +50,9 @@ jobs:
       - name: test conda
         shell: bash -el {0}
         run: |
+          which conda
+          which mamba
+          conda activate test
           skesa --help
           shovill --help
       - name: Set up perl
