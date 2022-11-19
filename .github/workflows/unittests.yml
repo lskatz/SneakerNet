@@ -151,8 +151,8 @@ jobs:
           make
           cpanm --installdeps . -l /usr/share/miniconda --verbose --notest --force
           cpanm -l /usr/share/miniconda --verbose --notest --force -MFile::Slurp 
-          cpanm -l $HOME/perl5 --verbose --notest --force File::Slurp 
-          cpanm -l $HOME/perl5 --verbose --notest --force Statistics::Descriptive
+          cpanm -l $HOME/perl5 --verbose --notest --force File::Slurp Statistics::Descriptive \
+            Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils
           echo
           find /usr/share/miniconda $HOME/perl5 -name Slurp.pm
           echo
