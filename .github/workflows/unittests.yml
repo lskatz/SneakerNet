@@ -45,6 +45,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
+          mamba install perl-bio-tools-run-alignment-tcoffee
           mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl==1.7.8 jellyfish==1.1.12 kraken==1.1.1
           conda list
       - name: test conda
