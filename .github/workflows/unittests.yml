@@ -46,8 +46,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y perl-bio-tools-run-alignment-tcoffee
-          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl==1.7.8 jellyfish==1.1.12 kraken==1.1.1
+          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -87,7 +86,7 @@ jobs:
         run:  |
           sudo apt-get update
           sudo apt-get -y install libgd-dev ca-certificates
-          sudo apt-get -y install tree libberkeleydb-perl libdb-dev cpanminus curl 
+          sudo apt-get -y install tree bioperl-run libberkeleydb-perl libdb-dev cpanminus curl 
           sudo apt-get -y install build-essential ncbi-blast+ prodigal sendmail 
           # shovill things
           sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
