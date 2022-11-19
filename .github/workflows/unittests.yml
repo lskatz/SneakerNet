@@ -100,7 +100,7 @@ jobs:
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
-          sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
+          sudo wget --progress=dot https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
           sudo tar -zxf minikraken_20171101_4GB_dustmasked.tgz
           sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
           sudo ls -lhSR /kraken-database
@@ -148,10 +148,11 @@ jobs:
           export PERL5LIB=$PERL5LIB:/usr/share/miniconda/lib/perl5
 
           # Add any perl lib dir containing bio to PERL5LIB
-          BioDir=$(find /usr/local/lib/perl5 -name Bio -type d)
+          BioDir=$(find /usr* /lib* -name Bio -type d)
           echo "BioDir: $BioDir"
           for i in $BioDir; do \
             parent=$(dirname $i); \
+            echo "adding to perl5lib: $parent" \
             export PERL5LIB=$PERL5LIB:$parent; \
           done
 
