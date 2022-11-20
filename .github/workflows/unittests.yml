@@ -4,6 +4,7 @@ on: [push]
 env:
   spadesVer: 3.14.1
   KRAKEN_DEFAULT_DB: /kraken-database
+  PERLLIBDIR: /usr/share/miniconda
 # perl: [ '5.32', '5.30', '5.28' ]
 # perl: [ '5.32', '5.30.1', '5.16.3', '5.12.3' ]
 # os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
@@ -46,7 +47,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1
+          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -106,9 +107,9 @@ jobs:
           sudo ls -lhSR /kraken-database
       - name: configure cpanm
         run:  |
-          cpanm --local-lib=$HOME/perl5 local::lib
-          perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          cpanm --local-lib=${{ env.PERLLIBDIR }}/lib/perl5 local::lib
+          perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib
+          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
       - name: Dumper INC
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - name: tree pwd
@@ -124,13 +125,12 @@ jobs:
         run:  env
       - name: env with perl local lib
         run:  |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
           env
       - name: install-makemaker
         shell: bash -el {0}
         run: |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          #perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib | perl -plane 's/export .*//' >> $GITHUB_ENV
+          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
           echo "PERL5LIB=$PERL5LIB" >> $GITHUB_ENV
           echo "PERL_MB_OPT=$PERL_MB_OPT" >> $GITHUB_ENV
           echo "PERL_MM_OPT=$PERL_MM_OPT" >> $GITHUB_ENV
@@ -139,13 +139,13 @@ jobs:
           cat $GITHUB_ENV
           echo
           cd SneakerNet
-          cpanm -l $HOME/perl5 --verbose --notest --force ExtUtils::MakeMaker
-          cpanm -l $HOME/perl5 --installdeps . --verbose --notest --force
+          cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --verbose --notest --force ExtUtils::MakeMaker
+          cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
         shell: bash -el {0}
         run:  |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          export PERL5LIB=$PERL5LIB:/usr/share/miniconda/lib/perl5
+          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
+          export PERL5LIB=$PERL5LIB:${{ env.PERLLIBDIR }}/lib/perl5
 
           # Add any perl lib dir containing bio to PERL5LIB
           BioDir=$(find /usr* /lib* -name Bio -type d)
@@ -159,9 +159,8 @@ jobs:
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
-          cpanm --installdeps . -l /usr/share/miniconda --verbose --notest --force
-          #cpanm -l /usr/share/miniconda --verbose --notest --force -MFile::Slurp 
-          cpanm -l $HOME/perl5 --verbose --notest --force File::Slurp Statistics::Descriptive \
+          cpanm --installdeps . -l ${{ env.PERLLIBDIR }} --verbose --notest --force
+          cpanm -l ${{ env.PERLLIBDIR }} --verbose --notest --force File::Slurp Statistics::Descriptive \
             Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils \
             Exporter::Tiny
           echo
@@ -173,7 +172,7 @@ jobs:
       - name: check-SneakerNet-repo
         shell: bash -el {0}
         run: |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5/ -Mlocal::lib)
           cd $GITHUB_WORKSPACE/SneakerNet
           cat MYMETA.json
           echo;env;echo
@@ -198,7 +197,7 @@ jobs:
         name: prove-lv-t
         shell: bash -el {0}
         run:  |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
           mkdir -v $GITHUB_WORKSPACE/tmp
           export TMPDIR=$GITHUB_WORKSPACE/tmp
           cd $GITHUB_WORKSPACE/SneakerNet
