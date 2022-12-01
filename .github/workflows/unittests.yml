@@ -47,7 +47,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio
+          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -112,43 +112,50 @@ jobs:
           sudo tar -zxf minikraken_20171101_4GB_dustmasked.tgz
           sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
           sudo ls -lhSR /kraken-database
-      - name: configure cpanm
-        shell: bash -el {0}
-        run:  |
-          cpanm --local-lib=${{ env.PERLLIBDIR }}/lib/perl5 local::lib
-          perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib
-          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
+      #- name: configure cpanm
+      #  shell: bash -el {0}
+      #  run:  |
+      #    cpanm --local-lib=${{ env.PERLLIBDIR }}/lib/perl5 local::lib
+      #    perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib
+      #    eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
       - name: Dumper INC
+        shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - name: tree pwd
+        shell: bash -el {0}
         run:  tree $(pwd)
       - name: tree home
+        shell: bash -el {0}
         run:  tree $HOME
       - name: tree GITHUB_WORKSPACE
+        shell: bash -el {0}
         run:  tree $GITHUB_WORKSPACE
       - name: tree -L 3 -d GITHUB_WORKSPACE
+        shell: bash -el {0}
         run:  tree -L 3 -d $GITHUB_WORKSPACE
       - run: perl -V
-      - name: env
-        run:  env
-      - name: env with perl local lib
-        run:  |
-          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
-          env
-      - name: install-makemaker
         shell: bash -el {0}
-        run: |
-          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
-          echo "PERL5LIB=$PERL5LIB" >> $GITHUB_ENV
-          echo "PERL_MB_OPT=$PERL_MB_OPT" >> $GITHUB_ENV
-          echo "PERL_MM_OPT=$PERL_MM_OPT" >> $GITHUB_ENV
-          echo 
-          echo GITHUG_ENV
-          cat $GITHUB_ENV
-          echo
-          cd SneakerNet
-          cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --verbose --notest --force ExtUtils::MakeMaker
-          cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --installdeps . --verbose --notest --force
+      - name: env
+        shell: bash -el {0}
+        run:  env
+      #- name: env with perl local lib
+      #  run:  |
+      #    eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
+      #    env
+      #- name: install-makemaker
+      #  shell: bash -el {0}
+      #  run: |
+      #    eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
+      #    echo "PERL5LIB=$PERL5LIB" >> $GITHUB_ENV
+      #    echo "PERL_MB_OPT=$PERL_MB_OPT" >> $GITHUB_ENV
+      #    echo "PERL_MM_OPT=$PERL_MM_OPT" >> $GITHUB_ENV
+      #    echo 
+      #    echo GITHUG_ENV
+      #    cat $GITHUB_ENV
+      #    echo
+      #    cd SneakerNet
+      #    cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --verbose --notest --force ExtUtils::MakeMaker
+      #    cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
         shell: bash -el {0}
         run:  |
