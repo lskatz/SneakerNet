@@ -58,6 +58,7 @@ jobs:
           shovill --help
           perl -MBio::SeqIO -e 1
           perl -MBio::FeatureIO -e 1
+          which cpanm
       - name: Get Date
         id: get-date
         run: |
@@ -135,8 +136,9 @@ jobs:
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
-          sudo cpanm --installdeps . --verbose --notest --force
-          sudo cpanm --verbose --notest --force File::Slurp Statistics::Descriptive Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils Exporter::Tiny
+          which cpanm
+          sudo $(which cpanm) --installdeps . --verbose --notest --force
+          sudo $(which cpanm)--verbose --notest --force File::Slurp Statistics::Descriptive Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils Exporter::Tiny
 
           #cpanm --installdeps . -l ${{ env.PERLLIBDIR }} --verbose --notest --force
           #cpanm -l ${{ env.PERLLIBDIR }} --verbose --notest --force File::Slurp Statistics::Descriptive \
