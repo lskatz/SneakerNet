@@ -84,6 +84,7 @@ jobs:
           path: CG-Pipeline
           ref:  v0.5
       - name: apt-get install
+        shell: bash -el {0}
         run:  |
           sudo apt-get update
           sudo apt-get -y install libgd-dev ca-certificates
@@ -91,13 +92,16 @@ jobs:
           sudo apt-get -y install build-essential ncbi-blast+ prodigal sendmail 
           # shovill things
           sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
-      - name: update alternatives for python3
-        run:  |
-          sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-          sudo update-alternatives --set python /usr/bin/python3
-          python --version
-          pip3 --version
+          # test
+          perl -MBio::FeatureIO -e 1
+      #- name: update alternatives for python3
+      #  run:  |
+      #    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+      #    sudo update-alternatives --set python /usr/bin/python3
+      #    python --version
+      #    pip3 --version
       - name: install minikraken
+        shell: bash -el {0}
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
@@ -106,6 +110,7 @@ jobs:
           sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
           sudo ls -lhSR /kraken-database
       - name: configure cpanm
+        shell: bash -el {0}
         run:  |
           cpanm --local-lib=${{ env.PERLLIBDIR }}/lib/perl5 local::lib
           perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib
