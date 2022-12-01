@@ -40,25 +40,6 @@ jobs:
           mamba-version: "*"
           auto-activate-base: true
           activate-environment: ""
-      - name: conda installations
-        shell: bash -el {0}
-        run: |
-          conda info
-          conda list
-          conda config --show-sources
-          conda config --show
-          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp gcc
-          conda list
-      - name: test conda
-        shell: bash -el {0}
-        run: |
-          which conda
-          which mamba
-          conda info --envs
-          shovill --help
-          perl -MBio::SeqIO -e 1
-          perl -MBio::FeatureIO -e 1
-          which cpanm
       - name: Get Date
         id: get-date
         run: |
@@ -79,6 +60,25 @@ jobs:
         env:
           # Increase this value to reset cache if etc/example-environment.yml has not changed
           CACHE_NUMBER: 0
+      - name: conda installations
+        shell: bash -el {0}
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp 
+          conda list
+      - name: test conda
+        shell: bash -el {0}
+        run: |
+          which conda
+          which mamba
+          conda info --envs
+          shovill --help
+          perl -MBio::SeqIO -e 1
+          perl -MBio::FeatureIO -e 1
+          which cpanm
       - name: checkout my repo
         uses: actions/checkout@v2
         with:
@@ -99,8 +99,7 @@ jobs:
           sudo apt-get -y install build-essential ncbi-blast+ prodigal sendmail 
           # shovill things
           sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
-          # test
-          perl -MBio::FeatureIO -e 1
+          gcc --version
       - name: Cache minikraken
         id: cache-minikraken
         uses: actions/cache@v3
