@@ -47,7 +47,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker
+          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp
           conda list
       - name: test conda
         shell: bash -el {0}
@@ -60,7 +60,10 @@ jobs:
           perl -MBio::FeatureIO -e 1
       - name: Get Date
         id: get-date
-        run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+        run: |
+          today=$(/bin/date -u '+%Y%m%d')
+          echo $today
+          echo "today=$today" >> $GITHUB_OUTPUT
         shell: bash
       - name: Cache Conda env
         id: cache
@@ -97,12 +100,6 @@ jobs:
           sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
           # test
           perl -MBio::FeatureIO -e 1
-      #- name: update alternatives for python3
-      #  run:  |
-      #    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-      #    sudo update-alternatives --set python /usr/bin/python3
-      #    python --version
-      #    pip3 --version
       - name: install minikraken
         shell: bash -el {0}
         run: |
@@ -112,12 +109,6 @@ jobs:
           sudo tar -zxf minikraken_20171101_4GB_dustmasked.tgz
           sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
           sudo ls -lhSR /kraken-database
-      #- name: configure cpanm
-      #  shell: bash -el {0}
-      #  run:  |
-      #    cpanm --local-lib=${{ env.PERLLIBDIR }}/lib/perl5 local::lib
-      #    perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib
-      #    eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
@@ -138,48 +129,19 @@ jobs:
       - name: env
         shell: bash -el {0}
         run:  env
-      #- name: env with perl local lib
-      #  run:  |
-      #    eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
-      #    env
-      #- name: install-makemaker
-      #  shell: bash -el {0}
-      #  run: |
-      #    eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
-      #    echo "PERL5LIB=$PERL5LIB" >> $GITHUB_ENV
-      #    echo "PERL_MB_OPT=$PERL_MB_OPT" >> $GITHUB_ENV
-      #    echo "PERL_MM_OPT=$PERL_MM_OPT" >> $GITHUB_ENV
-      #    echo 
-      #    echo GITHUG_ENV
-      #    cat $GITHUB_ENV
-      #    echo
-      #    cd SneakerNet
-      #    cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --verbose --notest --force ExtUtils::MakeMaker
-      #    cpanm -l ${{ env.PERLLIBDIR }}/lib/perl5 --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
         shell: bash -el {0}
         run:  |
-          eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5 -Mlocal::lib)
-          export PERL5LIB=$PERL5LIB:${{ env.PERLLIBDIR }}/lib/perl5
-
-          # Add any perl lib dir containing bio to PERL5LIB
-          BioDir=$(find /usr* /lib* -name Bio -type d)
-          echo "BioDir: $BioDir"
-          for i in $BioDir; do \
-            parent=$(dirname $i); \
-            echo "adding to perl5lib: $parent" \
-            export PERL5LIB=$PERL5LIB:$parent; \
-          done
-
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
-          cpanm --installdeps . -l ${{ env.PERLLIBDIR }} --verbose --notest --force
-          cpanm -l ${{ env.PERLLIBDIR }} --verbose --notest --force File::Slurp Statistics::Descriptive \
-            Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils \
-            Exporter::Tiny
-          echo
-          find /usr/share/miniconda $HOME/perl5 -name Slurp.pm
+          sudo cpanm --installdeps . --verbose --notest --force
+          sudo cpanm --verbose --notest --force File::Slurp Statistics::Descriptive Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils Exporter::Tiny
+
+          #cpanm --installdeps . -l ${{ env.PERLLIBDIR }} --verbose --notest --force
+          #cpanm -l ${{ env.PERLLIBDIR }} --verbose --notest --force File::Slurp Statistics::Descriptive \
+          #  Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils \
+          #  Exporter::Tiny
           echo
           perl -MBio::FeatureIO -MBio::SeqIO -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MText::Fuzzy -MEmail::Stuffer -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
