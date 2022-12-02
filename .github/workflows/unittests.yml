@@ -104,18 +104,18 @@ jobs:
         id: cache-minikraken
         uses: actions/cache@v3
         with:
-          path: /kraken-database
+          path: ~/kraken-database
           key: ${{ steps.get-date.outputs.today }}-minikraken
       - name: install minikraken
         shell: bash -el {0}
         if: steps.cache-minikraken.outputs.cache-hit != 'true'
         run: |
-          sudo mkdir -v /kraken-database
-          cd /kraken-database
-          sudo wget --progress=dot https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
-          sudo tar -zxf minikraken_20171101_4GB_dustmasked.tgz
-          sudo mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
-          sudo ls -lhSR /kraken-database
+          mkdir -v ~/kraken-database
+          cd ~/kraken-database
+          wget --progress=dot https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
+          tar -zxf minikraken_20171101_4GB_dustmasked.tgz
+          mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
+          ls -lhSR /kraken-database
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
