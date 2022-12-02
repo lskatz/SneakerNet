@@ -67,7 +67,7 @@ jobs:
           mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp gxx_linux-64 gcc_linux-64
           conda list
           which gcc
-          ln -sv $(which gcc) $(dirname $(which gcc))/x86_64-conda-linux-gnu-gcc
+          sudo ln -sv $(which gcc) $(dirname $(which gcc))/x86_64-conda-linux-gnu-gcc
           #find /usr/share/miniconda -name gcc | xargs -n 1 bash -c 'target="$(dirname $0)/x86_64-conda-linux-gnu-gcc"; if [ ! -e "$target" ]; then ln -sv $0 x86_64-conda-linux-gnu-gcc; fi;'
           which x86_64-conda-linux-gnu-gcc
           ls -lh $(which x86_64-conda-linux-gnu-gcc)
