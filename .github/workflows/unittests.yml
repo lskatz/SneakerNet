@@ -148,8 +148,8 @@ jobs:
         run:  env
       - name: perl-check-dependencies
         shell: bash -el {0}
+        if: ${{ 1 == 0 }}
         run:  |
-          exit 0; # skip all other steps so that we can cache
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
@@ -162,6 +162,7 @@ jobs:
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-SneakerNet-repo
         shell: bash -el {0}
+        if: ${{ 1 == 0 }}
         run: |
           eval $(perl -I ${{ env.PERLLIBDIR }}/lib/perl5/ -Mlocal::lib)
           cd $GITHUB_WORKSPACE/SneakerNet
@@ -182,6 +183,7 @@ jobs:
           perl t/00_env.t
           for i in t/M00123-18-001-test/*.fastq.gz; do echo -ne "$i\t"; zcat $i | tail -n 1; done;
       - id:   prove-lv-t
+        if: ${{ 1 == 0 }}
         name: prove-lv-t
         shell: bash -el {0}
         run:  |
