@@ -66,6 +66,12 @@ jobs:
           conda config --show
           mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp gxx_linux-64 gcc_linux-64
           conda list
+          find /usr/share/miniconda -name gcc
+          find /usr/share/miniconda -name g++
+          echo exit 1
+          exit 1
+          which x86_64-conda-linux-gnu-gcc
+          ls -lh x86_64-conda-linux-gnu-gcc
       - name: test conda
         shell: bash -el {0}
         run: |
@@ -116,6 +122,10 @@ jobs:
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
+      - name: PATH
+        shell: bash -el {0}
+        run:  |
+          echo "$PATH" | tr ":" "\n" | nl
       - name: tree pwd
         shell: bash -el {0}
         run:  tree $(pwd)
@@ -161,9 +171,6 @@ jobs:
           ls -lhS t/M00123-18-001-test/
           md5sum t/M00123-18-001-test/*.fastq.gz
           for i in t/M00123-18-001-test/*.fastq.gz; do echo -ne "$i\t"; zcat $i | tail -n 1; done;
-          echo
-          echo "PATH broken up:"
-          echo "$PATH" | tr ":" "\n"
           echo
           echo "GITHUB_ENV: $GITHUB_ENV"
           cat $GITHUB_ENV
