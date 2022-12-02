@@ -117,7 +117,7 @@ jobs:
           wget --progress=dot https://ccb.jhu.edu/software/kraken/dl/minikraken_20171101_4GB_dustmasked.tgz
           tar -zxf minikraken_20171101_4GB_dustmasked.tgz
           mv -nv minikraken_20171101_4GB_dustmasked/* . # flatten db dir
-          ls -lhSR /kraken-database
+          ls -lhSR ~/kraken-database
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
