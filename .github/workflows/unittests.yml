@@ -60,6 +60,7 @@ jobs:
           CACHE_NUMBER: 0
       - name: conda installations
         shell: bash -el {0}
+        if: steps.cache-conda.outputs.cache-hit != 'true'
         run: |
           conda info
           conda list
@@ -146,18 +147,22 @@ jobs:
       - name: env
         shell: bash -el {0}
         run:  env
+      - name: perl-email-stuffer
+        shell: bash -el {0}
+        run:  |
+          sudo $(which cpanm) --verbose --notest --force Email::Stuffer
+          perl -MEmail::Stuffer -e 'print Dumper \%INC'
       - name: perl-check-dependencies
         shell: bash -el {0}
-        if: ${{ 1 == 0 }}
         run:  |
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
           which cpanm
           sudo $(which cpanm) --installdeps . --verbose --notest --force
-          sudo $(which cpanm)--verbose --notest --force File::Slurp Statistics::Descriptive Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils Exporter::Tiny
+          sudo $(which cpanm) --verbose --notest --force File::Slurp Statistics::Descriptive Config::Simple Bio::Kmer Text::Fuzzy List::MoreUtils Exporter::Tiny
           echo
-          perl -MBio::FeatureIO -MBio::SeqIO -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MText::Fuzzy -MEmail::Stuffer -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
+          perl -MBio::FeatureIO -MBio::SeqIO -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MText::Fuzzy -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-SneakerNet-repo
