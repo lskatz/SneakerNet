@@ -15,7 +15,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-18.04' ]
+        #os: ['ubuntu-18.04' ]
+        os: ['ubuntu-22.04' ]
         perl: [ '5.26.2' ]
         python: [ '3.7' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
@@ -64,7 +65,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp gxx_linux-64 gcc_linux-64
+          mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp gxx_linux-64 gcc_linux-64 cxx-compiler
           conda list
           which gcc
           sudo ln -sv $(which gcc) $(dirname $(which gcc))/x86_64-conda-linux-gnu-gcc
@@ -152,11 +153,6 @@ jobs:
           which cpanm
           sudo $(which cpanm) --installdeps . --verbose --notest --force
           sudo $(which cpanm)--verbose --notest --force File::Slurp Statistics::Descriptive Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils Exporter::Tiny
-
-          #cpanm --installdeps . -l ${{ env.PERLLIBDIR }} --verbose --notest --force
-          #cpanm -l ${{ env.PERLLIBDIR }} --verbose --notest --force File::Slurp Statistics::Descriptive \
-          #  Config::Simple Bio::Kmer Text::Fuzzy Email::Stuffer List::MoreUtils \
-          #  Exporter::Tiny
           echo
           perl -MBio::FeatureIO -MBio::SeqIO -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MText::Fuzzy -MEmail::Stuffer -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
