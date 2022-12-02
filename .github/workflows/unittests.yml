@@ -53,7 +53,7 @@ jobs:
         with:
           path: ${{ env.CONDA }}/envs
           key:
-            conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER }}
+            conda-${{ runner.os }}--${{ runner.arch }}--${{ hashFiles('etc/example-environment-caching.yml') }}--${{ steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER }}
         env:
           # Increase this value to reset cache if etc/example-environment.yml has not changed
           CACHE_NUMBER: 0
