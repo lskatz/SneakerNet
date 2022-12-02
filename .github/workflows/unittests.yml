@@ -68,6 +68,7 @@ jobs:
           conda list
           which gcc
           sudo ln -sv $(which gcc) $(dirname $(which gcc))/x86_64-conda-linux-gnu-gcc
+          sudo ln -sv $(which gcc) /bin/x86_64-conda-linux-gnu-gcc
           #find /usr/share/miniconda -name gcc | xargs -n 1 bash -c 'target="$(dirname $0)/x86_64-conda-linux-gnu-gcc"; if [ ! -e "$target" ]; then ln -sv $0 x86_64-conda-linux-gnu-gcc; fi;'
           which x86_64-conda-linux-gnu-gcc
           ls -lh $(which x86_64-conda-linux-gnu-gcc)
@@ -107,7 +108,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/kraken-database
-          key: ${{ steps.get-date.outputs.today }}-minikraken
+          key: minikraken-${{ steps.get-date.outputs.today }}
       - name: install minikraken
         shell: bash -el {0}
         if: steps.cache-minikraken.outputs.cache-hit != 'true'
