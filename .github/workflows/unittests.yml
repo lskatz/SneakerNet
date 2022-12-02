@@ -65,6 +65,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
+          # possible fix here? https://github.com/bioconda/bioconda-recipes/issues/24709#issuecomment-718143674
           mamba install -y perl==${{ matrix.perl }} skesa spades krona shovill samclip flash seqtk kmc lighter megahit pilon trimmomatic jellyfish==1.1.12 kraken==1.1.1 perl-app-cpanminus perl-bioperl-run perl-bio-featureio perl-extutils-makemaker perl-local-lib perl-file-slurp gxx_linux-64 gcc_linux-64 cxx-compiler
           conda list
           which gcc
@@ -148,6 +149,7 @@ jobs:
       - name: perl-check-dependencies
         shell: bash -el {0}
         run:  |
+          exit 0; # skip all other steps so that we can cache
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
