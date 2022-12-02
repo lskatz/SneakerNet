@@ -70,6 +70,7 @@ jobs:
           which gcc
           #sudo ln -sv $(which gcc) $(dirname $(which gcc))/x86_64-conda-linux-gnu-gcc
           #sudo ln -sv $(which gcc) /bin/x86_64-conda-linux-gnu-gcc
+          sudo ln -sv $(which x86_64-conda-linux-gnu-gcc) /bin/x86_64-conda-linux-gnu-gcc
           #find /usr/share/miniconda -name gcc | xargs -n 1 bash -c 'target="$(dirname $0)/x86_64-conda-linux-gnu-gcc"; if [ ! -e "$target" ]; then ln -sv $0 x86_64-conda-linux-gnu-gcc; fi;'
           which x86_64-conda-linux-gnu-gcc
           ls -lh $(which x86_64-conda-linux-gnu-gcc)
@@ -84,11 +85,11 @@ jobs:
           perl -MBio::FeatureIO -e 1
           which cpanm
       - name: checkout my repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: SneakerNet
       - name: checkout CG-Pipeline
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: lskatz/CG-Pipeline
           path: CG-Pipeline
