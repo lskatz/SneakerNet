@@ -17,7 +17,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 use MIME::Base64 qw/encode_base64/;
 
-our $VERSION = "2.7";
+our $VERSION = "2.8";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -456,6 +456,7 @@ sub htmlFooters{
 
   $html .= "<p>For more information, see <a href='https://github.com/lskatz/SneakerNet'>https://github.com/lskatz/SneakerNet</a></p>\n";
   $html .= "<p>SneakerNet files can be found in <span style='font-weight:bold'>$snPath</span></p>\n";
+  $html .= "<p>Griswold et al., (2021). SneakerNet: A modular quality assurance and quality check workflow for primary genomic and metagenomic read data. Journal of Open Source Software, 6(60), 2334, https://doi.org/10.21105/joss.02334</p>";
   $html .= "</html>\n";
 
   return $html;
