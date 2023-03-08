@@ -63,6 +63,8 @@ jobs:
           echo
           echo conda
           conda info
+          echo
+          ls -l ~/conda_pkgs_dir /usr/share/miniconda || true
       - name: add some paths to PATH
         run:  |
           #echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
