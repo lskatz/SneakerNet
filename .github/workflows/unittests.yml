@@ -161,7 +161,7 @@ jobs:
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install libgd-graph-perl libgd-graph3d-perl libgd-perllibgd-svg-perl libgd-tools libgd3 libgd-text-perl libgd-barcode-perl ca-certificates
+          sudo apt-get -y install libgd-graph-perl libgd-graph3d-perl libgd-perl libgd-svg-perl libgd-tools libgd3 libgd-text-perl libgd-barcode-perl ca-certificates
           sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus curl 
           sudo apt-get -y install build-essential bioperl-run ncbi-blast+ prodigal sendmail python3 python3-pip
           # shovill things
