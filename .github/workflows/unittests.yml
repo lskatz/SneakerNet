@@ -38,8 +38,9 @@ jobs:
         id: cache-conda
         uses: actions/cache@v3
         with:
-          #path: ~/conda_pkgs_dir
-          path: /usr/share/miniconda
+          path: |
+            ~/conda_pkgs_dir
+            /usr/share/miniconda
           key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
           CACHE_NUMBER: 1
@@ -119,8 +120,10 @@ jobs:
           sudo mkdir -v $KRAKEN_DEFAULT_DB
           sudo chown -v $USER $KRAKEN_DEFAULT_DB
           chmod -v 775 $KRAKEN_DEFAULT_DB
+          gunzip -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.fasta.gz
+          find $GITHUB_WORKSPACE/SneakerNet/t/asm -name '*.fasta' -exec kraken-build --db $KRAKEN_DEFAULT_DB --add-to-library {} \;
           kraken-build --db $KRAKEN_DEFAULT_DB --download-taxonomy
-          kraken-build --db $KRAKEN_DEFAULT_DB --download-library bacteria --threads 2 --max-db-size 4
+          kraken-build --db $KRAKEN_DEFAULT_DB --threads 2 --build
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
