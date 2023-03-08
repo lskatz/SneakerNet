@@ -49,3 +49,81 @@ jobs:
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
           mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal 
+      - name: check installation
+        shell: bash -el {0}
+        run: | 
+          perl -v
+          echo 
+          python -V
+          echo 
+          which perl
+          which python
+          echo
+          which kraken
+          kraken --version
+          which kraken-build
+          echo
+          echo conda
+          conda info
+          echo
+          ls -l ~/conda_pkgs_dir /usr/share/miniconda || true
+      - name: add some paths to PATH
+        run:  |
+          #echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
+          echo
+          cat $GITHUB_PATH
+      - name: checkout my repo
+        uses: actions/checkout@v2
+        with:
+          path: SneakerNet
+      - name: apt-get install
+        run:  |
+          sudo apt-get update
+          sudo apt-get -y install ca-certificates
+          sudo apt-get -y install build-essential sendmail 
+          # shovill things
+          #sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
+      #- name: install minikraken
+      #  shell: bash -el {0}
+      #  run: |
+      #    sudo mkdir -v /kraken-database
+      #    sudo chown -v $USER /kraken-database
+      #    chmod -v 775 /kraken-database
+      #    cd /kraken-database
+      #    #sudo wget --no-check-certificate --secure-protocol=TLSv1 https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+      #    curl -SL https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
+      #    # View the contents
+      #    tar ztvf minikraken_20171019_4GB.tgz
+      #    # Then, uncompress
+      #    tar -zxf minikraken_20171019_4GB.tgz 
+      #    mv -nv minikraken_20171013_4GB/* . # flatten db dir
+      #    ls -lhSR /kraken-database
+      #    cd -
+      - name: Cache Kraken DB
+        id: cache-kraken
+        uses: actions/cache@v3
+        with:
+          path: /kraken-database
+          key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
+        env:
+          CACHE_NUMBER: 0
+      - name: make very simple kraken database
+        shell: bash -el {0}
+        if: steps.cache-kraken.outputs.cache-hit != 'true'
+        run: |
+          sudo mkdir -v $KRAKEN_DEFAULT_DB
+          sudo chown -v $USER $KRAKEN_DEFAULT_DB
+          chmod -v 775 $KRAKEN_DEFAULT_DB
+          gunzip -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.fasta.gz
+          find $GITHUB_WORKSPACE/SneakerNet/t/asm -name '*.fasta' -exec kraken-build --db $KRAKEN_DEFAULT_DB --add-to-library {} \;
+          mkdir $KRAKEN_DEFAULT_DB/taxonomy
+          cp -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.dmp.gz $KRAKEN_DEFAULT_DB/taxonomy
+          gunzip -v $KRAKEN_DEFAULT_DB/taxonomy/*.gz
+          #kraken-build --db $KRAKEN_DEFAULT_DB --download-taxonomy
+          kraken-build --db $KRAKEN_DEFAULT_DB --threads 2 --build
