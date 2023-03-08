@@ -45,7 +45,7 @@ jobs:
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
-          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline
+          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd
       - name: check installation
         shell: bash -el {0}
         run: | 
@@ -69,135 +69,10 @@ jobs:
           echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
           echo
           cat $GITHUB_PATH
-      - name: Set up perl
-        uses: shogo82148/actions-setup-perl@v1
-        with:
-          perl-version: ${{ matrix.perl }}
-          multi-thread: "true"
       - name: checkout my repo
         uses: actions/checkout@v2
         with:
           path: SneakerNet
-      - name: checkout CG-Pipeline
-        uses: actions/checkout@v2
-        with:
-          repository: lskatz/CG-Pipeline
-          path: CG-Pipeline
-          ref:  v0.5
-      - name: checkout Shovill
-        uses: actions/checkout@v2
-        with:
-          repository: tseemann/shovill
-          path: shovill
-          ref:  v1.1.0
-      - name: install krona
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/marbl/Krona/releases/download/v2.7.1/KronaTools-2.7.1.tar
-          tar xvf KronaTools-2.7.1.tar
-          cd KronaTools-2.7.1
-          ./install.pl --prefix /opt/krona
-          ./updateTaxonomy.sh
-          export PATH=$PATH:/opt/krona/bin
-          echo "/opt/krona/bin" >> $GITHUB_PATH
-          which ktImportText
-      - name: install samclip
-        run:  |
-          mkdir $GITHUB_WORKSPACE/samclip
-          cd $GITHUB_WORKSPACE/samclip
-          wget https://raw.githubusercontent.com/tseemann/samclip/master/samclip
-          chmod +x samclip
-          export PATH=$PATH:$GITHUB_WORKSPACE/samclip
-          echo "$GITHUB_WORKSPACE/samclip" >> $GITHUB_PATH
-          which samclip
-      - name: install FLASh
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz
-          tar -zxf FLASH-1.2.11.tar.gz
-          rm -rf FLASH-1.2.11.tar.gz
-          cd FLASH-1.2.11
-          make
-          export PATH=$PATH:$GITHUB_WORKSPACE/FLASH-1.2.11
-          echo "$GITHUB_WORKSPACE/FLASH-1.2.11" >> $GITHUB_PATH
-          ls -RlhS "$GITHUB_WORKSPACE/FLASH-1.2.11"
-          which flash
-      - name: install Mash
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/marbl/Mash/releases/download/v2.2/mash-Linux64-v2.2.tar
-          tar -xvf mash-Linux64-v2.2.tar # creates mash-Linux64-v2.2/mash
-          export PATH=$PATH:$GITHUB_WORKSPACE/mash-Linux64-v2.2
-          echo "$GITHUB_WORKSPACE/mash-Linux64-v2.2" >> $GITHUB_PATH
-          which mash
-      - name: checkout seqtk
-        run:  |
-          mkdir -v $GITHUB_WORKSPACE/seqtk-src
-          cd $GITHUB_WORKSPACE/seqtk-src
-          wget https://github.com/lh3/seqtk/archive/v1.3.tar.gz
-          tar -zxf v1.3.tar.gz 
-          rm -v v1.3.tar.gz 
-          cd seqtk-1.3/
-          make
-          sudo make install
-          which seqtk
-      - name: install kmc
-        run:  |
-          mkdir -v $GITHUB_WORKSPACE/kmc
-          cd $GITHUB_WORKSPACE/kmc
-          wget https://github.com/refresh-bio/KMC/releases/download/v3.1.1/KMC3.1.1.linux.tar.gz
-          tar -xvzf KMC3.1.1.linux.tar.gz || echo "WARNING: could not find KMC3.1.1.linux.tar.gz"
-          rm -vf KMC3.1.1.linux.tar.gz
-          sudo ln -sv $GITHUB_WORKSPACE/kmc/kmc* /usr/local/bin
-          which kmc
-          kmc --help || true
-      - name: install lighter
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz
-          tar -zvxf v1.1.1.tar.gz
-          cd Lighter-1.1.1
-          make
-          chmod -v +x lighter
-          export PATH=$PATH:$GITHUB_WORKSPACE/lighter-1.1.1
-          echo "$GITHUB_WORKSPACE/lighter-1.1.1" >> $GITHUB_PATH
-          which lighter
-      - name: install megahit
-        run:  |
-          mkdir "$GITHUB_WORKSPACE/megahit"
-          cd "$GITHUB_WORKSPACE/megahit"
-          wget https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
-          tar -xzf megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
-          ls -lhSR "$GITHUB_WORKSPACE/megahit"
-          export PATH="$PATH:$GITHUB_WORKSPACE/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin"
-          echo "$GITHUB_WORKSPACE/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin" >> $GITHUB_PATH
-          which megahit
-      - name: install pilon
-        run:  |
-          mkdir -v $GITHUB_WORKSPACE/pilon
-          cd $GITHUB_WORKSPACE/pilon
-          wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar
-          chmod +x pilon-1.22.jar
-          echo "#!/bin/bash" > pilon
-          echo "exec java -jar /pilon/pilon-1.22.jar """"$""@"""" " >> pilon
-          chmod +x pilon
-          export PATH=$PATH:$GITHUB_WORKSPACE/pilon
-          echo "$GITHUB_WORKSPACE/pilon" >> $GITHUB_PATH
-          which pilon
-      - name: install trimmomatic
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip 
-          unzip Trimmomatic-0.38.zip 
-          rm -rf Trimmomatic-0.38.zip 
-          cd Trimmomatic-0.38
-          chmod +x trimmomatic-0.38.jar
-          echo "#!/bin/bash" >> trimmomatic
-          echo "exec java -jar $GITHUB_WORKSPACE/Trimmomatic-0.38/trimmomatic-0.38.jar """"$""@"""" " >> trimmomatic
-          chmod -v +x trimmomatic
-          export PATH="$PATH:$GITHUB_WORKSPACE/Trimmomatic-0.38"
-          echo "$GITHUB_WORKSPACE/Trimmomatic-0.38" >> $GITHUB_PATH
-          which trimmomatic       
       - name: apt-get install
         run:  |
           sudo apt-get update
