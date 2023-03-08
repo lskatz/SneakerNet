@@ -45,7 +45,7 @@ jobs:
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
-          mamba install -y perl shovill=1.1 krona=2.7.1 samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl curl wget kmer-jellyfish=1.1 kraken=1.1 spades skesa=2.4
+          mamba install -y perl shovill">=1.0" krona"=2" samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl curl wget kmer-jellyfish=1.1 kraken=1.1 spades skesa=2.4 boost
       - name: check installation
         shell: bash -el {0}
         run: | 
