@@ -48,7 +48,7 @@ jobs:
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
-          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal perl-app-cpanminus
+          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal perl-app-cpanminus perl-statistics-descriptive perl-config-simple perl-file-slurp perl-moo perl-list-moreutils
       - name: check installation
         shell: bash -el {0}
         run: | 
@@ -128,8 +128,8 @@ jobs:
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
-          cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
-          perl -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
+          #cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
+          #perl -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-SneakerNet-repo
