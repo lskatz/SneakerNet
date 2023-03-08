@@ -78,6 +78,7 @@ jobs:
           # shovill things
           #sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
       - name: install minikraken
+        shell: bash -el {0}
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
