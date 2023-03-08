@@ -55,9 +55,6 @@ jobs:
           echo 
           which perl
           which python
-      - name: spacer
-        shell: bash -el {0}
-        run: echo "hello world"
       - name: add some paths to PATH
         run:  |
           echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
@@ -89,33 +86,8 @@ jobs:
           sudo tar -zxf minikraken_20171019_4GB.tgz 
           sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
           sudo ls -lhSR /kraken-database
-      - name: install SPAdes
-        run:  |
-          wget https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAdes-${spadesVer}-Linux.tar.gz
-          tar -xzf SPAdes-${spadesVer}-Linux.tar.gz
-      - name: install skesa
-        run:  |
-          mkdir $GITHUB_WORKSPACE/skesa
-          cd $GITHUB_WORKSPACE/skesa 
-          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/skesa.centos.7.7
-          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/gfa_connector.centos7.7
-          wget https://github.com/ncbi/SKESA/releases/download/2.4.0/kmercounter.centos7.7
-          mv -v skesa.centos.7.7 skesa
-          mv -v gfa_connector.centos7.7 gfa_connector 
-          mv -v kmercounter.centos7.7 kmercounter
-          chmod -v +x skesa gfa_connector kmercounter
-          tree $GITHUB_WORKSPACE/skesa
-          export PATH=$PATH:$GITHUB_WORKSPACE/skesa
-          echo "$GITHUB_WORKSPACE/skesa" >> $GITHUB_PATH
-          which skesa
-          which gfa_connector
-          which kmercounter
-      - name: configure cpanm
-        run:  |
-          cpanm --local-lib=$HOME/perl5 local::lib
-          perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
       - name: Dumper INC
+        shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
       - name: tree pwd
         run:  tree $(pwd)
@@ -125,30 +97,12 @@ jobs:
         run:  tree $GITHUB_WORKSPACE
       - name: tree -L 3 -d GITHUB_WORKSPACE
         run:  tree -L 3 -d $GITHUB_WORKSPACE
-      - run: perl -V
       - name: env
+        shell: bash -el {0}
         run:  env
-      - name: env with perl local lib
-        run:  |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          env
-      - name: install-makemaker
-        run: |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
-          #perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib | perl -plane 's/export .*//' >> $GITHUB_ENV
-          echo "PERL5LIB=$PERL5LIB" >> $GITHUB_ENV
-          echo "PERL_MB_OPT=$PERL_MB_OPT" >> $GITHUB_ENV
-          echo "PERL_MM_OPT=$PERL_MM_OPT" >> $GITHUB_ENV
-          echo 
-          echo GITHUG_ENV
-          cat $GITHUB_ENV
-          echo
-          cd SneakerNet
-          cpanm -l $HOME/perl5 --verbose --notest --force ExtUtils::MakeMaker
-          cpanm -l $HOME/perl5 --installdeps . --verbose --notest --force
       - name: perl-check-dependencies
+        shell: bash -el {0}
         run:  |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           cd $GITHUB_WORKSPACE/SneakerNet
           perl Makefile.PL
           make
@@ -157,6 +111,7 @@ jobs:
           make
           echo "DEBUG: PERL5LIB: $PERL5LIB"
       - name: check-SneakerNet-repo
+        shell: bash -el {0}
         run: |
           eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           cd $GITHUB_WORKSPACE/SneakerNet
