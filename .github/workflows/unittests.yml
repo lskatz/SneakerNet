@@ -55,6 +55,8 @@ jobs:
           echo 
           which perl
           which python
+      - name: early exit to force caching
+        run: exit 0
       - name: add some paths to PATH
         run:  |
           echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
