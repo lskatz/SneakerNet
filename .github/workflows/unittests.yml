@@ -122,7 +122,10 @@ jobs:
           chmod -v 775 $KRAKEN_DEFAULT_DB
           gunzip -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.fasta.gz
           find $GITHUB_WORKSPACE/SneakerNet/t/asm -name '*.fasta' -exec kraken-build --db $KRAKEN_DEFAULT_DB --add-to-library {} \;
-          kraken-build --db $KRAKEN_DEFAULT_DB --download-taxonomy
+          mkdir $KRAKEN_DEFAULT_DB/taxonomy
+          cp -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.dmp.gz $KRAKEN_DEFAULT_DB/taxonomy
+          gunzip -v $KRAKEN_DEFAULT_DB/taxonomy/*.gz
+          #kraken-build --db $KRAKEN_DEFAULT_DB --download-taxonomy
           kraken-build --db $KRAKEN_DEFAULT_DB --threads 2 --build
       - name: Dumper INC
         shell: bash -el {0}
