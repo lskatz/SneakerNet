@@ -77,22 +77,30 @@ jobs:
           sudo apt-get -y install build-essential sendmail 
           # shovill things
           #sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
-      - name: install minikraken
+      #- name: install minikraken
+      #  shell: bash -el {0}
+      #  run: |
+      #    sudo mkdir -v /kraken-database
+      #    sudo chown -v $USER /kraken-database
+      #    chmod -v 775 /kraken-database
+      #    cd /kraken-database
+      #    #sudo wget --no-check-certificate --secure-protocol=TLSv1 https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+      #    curl -SL https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
+      #    # View the contents
+      #    tar ztvf minikraken_20171019_4GB.tgz
+      #    # Then, uncompress
+      #    tar -zxf minikraken_20171019_4GB.tgz 
+      #    mv -nv minikraken_20171013_4GB/* . # flatten db dir
+      #    ls -lhSR /kraken-database
+      #    cd -
+      - name: make very simple kraken database
         shell: bash -el {0}
         run: |
           sudo mkdir -v /kraken-database
           sudo chown -v $USER /kraken-database
           chmod -v 775 /kraken-database
-          cd /kraken-database
-          #sudo wget --no-check-certificate --secure-protocol=TLSv1 https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          curl -SL https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
-          # View the contents
-          tar ztvf minikraken_20171019_4GB.tgz
-          # Then, uncompress
-          tar -zxf minikraken_20171019_4GB.tgz 
-          mv -nv minikraken_20171013_4GB/* . # flatten db dir
-          ls -lhSR /kraken-database
-          cd -
+          kraken-build --db $KRAKEN_DEFAULT_DB --download-taxonomy
+          kraken-build --db $KRAKEN_DEFAULT_DB --download-library bacteria --threads 2 --max-db-size 4
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
