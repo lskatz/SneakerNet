@@ -55,3 +55,98 @@ jobs:
           echo 
           which perl
           which python
+      #- name: early exit to force caching
+      #  run: exit 0
+      - name: add some paths to PATH
+        run:  |
+          echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
+          echo
+          cat $GITHUB_PATH
+      - name: checkout my repo
+        uses: actions/checkout@v2
+        with:
+          path: SneakerNet
+      - name: apt-get install
+        run:  |
+          sudo apt-get update
+          sudo apt-get -y install ca-certificates
+          sudo apt-get -y install build-essential sendmail 
+          # shovill things
+          #sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
+      - name: install minikraken
+        run: |
+          sudo mkdir -v /kraken-database
+          cd /kraken-database
+          #sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo tar -zxf minikraken_20171019_4GB.tgz 
+          sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
+          sudo ls -lhSR /kraken-database
+      - name: Dumper INC
+        shell: bash -el {0}
+        run:  perl -MData::Dumper -e 'print Dumper \@INC'
+      - name: tree pwd
+        run:  tree $(pwd)
+      - name: tree home
+        run:  tree $HOME
+      - name: tree GITHUB_WORKSPACE
+        run:  tree $GITHUB_WORKSPACE
+      - name: tree -L 3 -d GITHUB_WORKSPACE
+        run:  tree -L 3 -d $GITHUB_WORKSPACE
+      - name: env
+        shell: bash -el {0}
+        run:  env
+      - name: perl-check-dependencies
+        shell: bash -el {0}
+        run:  |
+          cd $GITHUB_WORKSPACE/SneakerNet
+          perl Makefile.PL
+          make
+          cpanm --installdeps . -l $HOME/perl5 --verbose --notest --force
+          perl -MData::Dumper -MStatistics::Descriptive -MConfig::Simple -MFile::Slurp -MBio::Kmer -MBio::SeqIO -MText::Fuzzy -MEmail::Stuffer -MBio::FeatureIO -MMoo -MList::MoreUtils -MJSON -e 'print Dumper \%INC'
+          make
+          echo "DEBUG: PERL5LIB: $PERL5LIB"
+      - name: check-SneakerNet-repo
+        shell: bash -el {0}
+        run: |
+          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          cd $GITHUB_WORKSPACE/SneakerNet
+          cat MYMETA.json
+          echo;env;echo
+          ls -lhS t/M00123-18-001-test/
+          md5sum t/M00123-18-001-test/*.fastq.gz
+          for i in t/M00123-18-001-test/*.fastq.gz; do echo -ne "$i\t"; zcat $i | tail -n 1; done;
+          echo
+          echo "PATH broken up:"
+          echo "$PATH" | tr ":" "\n"
+          echo
+          echo "GITHUB_ENV: $GITHUB_ENV"
+          cat $GITHUB_ENV
+          echo "GITHUB_PATH: $GITHUB_PATH"
+          cat $GITHUB_PATH
+          echo "Which flash:"
+          which flash
+          echo
+          echo "Running t/00_env.t ..."
+          perl t/00_env.t
+          for i in t/M00123-18-001-test/*.fastq.gz; do echo -ne "$i\t"; zcat $i | tail -n 1; done;
+      - id:   prove-lv-t
+        name: prove-lv-t
+        shell: bash -el {0}
+        run:  |
+          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          mkdir -v $GITHUB_WORKSPACE/tmp
+          export TMPDIR=$GITHUB_WORKSPACE/tmp
+          cd $GITHUB_WORKSPACE/SneakerNet
+          sed -i 's+/opt/kraken/full-20140723+/kraken-database+g' config/settings.conf
+          #prove -lv t
+          make
+          make test
+
+
