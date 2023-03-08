@@ -85,7 +85,7 @@ jobs:
           chmod -v 775 /kraken-database
           cd /kraken-database
           #sudo wget --no-check-certificate --secure-protocol=TLSv1 https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          curl https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
+          curl -SL https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
           # View the contents
           tar ztvf minikraken_20171019_4GB.tgz
           # Then, uncompress
