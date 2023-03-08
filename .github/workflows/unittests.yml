@@ -69,7 +69,7 @@ jobs:
           ls -l ~/conda_pkgs_dir /usr/share/miniconda || true
       - name: add some paths to PATH
         run:  |
-          #echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
           #echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
           #echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
           #echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
@@ -82,6 +82,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: SneakerNet
+      - name: checkout CG-Pipeline
+        uses: actions/checkout@v2
+        with:
+          repository: lskatz/CG-Pipeline
+          path: CG-Pipeline
+          ref:  v0.5
       - name: apt-get install
         run:  |
           sudo apt-get update
