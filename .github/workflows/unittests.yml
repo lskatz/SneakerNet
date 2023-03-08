@@ -55,17 +55,15 @@ jobs:
           echo 
           which perl
           which python
-      #- name: early exit to force caching
-      #  run: exit 0
       - name: add some paths to PATH
         run:  |
-          echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
+          #echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
           echo
           cat $GITHUB_PATH
       - name: checkout my repo
@@ -83,8 +81,7 @@ jobs:
         run: |
           sudo mkdir -v /kraken-database
           cd /kraken-database
-          #sudo wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          sudo wget --no-check-certificate https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+          sudo wget --no-check-certificate --secure-protocol=TLSv1_2 https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
           sudo tar -zxf minikraken_20171019_4GB.tgz 
           sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
           sudo ls -lhSR /kraken-database
