@@ -81,15 +81,18 @@ jobs:
         shell: bash -el {0}
         run: |
           sudo mkdir -v /kraken-database
+          sudo chown -v $USER /kraken-database
+          chmod -v 775 /kraken-database
           cd /kraken-database
           #sudo wget --no-check-certificate --secure-protocol=TLSv1 https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
-          sudo curl https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
+          curl https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz > minikraken_20171019_4GB.tgz
           # View the contents
-          sudo tar ztvf minikraken_20171019_4GB.tgz
+          tar ztvf minikraken_20171019_4GB.tgz
           # Then, uncompress
-          sudo tar -zxf minikraken_20171019_4GB.tgz 
-          sudo mv -nv minikraken_20171013_4GB/* . # flatten db dir
-          sudo ls -lhSR /kraken-database
+          tar -zxf minikraken_20171019_4GB.tgz 
+          mv -nv minikraken_20171013_4GB/* . # flatten db dir
+          ls -lhSR /kraken-database
+          cd -
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
