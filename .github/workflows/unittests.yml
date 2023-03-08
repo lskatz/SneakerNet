@@ -37,13 +37,14 @@ jobs:
         id: cache-conda
         uses: actions/cache@v3
         with:
-          path: ~/conda_pkgs_dir
+          #path: ~/conda_pkgs_dir
+          path: /usr/share/miniconda
           key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
-          CACHE_NUMBER: 0
+          CACHE_NUMBER: 1
       - name: conda installations
         shell: bash -el {0}
-        #if: steps.cache-conda.outputs.cache-hit != 'true'
+        if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
           mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal 
       - name: check installation
@@ -55,9 +56,13 @@ jobs:
           echo 
           which perl
           which python
+          echo
           which kraken
           kraken --version
           which kraken-build
+          echo
+          echo conda
+          conda info
       - name: add some paths to PATH
         run:  |
           #echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
