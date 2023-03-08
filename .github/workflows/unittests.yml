@@ -126,7 +126,7 @@ jobs:
           cp -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.dmp.gz $KRAKEN_DEFAULT_DB/taxonomy
           gunzip -v $KRAKEN_DEFAULT_DB/taxonomy/*.gz
           #kraken-build --db $KRAKEN_DEFAULT_DB --download-taxonomy
-          kraken-build --db $KRAKEN_DEFAULT_DB --threads 2 --build
+          kraken-build --db $KRAKEN_DEFAULT_DB --threads 1 --build --work-on-disk
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
