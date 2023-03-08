@@ -40,7 +40,7 @@ jobs:
           path: ~/conda_pkgs_dir
           key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
-          CACHE_NUMBER:0
+          CACHE_NUMBER: 0
       - name: conda installations
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
