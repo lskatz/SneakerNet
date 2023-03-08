@@ -135,7 +135,7 @@ jobs:
       - name: check-SneakerNet-repo
         shell: bash -el {0}
         run: |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          #eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           cd $GITHUB_WORKSPACE/SneakerNet
           cat MYMETA.json
           echo;env;echo
