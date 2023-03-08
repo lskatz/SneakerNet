@@ -47,7 +47,7 @@ jobs:
         run: | 
           #mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa boost
           #mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa boost python=3.7
-          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades 
+          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7
       - name: check installation
         shell: bash -el {0}
         run: | 
