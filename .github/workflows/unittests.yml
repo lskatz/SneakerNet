@@ -45,7 +45,7 @@ jobs:
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
-          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd
+          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal 
       - name: check installation
         shell: bash -el {0}
         run: | 
@@ -76,40 +76,10 @@ jobs:
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install libgd-graph-perl libgd-graph3d-perl libgd-perl libgd-svg-perl libgd-tools libgd3 libgd-text-perl libgd-barcode-perl ca-certificates
-          sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus curl 
-          sudo apt-get -y install build-essential bioperl-run ncbi-blast+ prodigal sendmail python3 python3-pip
+          sudo apt-get -y install ca-certificates
+          sudo apt-get -y install build-essential sendmail 
           # shovill things
-          sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
-      - name: update alternatives for python3
-        run:  |
-          sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-          sudo update-alternatives --set python /usr/bin/python3
-          python --version
-          pip3 --version
-      - name: install jellyfish1
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
-          tar -zxf jellyfish-1.1.12.tar.gz
-          cd jellyfish-1.1.12
-          ./configure --prefix=/opt/jellyfish-1.1.12
-          make -j 2
-          sudo make install
-          export PATH=$PATH:/opt/jellyfish-1.1.12/bin
-          echo "/opt/jellyfish-1.1.12/bin" >> $GITHUB_PATH
-          which jellyfish
-      - name: install kraken1
-        run:  |
-          cd $GITHUB_WORKSPACE
-          wget https://github.com/DerrickWood/kraken/archive/v1.1.1.tar.gz -O kraken-v1.1.1.tar.gz
-          tar -xvzf kraken-v1.1.1.tar.gz
-          cd kraken-1.1.1
-          mkdir /opt/kraken
-          ./install_kraken.sh /opt/kraken/
-          export PATH=$PATH:/opt/kraken
-          echo "/opt/kraken/" >> $GITHUB_PATH
-          which kraken
+          #sudo apt-get -y install bwa velvet wget pigz libncurses5-dev libbz2-dev liblzma-dev libfindbin-libs-perl trimmomatic
       - name: install minikraken
         run: |
           sudo mkdir -v /kraken-database
