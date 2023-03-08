@@ -160,7 +160,7 @@ jobs:
         name: prove-lv-t
         shell: bash -el {0}
         run:  |
-          eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
+          #eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           mkdir -v $GITHUB_WORKSPACE/tmp
           export TMPDIR=$GITHUB_WORKSPACE/tmp
           cd $GITHUB_WORKSPACE/SneakerNet
