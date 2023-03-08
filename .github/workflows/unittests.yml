@@ -14,10 +14,50 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-18.04' ]
-        perl: [ '5.32' ]
+        os: ['ubuntu-20.04' ]
+        perl: [ '5.36.0' ]
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
+      - name: Get Date
+        id: get-date
+        run: |
+          today=$(/bin/date -u '+%Y%m%d')
+          echo $today
+          echo "today=$today" >> $GITHUB_OUTPUT
+      - name: set up conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          use-mamba: true
+          channels: conda-forge,bioconda,defaults
+          mamba-version: "*"
+          auto-activate-base: true
+          activate-environment: ""
+      - name: Cache Conda env
+        id: cache-conda
+        uses: actions/cache@v3
+        with:
+          path: ~/conda_pkgs_dir
+          key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
+        env:
+          CACHE_NUMBER:0
+      - name: conda installations
+        shell: bash -el {0}
+        if: steps.cache-conda.outputs.cache-hit != 'true'
+        run: | 
+          mamba install -y mashtree
+      - name: check installation
+        shell: bash -el {0}
+        run: | 
+          perl -v
+          echo 
+          python -V
+          echo 
+          which perl
+          which python
+      - name: spacer
+        shell: bash -el {0}
+        run: echo "hello world"
       - name: add some paths to PATH
         run:  |
           echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
@@ -161,7 +201,7 @@ jobs:
       - name: apt-get install
         run:  |
           sudo apt-get update
-          sudo apt-get -y install libgd-dev ca-certificates
+          sudo apt-get -y install libgd-graph-perl libgd-graph3d-perl libgd-perl libgd-svg-perl libgd-tools libgd3 libgd-text-perl libgd-barcode-perl ca-certificates
           sudo apt-get -y install tree libberkeleydb-perl libdb-dev bioperl perl cpanminus curl 
           sudo apt-get -y install build-essential bioperl-run ncbi-blast+ prodigal sendmail python3 python3-pip
           # shovill things
