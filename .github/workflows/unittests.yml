@@ -43,7 +43,7 @@ jobs:
           CACHE_NUMBER: 0
       - name: conda installations
         shell: bash -el {0}
-        if: steps.cache-conda.outputs.cache-hit != 'true'
+        #if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
           mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal 
       - name: check installation
