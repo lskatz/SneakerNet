@@ -33,6 +33,7 @@ jobs:
           mamba-version: "*"
           auto-activate-base: true
           activate-environment: ""
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
       - name: Cache Conda env
         id: cache-conda
         uses: actions/cache@v3
