@@ -16,6 +16,9 @@ jobs:
       matrix:
         os: ['ubuntu-20.04' ]
         perl: [ '5.36.0' ]
+    defaults:
+      run:
+        shell: bash -el {0}
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
       - name: Get Date
@@ -37,6 +40,13 @@ jobs:
           auto-activate-base: true
           activate-environment: "anaconda-client-env"
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+      - name: conda info
+        run: |
+          conda info
+          echo
+          conda list
+          echo
+          conda config --show
       #- name: chown /usr/share/miniconda
       #  run: |
       #    # In order to cache this directory for myself
