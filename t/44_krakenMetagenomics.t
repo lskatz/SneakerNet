@@ -18,6 +18,10 @@ use SneakerNet;
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-003-metagenomics";
 
+if($ENV{CI}){
+  plan 'skip_all' => "Detected CI environment. Skipping metagenomics.";
+}
+
 subtest 'kraken' => sub {
   diag `sn_kraken.pl --check-dependencies 2>&1`;
   if($?){

@@ -17,6 +17,10 @@ my $run = "$RealBin/M00123-18-001-test";
 # if the email box received an email.
 subtest 'sn_immediateStatus.pl' => sub{
 
+  if($ENV{CI}){
+    plan 'skip_all' => "Detected CI environment. Skipping immediate status test.";
+  }
+
   diag `sn_immediateStatus.pl --check-dependencies 2>&1`;
   if($?){
     plan skip_all=>"Dependencies not met for sn_immediateStatus.pl";

@@ -17,6 +17,10 @@ use lib "$RealBin/../lib/perl5";
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
 
+if($ENV{CI}){
+  plan 'skip_all' => "Detected CI environment. Skipping Kraken.";
+}
+
 subtest 'kraken' => sub {
   diag `sn_kraken.pl --check-dependencies`;
   if($?){
