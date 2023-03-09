@@ -40,7 +40,7 @@ jobs:
         with:
           path: |
             ~/conda_pkgs_dir
-            /usr/share/miniconda
+            #/usr/share/miniconda
           key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
           CACHE_NUMBER: 1
