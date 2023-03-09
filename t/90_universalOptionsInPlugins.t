@@ -39,22 +39,23 @@ closedir($dh);
 
 # sort
 @plugin = sort @plugin;
-note "Plugins in the pool of testable plugins:";
-note "  => ".join(" ", @plugin);
+diag "Plugins in the pool of testable plugins:";
+diag "  => ".join(" ", @plugin);
 
-# Travis-CI makes it super hard to install certain things so...
-if($ENV{TRAVIS} || $ENV{GITHUB_ACTIONS}){
+# Travis-CI and GitHub Actions makes it super hard to install certain things so...
+#if($ENV{TRAVIS} || $ENV{GITHUB_ACTIONS}){
+if($ENV{CI}){
   # Remove plugins with kraken, taxonomy, assembly, mlst, ...
   # because it is difficult to get travis to download and
   # install it all.
-  my @removed = grep { /kraken|taxon|assembl|mlst|crypto|staramr|salm/i} @plugin;
-  @plugin     = grep {!/kraken|taxon|assembl|mlst|crypto|staramr|salm/i} @plugin;
+  my @removed = grep { /kraken|taxon|assembl|mlst|crypto|staramr|salm|email|status|detectContamination/i} @plugin;
+  @plugin     = grep {!/kraken|taxon|assembl|mlst|crypto|staramr|salm|email|status|detectContamination/i} @plugin;
   @plugin = sort @plugin;
-  note "Removed some plugins b/c CI environment:";
-  note "  => ".join(", ", map{basename($_)} @removed);
+  diag "Removed some plugins b/c CI environment:";
+  diag "  => ".join(", ", map{basename($_)} @removed);
 }
-note "Testing these plugins: ". join(", ", map{basename($_)} @plugin);
-note "  plugins directory: $pluginsDir";
+diag "Testing these plugins: ". join(", ", map{basename($_)} @plugin);
+diag "  plugins directory: $pluginsDir";
 
 # Do we have all plugins here?  At least one!
 cmp_ok(scalar(@plugin), '>', 1, "Gathering all plugins. ".scalar(@plugin)." found.");
@@ -92,6 +93,9 @@ if(@depsFail){
   diag "Dependencies from plugins that failed were: ".join(", ",sort(uniq(@depsFail)));
   diag "This does not mean that every single executable failed; it just means that when a dependency failed, it lists all the dependency of that plugin.";
   diag "Plugins that failed dependency checks were: ".join(", ", sort(@pluginsDepsFail));
+}
+else{
+  diag "Did not find any plugins that failed dependencies";
 }
 
 # Test whether --flagopt str works for script/flag combinations
