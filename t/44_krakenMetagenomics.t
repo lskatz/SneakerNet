@@ -8,7 +8,7 @@ use Scalar::Util qw/looks_like_number/;
 
 use threads;
 
-use Test::More tests=>2;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
@@ -21,6 +21,7 @@ my $run = "$RealBin/M00123-18-003-metagenomics";
 if($ENV{CI}){
   plan 'skip_all' => "Detected CI environment. Skipping metagenomics.";
 }
+plan tests=>2;
 
 subtest 'kraken' => sub {
   diag `sn_kraken.pl --check-dependencies 2>&1`;

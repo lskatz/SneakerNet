@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More;
 use Data::Dumper;
 
 use FindBin qw/$RealBin/;
@@ -12,6 +12,11 @@ use SneakerNet qw/readConfig/;
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
+
+if($ENV{CI}){
+  plan 'skip_all' => "Detected CI environment. Skipping email test.";
+}
+plan tests => 3;
 
 # This is a difficult test because we don't really know
 # if the email box received an email.
