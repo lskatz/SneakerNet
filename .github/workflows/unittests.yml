@@ -8,7 +8,7 @@ env:
 # perl: [ '5.32', '5.30.1', '5.16.3', '5.12.3' ]
 # os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
 # https://github.com/marketplace/actions/setup-perl-environment
- 
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -29,11 +29,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           use-mamba: true
+          channel-priority:strict
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
           auto-activate-base: true
-          activate-environment: ""
+          activate-environment: "anaconda-client-env"
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+      #- name: chown /usr/share/miniconda
+      #  run: |
+      #    # In order to cache this directory for myself
+      #    # downstream, I need to own it
+      #    sudo find /usr/share/miniconda -exec chown -v $(whoami) {} \;
       - name: Cache Conda env
         id: cache-conda
         uses: actions/cache@v3
