@@ -112,6 +112,27 @@ graph TD
     J -->M 
 ```
 
+## Diagram of assembly workflow
+```mermaid
+graph TD
+    A(assemblies) --> |sn_assemblyWorkflow_init.pl| B(Copies of assemblies)
+    A --> |sn_assemblyWorkflow_init.pl| C(Gene predictions)
+    B --> I(genome metrics)
+    C --> I
+    B --> |sn_mlst.pl| D(Sequence types)
+    B --> |sn_staramr.pl| E(AMR profiles)
+    B --> |sn_kraken.pl| F(Kraken results)
+    F --> |sn_detectContamination-kraken.pl| G(Contamination results)
+    G --> |sn_passfail.pl| H(passfail)
+    I --> |sn_passfail.pl| H
+    H --> |sn_report.pl| J(SN report)
+    F --> J
+    G --> J
+    D --> J
+    E --> J
+    I --> J
+```
+
 <!-- ![Default workflow](/docs/images/defaultworkflow.png) -->
 
 # Command line
