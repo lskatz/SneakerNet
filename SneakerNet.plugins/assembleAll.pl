@@ -252,11 +252,11 @@ sub assembleSample{
   my($R1,$R2) = @{ $$sampleInfo{fastq} };
 
   if(!$R1 || !-e $R1){
-    logmsg "Could not find R1 for $sample. Skipping.";
+    logmsg "Could not find R1 for $sample ($R1). Skipping.";
     return "";
   }
   if(!$R2 || !-e $R2){
-    logmsg "Could not find R2 for $sample. Skipping.";
+    logmsg "Could not find R2 for $sample ($R2). Skipping.";
     return "";
   }
 
