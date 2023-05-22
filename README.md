@@ -20,7 +20,7 @@ This is the default workflow in v0.14
 but there are other workflows available as described in
 [PLUGINS.md](/docs/PLUGINS.md#workflows).
  
-* [Parse sample entries](/docs/plugins/sn_detectContamination-kraken.pl.md) - create an input file `samples.tsv`
+* [Parse sample entries](docs/plugins/sn_parseSampleSheet.pl.md) - create an input file `samples.tsv`
 * [Read metrics](/docs/plugins/addReadMetrics.pl.md) - get raw read yields and raw read QC summary (CG-Pipeline)
 * [Assembly](/docs/plugins/assembleAll.pl.md) - assemble each genome (Shovill/skesa)
 * [MLST](/docs/plugins/sn_mlst.pl.md) - 7-gene MLST (_mlst_)
