@@ -123,6 +123,8 @@ and the [contributing](CONTRIBUTING.md) doc.
 
 Please see the docs subfolder for more specific documentation.
 
+For inline documentation on some of the perl code, run `perldoc lib/perl5/SneakerNet.pm`.
+
 ### Citation
 
 Griswold, T., Kapsak, C., Chen, J. C., den Bakker, H. C., Williams, G., Kelley, A., Vidyaprakash, E., & Katz, L. S. (2021). SneakerNet: A modular quality assurance and quality check workflow for primary genomic and metagenomic read data. Journal of open source software, 6(60), 10.21105/joss.02334. https://doi.org/10.21105/joss.02334
