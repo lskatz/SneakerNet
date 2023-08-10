@@ -46,11 +46,20 @@ sub main{
     mkdir "$dir/SneakerNet/forEmail";
   }
 
-  cleanup($dir, $settings);
+  my %removalStats = cleanup($dir, $settings);
+  my $numRemoved += $removalStats{num};
+  my $sizeRemoved+= $removalStats{size};
+
+  my $gigabytes = sprintf("%0.2f", $sizeRemoved / (1024 ** 3) );
+  logmsg "Removed $numRemoved files to clear ${gigabytes}G";
+  logmsg "NOTE: nothing was removed because --debug" if($$settings{debug});
 
   recordProperties($dir,{
     version=>$VERSION,
     warnings => $warningsMsg,
+    debug => $$settings{debug}, 
+    numRemoved => $numRemoved,
+    sizeRemoved => "${gigabytes}G",
   });
 
   return 0;
@@ -74,9 +83,7 @@ sub cleanup{
     $sizeRemoved+= $removalStats{size};
   }
 
-  my $G = sprintf("%0.2f", $sizeRemoved / (1024 ** 3) );
-  logmsg "Removed $numRemoved files to clear ${G}G";
-  logmsg "NOTE: nothing was removed because --debug" if($$settings{debug});
+  return (size=>$sizeRemoved, num=>$numRemoved);
 }
 
 sub cleanThis{
