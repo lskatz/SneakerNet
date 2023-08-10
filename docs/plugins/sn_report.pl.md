@@ -17,6 +17,17 @@ has three columns: plugin, key, value. If a duplicate
 plugin/key combination is found, then the latest value
 is used.
 
+Properties are recorded into `SneakerNet/properties.txt` from other plugins.
+With the perl plugins, these are recorded using `SneakerNet::recordProperties()` which is documented via `perldoc lib/perl5/SneakerNet.pm`.
+
+## Warnings
+
+If the plugin key is `warnings`, then it will display any warnings at the top of the report.
+
+## Errors
+
+If the plugin key is `errors`, then it will display any errors at the top of the report.
+
 ## tables
 
 If the value has a suffix `.csv` or `.tsv`, then the corresponding table is 
