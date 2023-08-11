@@ -47,6 +47,7 @@ sub main{
       'trimmomatic'                   => 'trimmomatic -version 2>&1 | grep -v _JAVA',
       seqtk                           => 'seqtk 2>&1 | grep -m 1 Version:',
       # note: buggy bgzip                           => 'bgzip --version | head -n1',
+      bgzip                           => 'which bgzip',
       tabix                           => 'tabix --version | head -n1',
       bowtie2                         => 'bowtie2 --version | grep -m 1 version',
       'bowtie2-build'                   => 'bowtie2-build --version | grep -m 1 version',
