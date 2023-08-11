@@ -27,16 +27,21 @@ In version 2, Shovill was added and many requirements were added
   * Velvet  (not used but checked when shovill runs)
 * CG-Pipeline
 * Prodigal
+* `gfa_connector`, part of the skesa package
 
 # Algorithm
 
-Assembles genomes with Skesa, predicts genes with prodigal,
+Assembles genomes with Skesa,
+creates an assembly graph file with `gfa_connector`,
+predicts genes with prodigal,
 then produces assembly and gene prediction metrics.
 Contigs with length < 500 are not considered in the assembly metrics.
 
 # Outputs
 
 Assemblies are found in `SneakerNet/assemblies/[samplename]/*.fasta`
+GFA graph file found in `SneakerNet/assemblies/[samplename]/*.gfa`
+Annotated assembly found in `SneakerNet/assemblies/[samplename]/*.gbk`
 
 Table with columns
 

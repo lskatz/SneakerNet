@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.5.2";
+our $VERSION = "2.6.0";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -50,6 +50,7 @@ sub main{
       'flash'       => 'flash --version 2>&1 | grep FLASH',
       'spades.py'   => 'spades.py  --version 2>&1',
       'skesa'       => 'skesa --version 2>&1 | grep SKESA',
+      'gfa_connector' => 'gfa_connector --version 2>/dev/null | grep gfa_connector',
       'bwa'         => 'bwa 2>&1 | grep Version:',
       'samtools'    => 'samtools 2>&1 | grep Version:',
       'samclip'     => 'samclip --version 2>&1',
@@ -100,6 +101,7 @@ sub assembleAll{
 
     my $outdir="$dir/SneakerNet/assemblies/$sample";
     my $outassembly="$outdir/$sample.shovill.skesa.fasta";
+    my $outgfa     ="$outdir/$sample.shovill.skesa.gfa";
     my $outgbk="$outdir/$sample.shovill.skesa.gbk";
     #my $outassembly="$outdir/$sample.megahit.fasta";
     #my $outgbk="$outdir/$sample.megahit.gbk";
@@ -108,6 +110,7 @@ sub assembleAll{
     if(!-e $outassembly){
       my $assemblyDir = assembleSample($sample,$info,$settings);
       my $assembly    = "$assemblyDir/contigs.fa";
+      my $gfa         = "$assemblyDir/contigs.gfa";
       next if(! -d $assemblyDir);
       next if(! -e $assembly);
       next if(! -s $assembly);
@@ -120,6 +123,7 @@ sub assembleAll{
         cp($srcFile, $target) or die "ERROR copying $srcFile => $target\n  $!";
       }
       cp($assembly, $outassembly) or die "ERROR copying $assembly => $outassembly\n  $!";
+      cp($gfa,      $outgfa)      or die "ERROR copying $gfa => $outgfa\n  $!";
 
       mkdir "$outdir/prodigal"; # just make this directory right away
     }
@@ -279,6 +283,7 @@ sub assembleSample{
 
   eval{
     command("shovill --outdir $outdir --R1 $R1 --R2 $R2 --ram 64 --assembler skesa --cpus $$settings{numcpus} --keepfiles");
+    command("gfa_connector --cores $$settings{numcpus} --reads $R1 $R2 --use_paired_ends --contigs $outdir/contigs.fa > $outdir/contigs.gfa");
   };
   if($@){
     logmsg "shovill failed!\n$@";
