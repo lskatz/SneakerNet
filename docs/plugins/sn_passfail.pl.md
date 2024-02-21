@@ -11,6 +11,8 @@ Marks each sample as passing or failing
 Reads upstream plugins for pass/fail criteria.
 Currently these criteria are only coverage and
 read quality, from the read metrics plugin.
+Additionally, this includes Kraken contamination results.
+Contamination is conservatively set at 25% although anything over a smaller percentage might be reported as a warning in `sn_detectContamination-kraken.pl`.
 
 # Outputs
 

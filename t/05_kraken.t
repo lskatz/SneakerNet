@@ -8,7 +8,7 @@ use Scalar::Util qw/looks_like_number/;
 
 use threads;
 
-use Test::More tests=>2;
+use Test::More;
 
 use FindBin qw/$RealBin/;
 
@@ -16,6 +16,11 @@ use lib "$RealBin/../lib/perl5";
 
 $ENV{PATH}="$RealBin/../scripts:$RealBin/../SneakerNet.plugins:$ENV{PATH}";
 my $run = "$RealBin/M00123-18-001-test";
+
+if($ENV{CI}){
+  plan 'skip_all' => "Detected CI environment. Skipping Kraken.";
+}
+plan tests => 2;
 
 subtest 'kraken' => sub {
   diag `sn_kraken.pl --check-dependencies`;

@@ -83,7 +83,57 @@ The pseudo-workflow `all` is an alphabetical listing of all available plugins.
         metagenomics
         sn_parseSampleSheet.pl, addReadMetrics.pl, sn_kraken.pl, sn_kraken-metagenomics.pl, sn_passfail.pl, sn_report.pl
 
-![Default workflow](/docs/images/defaultworkflow.png)
+## Diagram of default workflow
+```mermaid
+graph TD
+    A(reads) -->|sn_parseSampleSheet.pl| B(raw reads, samples.tsv)
+    B -->|addReadMetrics.pl| C(read metrics)
+    B -->|assembleAll.pl| D(assembly, assembly metrics)
+    D -->|sn_mlst.pl| E(7-gene MLST results)
+    B -->|sn_kraken.pl| F[Kraken results]
+    F -->|sn_detectContamination-kraken.pl| G(Kraken contamination report)
+    B -->|sn_detectContamination-mlst.pl| H(MLST contamination report)
+    B -->|baseBalance.pl| I(base balance report)
+    D -->|sn_staramr.pl| J(AMR results)
+    G -->|sn_passfail.pl| K(pass or fail results)
+    C -->K
+    D -->K
+    K -->|transferFilesToRemoteComputers.pl| L(transfer report)
+    K -->|sn_report.pl| M(sneakernet report)
+    M -->|emailWhoever.pl| N(email with SN report)
+    B -->M 
+    C -->M
+    D -->M
+    E -->M
+    F -->M 
+    G -->M 
+    H -->M 
+    I -->M 
+    J -->M 
+```
+
+## Diagram of assembly workflow
+```mermaid
+graph TD
+    A(assemblies) --> |sn_assemblyWorkflow_init.pl| B(Copies of assemblies)
+    A --> |sn_assemblyWorkflow_init.pl| C(Gene predictions)
+    B --> I(genome metrics)
+    C --> I
+    B --> |sn_mlst.pl| D(Sequence types)
+    B --> |sn_staramr.pl| E(AMR profiles)
+    B --> |sn_kraken.pl| F(Kraken results)
+    F --> |sn_detectContamination-kraken.pl| G(Contamination results)
+    G --> |sn_passfail.pl| H(passfail)
+    I --> |sn_passfail.pl| H
+    H --> |sn_report.pl| J(SN report)
+    F --> J
+    G --> J
+    D --> J
+    E --> J
+    I --> J
+```
+
+<!-- ![Default workflow](/docs/images/defaultworkflow.png) -->
 
 # Command line
 

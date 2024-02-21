@@ -20,7 +20,7 @@ This is the default workflow in v0.14
 but there are other workflows available as described in
 [PLUGINS.md](/docs/PLUGINS.md#workflows).
  
-* [Parse sample entries](/docs/plugins/sn_detectContamination-kraken.pl.md) - create an input file `samples.tsv`
+* [Parse sample entries](docs/plugins/sn_parseSampleSheet.pl.md) - create an input file `samples.tsv`
 * [Read metrics](/docs/plugins/addReadMetrics.pl.md) - get raw read yields and raw read QC summary (CG-Pipeline)
 * [Assembly](/docs/plugins/assembleAll.pl.md) - assemble each genome (Shovill/skesa)
 * [MLST](/docs/plugins/sn_mlst.pl.md) - 7-gene MLST (_mlst_)
@@ -123,3 +123,8 @@ and the [contributing](CONTRIBUTING.md) doc.
 
 Please see the docs subfolder for more specific documentation.
 
+For inline documentation on some of the perl code, run `perldoc lib/perl5/SneakerNet.pm`.
+
+### Citation
+
+Griswold, T., Kapsak, C., Chen, J. C., den Bakker, H. C., Williams, G., Kelley, A., Vidyaprakash, E., & Katz, L. S. (2021). SneakerNet: A modular quality assurance and quality check workflow for primary genomic and metagenomic read data. Journal of open source software, 6(60), 10.21105/joss.02334. https://doi.org/10.21105/joss.02334

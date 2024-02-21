@@ -32,7 +32,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.20.2';
+our $VERSION  = '0.23.5';
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -535,6 +535,7 @@ sub samplesheetInfo_tsv{
 
     # Set the file path to the reference fasta if it exists
     my $ref_id = $sample{$sampleName}{taxonRules}{reference_fasta_id} || [];
+    $ref_id = [$ref_id] if(ref($ref_id) ne 'ARRAY');
     my $ref_name = join("", @$ref_id);
     my $ref_commas=join(",", @$ref_id);
     if(defined($ref_id)){
@@ -862,7 +863,7 @@ sub recordProperties{
   }
   for my $key(keys(%$writeHash)){
     if(!defined($$writeHash{$key})){
-      carp "WARNING: in SneakerNet::recordProperties(), key '$key' was not defined";
+      carp "WARNING: in SneakerNet::recordProperties(), the value for key '$key' was not defined";
       next;
     }
     $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";

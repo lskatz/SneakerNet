@@ -14,7 +14,7 @@ use POSIX qw/strftime/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg passfail/;
 
-our $VERSION = "1.7.1";
+our $VERSION = "2.0.0";
 our $CITATION= "Transfer files to remote computer plugin by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -24,7 +24,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation check-dependencies tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  GetOptions($settings,qw(version careful citation check-dependencies tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -51,31 +51,35 @@ sub main{
 
   # Check for the remote pid file
   my $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
-  logmsg "WARNING: I could not check for the remote pid file (pid: $pid): $!" if $?;
   $pid||=0;
   $pid+=0;
+  logmsg "WARNING: I could not check for the remote pid file (pid: $pid): $!" if $?;
   
-  my $numTries=0;
-  while($pid > 0 && !$$settings{force}){
-    logmsg "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
-    logmsg "I will sleep 1 minute to try again.  Delete $remotePid on remote computer to avoid this warning.";
-    sleep 60;
-    $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
+  if($$settings{careful}){
+    my $numTries=0;
+    while($pid > 0 && !$$settings{force}){
+      logmsg "ERROR: there is either already a transfer in progress into target folder $remotePath or a previous iteration died.  The local pid is/was $pid. Run this script with --force to ignore this error.";
+      logmsg "I will sleep 1 minute to try again.  Delete $remotePid on remote computer to avoid this warning.";
+      sleep 60;
+      $pid=`ssh -q $username\@$url cat $remotePid 2>/dev/null`;
 
-    $numTries++;
-    if($numTries > 10){
-      logmsg "Gave up after $numTries tries. I'll continue the transfer anyway, and I'll remove $url:$remotePid.";
-      command("ssh -q $username\@$url rm -vf $remotePid");
+      $numTries++;
+      if($numTries > 10){
+        logmsg "Gave up after $numTries tries. I'll continue the transfer anyway, and I'll remove $url:$remotePid.";
+        command("ssh -q $username\@$url rm -vf $remotePid");
+      }
     }
-  }
 
-  # Make the pid file
-  command("ssh -q $username\@$url 'mkdir -pv $remotePath/.SneakerNet; echo $$ > $remotePid'");
+    # Make the pid file
+    command("ssh -q $username\@$url 'mkdir -pv $remotePath/.SneakerNet; echo $$ > $remotePid'");
+  }
 
   transferFilesToRemoteComputers($dir,$settings);
 
   # Remove the remote pid file
-  command("ssh -q $username\@$url rm -vf $remotePid");
+  if($$settings{force}){
+    command("ssh -q $username\@$url rm -vf $remotePid");
+  }
 
   recordProperties($dir,{
     version=>$VERSION,
@@ -160,7 +164,11 @@ sub usage{
   print "Find all reads directories under the inbox
   Usage: $0 MiSeq_run_dir
   --debug            No files will actually be transferred
+  --careful          If there is another transfer in
+                     progress, then die
   --force            Ignore some warnings
+                     and also clear out the remote file lock
+                     for future transfers
   --force-transfer   Transfer the reads despite the routing
                      entry in the spreadsheet.
   --version
