@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "2.6.0";
+our $VERSION = "2.7.0";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -153,7 +153,7 @@ sub assembleAll{
   
   command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
   #command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
-  command("tail -q -n +2 $$settings{tempdir}/worker.*/metrics.tsv | sort >> $metricsOut");
+  command("tail -q -n +2 $$settings{tempdir}/worker.*/metrics.tsv | sort | grep -Ev '^File\\b' >> $metricsOut");
   
   return $metricsOut;
 }
@@ -184,31 +184,41 @@ sub predictionMetricsWorker{
     my $srcBam = dirname($fasta)."/shovill/shovill.bam";
     if(!-e $bam){
       logmsg "hard linking: $srcBam => $bam";
-      link($srcBam, $bam) or die "ERROR: could not hard link $srcBam => $bam: $!";
+      link($srcBam, $bam) or logmsg "WARNING: could not hard link $srcBam => $bam: $!";
     }
     
     logmsg "gbk metrics for $gbk";
     command("run_prediction_metrics.pl $gbk > $predictionOut");
     logmsg "asm metrics for $fasta";
     command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta > $assemblyOut");
-    logmsg "Coverage for $bam";
-    command("samtools depth -aa $bam | gzip -c > $coverageOut");
 
-    logmsg "Effective coverage for $bam";
-    my $total = 0;
-    my $numSites = 0;
-    open(my $fh, "zcat $coverageOut |") or die "ERROR: could not zcat $coverageOut: $!";
-    while(my $line = <$fh>){
-      chomp($line);
-      my(undef, undef, $depth) = split(/\t/, $line);
-      $total+=$depth;
-      $numSites++;
+    if(-e $bam){
+      logmsg "Coverage for $bam";
+      command("samtools depth -aa $bam | gzip -c > $coverageOut");
+
+      logmsg "Effective coverage for $bam";
+      my $total = 0;
+      my $numSites = 0;
+      open(my $fh, "zcat $coverageOut |") or die "ERROR: could not zcat $coverageOut: $!";
+      while(my $line = <$fh>){
+        chomp($line);
+        my(undef, undef, $depth) = split(/\t/, $line);
+        $total+=$depth;
+        $numSites++;
+      }
+      close $fh;
+      open(my $outFh, ">", $effectiveCoverage) or die "ERROR: could not write to $effectiveCoverage: $!";
+      print $outFh join("\t", qw(File effectiveCoverage))."\n";
+      print $outFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
+      close $outFh;
+    } else {
+      logmsg "WARNING: cannot determine effective coverage: could not find bam at $bam";
+      # dummy data
+      open(my $outFh, ">", $effectiveCoverage) or die "ERROR: could not write to $effectiveCoverage: $!";
+      print $outFh join("\t", qw(File effectiveCoverage))."\n";
+      print $outFh join("\t", $bam, -1)."\n";
+      close $outFh;
     }
-    close $fh;
-    open(my $outFh, ">", $effectiveCoverage) or die "ERROR: could not write to $effectiveCoverage: $!";
-    print $outFh join("\t", qw(File effectiveCoverage))."\n";
-    print $outFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
-    close $outFh;
 
     # Combine the metrics into one file
     # We know that each file is one header and one values line
@@ -236,7 +246,7 @@ sub predictionMetricsWorker{
     @header = grep{!/File/} @header;
 
     # Write combined metrics to file
-    open(my $combinedFh, ">", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
+    open(my $combinedFh, ">>", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
     print $combinedFh join("\t", "File", @header)."\n";
     print $combinedFh $metric{File};
     for my $h(@header){
