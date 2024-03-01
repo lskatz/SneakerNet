@@ -18,7 +18,7 @@ use SneakerNet qw/readConfig command logmsg/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "2.2";
+our $VERSION = "2.3";
 
 local $0=fileparse $0;
 
@@ -130,6 +130,12 @@ sub makeSneakernetDir{
         die "ERROR: could not find any fastq files in $dir";
       }
     }
+  }
+
+  # If we don't find the config file, check the base directory
+  if(!-e $config){
+    $config = "$dir/config.xml";
+    # If it doesn't exist here, then `cp` will just make a blank target file anyway
   }
 
   for(@fastq, $sampleSheet, $config){
