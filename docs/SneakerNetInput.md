@@ -46,11 +46,15 @@ The values can be comma-separated. Whitespace around each value is ignored.  For
 
     emails   = nobody@gatech.edu, nobody@cdc.gov, noreply@example.com
     workflow = default
+    additional_plugins = sn_cleanup.pl
 
 The current keys are `emails` and `workflow`.
 Emails describe where to send reports to, in addition to those in `config/emails.conf`.
 Workflow describes the set of plugins, and their order.
 Workflows are further described in [config/plugins.conf](PLUGINS.md).
+
+Also in this example, files will be cleaned up in the SN run as described in the `sn_cleanup.pl` plugin.
+`additional_plugins` can have multiple plugins, comma separated.
 
 ### Optional
 
