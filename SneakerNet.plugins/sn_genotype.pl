@@ -53,6 +53,8 @@ sub main{
   chomp($kmaVersion);
   recordProperties($dir,{version=>$VERSION, table=>$table, kma_version=>$kmaVersion});
 
+  logmsg "Table can be found in $table";
+
   return 0;
 }
 
@@ -93,8 +95,12 @@ sub genotypeSamples{
 
   # Make an output summary table
   my $table = "$dir/SneakerNet/forEmail/genotype.tsv";
-  command("head -n 1 -q $dir/SneakerNet/genotype/*/*.res | head -n 1 > $table");
-  command("tail -n +2 -q $dir/SneakerNet/genotype/*/*.res | sort | uniq >> $table");
+  command("head -n 1 -q $dir/SneakerNet/genotype/*/*.res | sed 's/^#//' | head -n 1 | sed 's/^/sample\t/' > $table");
+  for my $subdir(glob("$dir/SneakerNet/genotype/*")){
+    next if(!-d $subdir);
+    my $sample = basename($subdir);
+    command("tail -n +2 -q $subdir/*.res | sort | uniq | sed 's/^/$sample\t/' >> $table");
+  }
   return $table;
 }
     

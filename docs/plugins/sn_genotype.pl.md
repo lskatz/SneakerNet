@@ -26,6 +26,7 @@ taxon under `taxonProperties.conf`.
 
 Table with columns directly from `.res` files
 
+* Sample (this column does not actually appear in the original `.res` file)
 * Template
 * Score
 * Expected
