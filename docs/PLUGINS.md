@@ -194,4 +194,5 @@ Contributions are welcome for the following plugin documents.
 |[sn_saveFailedGenomes.pl](plugins/sn_saveFailedGenomes.pl.md)                    | Saves genomes into the destination folder, into a QC_Fails subfolder|
 |[sn_cleanup.pl](plugins/sn_cleanup.pl.md)                    | Cleans intermediate files in a SN directory |
 |[sn_genotype.pl](plugins/sn_genotype.pl.md)                    | Runs genotyping on samples, e.g., serogrouping |
+|[sn_genotype_escherichia.pl](plugins/sn_genotype_escherichia.pl.md)                    | Interprets genotyping on samples for Escherichia |
 
