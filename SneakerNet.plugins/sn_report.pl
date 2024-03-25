@@ -17,7 +17,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 use MIME::Base64 qw/encode_base64/;
 
-our $VERSION = "2.7";
+our $VERSION = "2.7.1";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;

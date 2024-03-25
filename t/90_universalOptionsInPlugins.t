@@ -48,8 +48,8 @@ if($ENV{CI}){
   # Remove plugins with kraken, taxonomy, assembly, mlst, ...
   # because it is difficult to get travis to download and
   # install it all.
-  my @removed = grep { /kraken|taxon|assembl|mlst|crypto|staramr|salm|email|status|detectContamination/i} @plugin;
-  @plugin     = grep {!/kraken|taxon|assembl|mlst|crypto|staramr|salm|email|status|detectContamination/i} @plugin;
+  my @removed = grep { /kraken|taxon|assembl|mlst|crypto|staramr|salm|email|saveFailed|status|detectContamination/i} @plugin;
+  @plugin     = grep {!/kraken|taxon|assembl|mlst|crypto|staramr|salm|email|saveFailed|status|detectContamination/i} @plugin;
   @plugin = sort @plugin;
   diag "Removed some plugins b/c CI environment:";
   diag "  => ".join(", ", map{basename($_)} @removed);
