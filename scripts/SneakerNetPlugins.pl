@@ -71,6 +71,12 @@ sub main{
       die "ERROR: workflow in snok.txt was defined as $workflow, but this workflow is not defined in config/plugins.conf";
     }
 
+    # Get any additional plugins requested
+    my $additionalPlugins = $vars{"default.additional_plugins"} || [];
+    $additionalPlugins = (ref($additionalPlugins) eq 'ARRAY')?$additionalPlugins:[$additionalPlugins];
+    # Add these plugins to the workflow
+    push(@$exe, @$additionalPlugins);
+
     # Should we skip any plugins?
     # First, email since that is its own parameter
     if(!$$settings{email}){

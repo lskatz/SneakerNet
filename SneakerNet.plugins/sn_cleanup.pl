@@ -26,7 +26,7 @@ exit(main());
 
 sub main{
   my $settings=readConfig();
-  GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i delete-more)) or die $!;
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -79,6 +79,11 @@ sub cleanup{
       $dir/SneakerNet/assemblies/*/prodigal
     "
   );
+
+  # Add the fastq files if requested
+  if($$settings{'delete-more'}){
+    push(@rmFiles, glob("$dir/*.fastq.gz"));
+  }
 
   for my $file(@rmFiles){
     my %removalStats = cleanThis($file, $$settings{debug}, $settings);
@@ -144,7 +149,8 @@ sub usage{
   print "Cleans up a SneakerNet folder, usually to save some space
 
   Usage: $0 MiSeq_run_dir
-  --debug  Just print what would be removed and do not remove
+  --delete-more  Also delete the reads in the repo
+  --debug        Just print what would be removed and do not remove
   \n";
   exit 0;
 }
