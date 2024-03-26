@@ -22,7 +22,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfa
 use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "2.2.1";
+our $VERSION = "3.0";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -57,6 +57,37 @@ sub main{
   });
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/assemblyMetrics_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Assembly metrics\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub emailWhoever{
@@ -164,6 +195,7 @@ sub emailWhoever{
   zip_directory("$dir/SneakerNet/forEmail", $zip);
   $email->attach_file($zip);
   $email->attach_file("$dir/SneakerNet/forEmail/report.html");
+  $email->attach_file("$dir/SneakerNet/forEmail/multiqc_report.html");
   $email->text_body($body);
 
   my $was_sent=$email->send;

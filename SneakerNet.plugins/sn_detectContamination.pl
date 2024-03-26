@@ -14,7 +14,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 use Bio::Kmer;
 
-our $VERSION = "1.2";
+our $VERSION = "2.0";
 our $CITATION= "Detect contamination by Lee Katz. Uses Bio::Kmer module for kmer counting.";
 
 # http://perldoc.perl.org/perlop.html#Symbolic-Unary-Operators
@@ -41,7 +41,7 @@ sub main{
   my $dir=$ARGV[0];
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/kmerHistogram";
-  mkdir "$dir/forEmail";
+  mkdir "$dir/SneakerNet/forEmail";
   
   my $numFastq=kmerContaminationDetection($dir,$settings);
   
@@ -62,9 +62,61 @@ sub main{
 
   logmsg "Kmer histograms were saved to $outfile";
 
-  recordProperties($dir,{version=>$VERSION, table=>$outfile});
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
+  recordProperties($dir,{version=>$VERSION, table=>$outfile, mqc=>$rawMultiQC});
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/kmer-cov_mqc.yaml";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "id: $anchor'\n";
+  print $outFh "section_name: \"Contamination detection (Kmers)\"\n";
+  print $outFh "description: \"We expect peaks around 1x and at around the genome coverage. An additional peak might indicate a kmer coverage of a contaminant.<br />\n$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "anchor: '$anchor'\n";
+  print $outFh "plot_type: 'linegraph'\n";
+  #print $outFh "pconfig:\n  xmax: 150\n";
+  print $outFh "data:\n";
+
+  for my $intable(glob("$dir/SneakerNet/kmerHistogram/*/*.tsv")){
+    next if($intable=~ /graph.tsv$/);
+    my $data = "";
+
+    # Print the rest of the table
+    open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+    my $dataCounter = 0;
+    while(<$fh>){
+      next if(/^#/);
+      chomp;
+      my($x,$y) = split /\t/;
+      $data .= "$x: $y,";
+
+      # Honestly do we care if we see things over a certain coverage?
+      last if(++$dataCounter > 150);
+    }
+    close $fh;
+    $data =~ s/,$//;
+    my $sample = basename($intable, ".tsv");
+    print $outFh "  '$sample': { $data }\n";
+  }
+  close $outFh;
+  logmsg "Made $outtable";
+
+  return $outtable;
 }
 
 sub kmerContaminationDetection{

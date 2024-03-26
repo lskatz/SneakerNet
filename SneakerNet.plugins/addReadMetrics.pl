@@ -1,5 +1,4 @@
 #!/usr/bin/env perl
-# Moves folders from the dropbox-inbox pertaining to reads, and
 # Runs read metrics on the directory
 
 use strict;
@@ -19,7 +18,7 @@ use List::MoreUtils qw/uniq/;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
-our $VERSION = "1.3";
+our $VERSION = "2.0";
 our $CITATION = "Add read metrics by Lee Katz. Uses read metrics script in CG-Pipeline.";
 
 local $0=fileparse $0;
@@ -52,9 +51,42 @@ sub main{
       or die "ERROR: could not hard link readMetrics.tsv to $dir/SneakerNet/forEmail/ - $!";
   }
 
-  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv"});
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv", mqc=>$rawMultiQC});
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/readMetrics.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/readMetrics_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Read metrics\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub addReadMetrics{

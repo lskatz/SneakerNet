@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.1";
+our $VERSION = "2.0";
 our $CITATION= "MLST plugin by Lee Katz. Uses mlst by Torsten Seemann.";
 
 local $0=fileparse $0;
@@ -70,9 +70,42 @@ sub main{
   print $fh "# For more details: https://github.com/tseemann/mlst\n";
   close $fh;
 
-  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv"});
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
+  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv", mqc=>$rawMultiQC});
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/mlst.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/mlst_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"MLST (7-gene)\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub mlst{

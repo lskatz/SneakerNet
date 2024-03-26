@@ -17,7 +17,7 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 use MIME::Base64 qw/encode_base64/;
 
-our $VERSION = "2.7.1";
+our $VERSION = "3.0";
 our $CITATION= "SneakerNet report by Lee Katz";
 
 local $0=fileparse $0;
@@ -145,6 +145,10 @@ sub main{
   print $fh $html;
   close $fh;
   logmsg "Report can be found in $outfile";
+
+  command("multiqc --force $dir/SneakerNet/MultiQC-build --outdir $dir/SneakerNet/MultiQC.out");
+  link("$dir/SneakerNet/MultiQC.out/multiqc_report.html", "$dir/SneakerNet/forEmail/multiqc_report.html")
+    or die "ERROR: could not hard link multiqc_report.html to the forEmail folder: $!";
 
   return 0;
 }

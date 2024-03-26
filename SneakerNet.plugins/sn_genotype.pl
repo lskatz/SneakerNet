@@ -15,7 +15,7 @@ use FindBin qw/$RealBin/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.0";
+our $VERSION = "2.0";
 our $CITATION = "Genotyping SneakerNet plugin by Lee Katz";
 
 local $0=fileparse $0;
@@ -49,13 +49,56 @@ sub main{
 
   my $table = genotypeSamples($dir, $settings);
 
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
   my $kmaVersion = `kma -v`;
   chomp($kmaVersion);
-  recordProperties($dir,{version=>$VERSION, table=>$table, kma_version=>$kmaVersion});
+  recordProperties($dir,{version=>$VERSION, table=>$table, kma_version=>$kmaVersion, mqc=>$rawMultiQC});
 
   logmsg "Table can be found in $table";
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/genotype.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/genotype_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Genotyping\"\n";
+  print $outFh "#description: \"These are the raw results that feed into other interpretation plugins like genotyping for Escherichia.<br />$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  my $header = <$fh>;
+  print $outFh "hit\t".$header;
+
+  my $resultCounter = 0;
+  while(<$fh>){
+    next if(/^#/);
+    chomp;
+
+    # need to make sample names unique
+    my($sample, @F) = split /\t/;
+    my $hit = $sample. '-' . ++$resultCounter;
+
+    print $outFh join("\t", $hit, $sample, @F)."\n";
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub genotypeSamples{

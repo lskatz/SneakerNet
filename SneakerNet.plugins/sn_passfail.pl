@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv @rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "6.2";
+our $VERSION = "7.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -48,13 +48,57 @@ sub main{
   my $outfile=passfail($dir,$settings);
   logmsg "The pass/fail file is under $outfile";
   
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
   recordProperties($dir,{
       version=>$VERSION,table=>$outfile,
       kraken_contamination_min_rank  => $$settings{kraken_contamination_min_rank},
       kraken_contamination_threshold => $$settings{kraken_contamination_threshold},
+      mqc => $rawMultiQC,
   });
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/passfail.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/passfail_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Pass/fail information\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    chomp;
+
+    my($sample, @F) = split /\t/;
+
+    # Change integers to pass/fail strings
+    for(@F){
+      s/-1/unknown/;
+      s/1/fail/;
+      s/0/pass/;
+    }
+    print $outFh join("\t", $sample, @F)."\n";
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub passfail{
