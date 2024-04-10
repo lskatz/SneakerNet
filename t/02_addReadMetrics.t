@@ -45,7 +45,7 @@ subtest "Expected coverage" => sub {
   #system("wc -l $run/readMetrics.tsv");
   while(<$fh>){
     chomp;
-    my ($file, $avgReadLength, $totalBases, $minReadLength, $maxReadLength, $avgQuality, $numReads, $PE, $coverage) 
+    my ($file, $avgReadLength, $totalBases, $minReadLength, $maxReadLength, $avgQuality, $numReads, $coverage) 
         = split(/\t/, $_);
 
     $file = basename($file);

@@ -105,13 +105,38 @@ sub addReadMetrics{
     $Q->enqueue(undef);
   }
 
+  my %metrics;
   for(@thr){
-    $_->join;
+    my $subMetrics = $_->join;
+    %metrics = (%metrics, %$subMetrics);
   }
+  open(my $fh, ">", "$dir/readMetrics.tsv.tmp") or die "ERROR: could not write to $dir/readMetrics.tsv.tmp: $!";
+  my @header = qw(File avgReadLength totalBases minReadLength maxReadLength avgQuality numReads coverage);
+  print $fh join("\t", @header)."\n";
+  for my $fastq(sort(keys(%metrics))){
+    my $m = $metrics{$fastq};
+    print $fh join("\t", basename($fastq), $$m{avgReadLength}, $$m{totalBases}, $$m{minReadLength}, 
+                         $$m{maxReadLength}, $$m{avgQuality}, $$m{numReads}, $$m{coverage}) . "\n";
+  }
+  close $fh;
+
+
+=cut
+  # Write to the output file
+  open(my $fh, ">>", "$tempdir/readMetrics.tsv") or die "ERROR: could not append to $tempdir/readMetrics.tsv: $!";
+  print $fh join("\t", qw(File avgReadLength totalBases minReadLength maxReadLength avgQuality numReads coverage))."\n";
+  while(my($fastq,$m) = each(%metrics)){
+    print $fh join("\t", basename($fastq), $$m{avgReadLength}, $$m{totalBases}, $$m{minReadLength}, 
+                         $$m{maxReadLength}, $$m{avgQuality}, $$m{numReads}, $$m{coverage}) . "\n";
+  }
+  close $fh;
+
+  return "$tempdir/readMetrics.tsv";
 
   system("cat $$settings{tempdir}/*/readMetrics.tsv | head -n 1 > $dir/readMetrics.tsv.tmp"); # header
   system("sort -k3,3n $$settings{tempdir}/*/readMetrics.tsv | uniq -u >> $dir/readMetrics.tsv.tmp"); # content
   die if $?;
+=cut
 
   # edit read metrics to include genome sizes
   logmsg "Backfilling values in $dir/readMetrics.tsv";
@@ -122,8 +147,8 @@ sub addReadMetrics{
   # get the header and also put it into the final output file
   my $header=<READMETRICS>;
   print READMETRICSFINAL $header;
-  chomp($header);
-  my @header=split(/\t/,$header);
+  #chomp($header);
+  #my @header=split(/\t/,$header);
   while(<READMETRICS>){
     chomp;
     # read in each line into the appropriate header
@@ -159,6 +184,8 @@ sub readMetricsWorker{
     %metrics = (%metrics, %$metricsHashRef);
   }
 
+  return \%metrics;
+
   # Write to the output file
   open(my $fh, ">>", "$tempdir/readMetrics.tsv") or die "ERROR: could not append to $tempdir/readMetrics.tsv: $!";
   print $fh join("\t", qw(File avgReadLength totalBases minReadLength maxReadLength avgQuality numReads coverage))."\n";
@@ -167,6 +194,8 @@ sub readMetricsWorker{
                          $$m{maxReadLength}, $$m{avgQuality}, $$m{numReads}, $$m{coverage}) . "\n";
   }
   close $fh;
+
+  return "$tempdir/readMetrics.tsv";
 }
 
 
