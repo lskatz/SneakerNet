@@ -4,11 +4,14 @@ use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
 use File::Copy qw/mv/;
+use File::Temp qw/tempdir/;
 #use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
 use Carp qw/croak confess carp/;
 use Cwd qw/realpath/;
+use List::Util qw/sum min max/;
+use version 0.77;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
@@ -17,6 +20,7 @@ our @EXPORT_OK = qw(
   readTsv readKrakenDir
   command logmsg fullPathToExec version recordProperties readProperties
   exitOnSomeSneakernetOptions
+  readMetrics
   @rankOrder %rankOrder $VERSION
 );
 
@@ -32,7 +36,7 @@ TODO
 
 =cut
 
-our $VERSION  = '0.25.0';
+our $VERSION  = version->declare('0.25.0');
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
@@ -926,6 +930,88 @@ sub readProperties{
   return \%prop;
 }
 
+=head3 readMetrics(\@fastq, $expectedGenomeSize, $settings)
+
+Read metrics.
+Replacing CG-Pipeline's run_assembly_readMetrics.pl
+
+Arguments:
+
+  \@fastq              The list of fastq files
+  $expectedGenomeSize  in nucleotides
+  $settings            hash
+
+Returns
+
+  $properties:  hash ref with keys.  E.g.,
+    File
+    avgReadLength
+    totalBases
+    minReadLength
+    maxReadLength
+    avgQuality
+    numReads
+    coverage
+
+=cut
+
+sub readMetrics{
+  my($fastqs, $expectedGenomeSize, $settings) = @_;
+  my %metrics;
+
+  my @fastq = sort{$a cmp $b} @$fastqs;
+
+  my $tempdir = tempdir(basename($0).".readMetrics.XXXXXX",TMPDIR=>1,CLEANUP=>1);
+
+  for(my $i=0; $i<@fastq; $i++){
+    my $seqtkComp = "$tempdir/".basename($fastq[$i]).".seqtkcomp";
+    my $seqtkFqchk= "$tempdir/".basename($fastq[$i]).".seqtkfqchk";
+    command("seqtk comp $fastq[$i] > $seqtkComp");
+    command("seqtk fqchk $fastq[$i]> $seqtkFqchk");
+
+    my(@lengths,@A,@C,@G,@T);
+    open(my $fh, $seqtkComp) or die "ERROR: could not read seqtk comp file $seqtkComp: $!";
+    while(<$fh>){
+      # chomp; # <- not including the last field and so no need to remove last newline char
+      my($readName, $length, $A, $C, $G, $T) = split /\t/;
+      push(@lengths, $length);
+      push(@A, $A);
+      push(@C, $C);
+      push(@G, $G);
+      push(@T, $T);
+    }
+    close $fh;
+
+    # parse Fqchk to get average qual
+    my $avgQual = -1;
+    open(my $fh2, $seqtkFqchk) or die "ERROR: could not read seqtk fqchk file $seqtkFqchk: $!";
+    while(<$fh2>){
+      next if(!/^ALL/);
+      chomp;
+      my(undef, $bases, $A,$C,$G,$T,$N, $avgQ, $errQ, $low, $high) = split /\t/;
+      $avgQual = $avgQ;
+      last;
+    }
+    close $fh2;
+
+    my $totalBases = sum(@lengths);
+    my $numReads   = scalar(@lengths);
+    my $coverage   = -1;
+    if($expectedGenomeSize){
+      $coverage = $totalBases / $expectedGenomeSize;
+    }
+    $metrics{$fastq[$i]} = {
+      avgReadLength  => ($totalBases/$numReads),
+      totalBases     => $totalBases,
+      minReadLength  => min(@lengths),
+      maxReadLength  => max(@lengths),
+      avgQuality     => $avgQual,
+      numReads       => $numReads,
+      coverage       => $coverage,
+    };
+  }
+  return \%metrics;
+}
 
 1;
 

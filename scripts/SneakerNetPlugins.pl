@@ -13,7 +13,6 @@ use FindBin qw/$RealBin/;
 use lib "$RealBin/../lib/perl5";
 use SneakerNet qw/readConfig command logmsg/;
 use Config::Simple;
-use Email::Stuffer;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
@@ -89,13 +88,12 @@ sub main{
     
     # Run all plugins
     chdir($dir) or die "ERROR: could not change to directory $dir: $!";
+    logmsg "Changing directory to $dir";
     for my $e(@$exe){
 
       my $command="$RealBin/../SneakerNet.plugins/$e . --numcpus $$settings{numcpus}";
       $command.=" --force" if($$settings{force});
       $command.=" --tempdir $$settings{tempdir}" if($$settings{tempdir});
-      #print "$command\n\n"; next;
-      #command($command); next;
 
       if($$settings{'dry-run'}){
         logmsg $command;
@@ -110,33 +108,10 @@ sub main{
           logmsg "  ... however, --keep-going was specified and I will ignore that.";
           next;
         }
-
-        my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
-        my $subject="Run failed for ".basename(realpath($dir));
-        my @to;
-        if(ref($$settings{'default.emails'}) eq "ARRAY"){
-          push(@to, @{$$settings{'default.emails'}});
-        } else {
-          push(@to, $$settings{'default.emails'});
-        }
-        my $to = join(",",@to);
-        my $body = "Failed for ".realpath($dir)."\n\n";
-        $body .= "Plugin that failed was $e: $@";
-        my $email=Email::Stuffer->from($from)
-                                ->subject($subject)
-                                ->to($to)
-                                ->text_body($body);
-        if($email->send){
-          logmsg "Email sent to $to";
-        } else {
-          logmsg "ERROR email failed to send to $to";
-        }
-        return 1;
       }
-
-        
     }
-    chdir($cwd); # go back to original directory
+    chdir($cwd) or die "ERROR: could not change back to directory $cwd: $!"; # go back to original directory
+    logmsg "Changing directories from $dir, back to $cwd";
   }
   
   return 0;

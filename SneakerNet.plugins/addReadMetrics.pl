@@ -15,7 +15,7 @@ use Thread::Queue;
 
 use lib "$FindBin::RealBin/../lib/perl5";
 use List::MoreUtils qw/uniq/;
-use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig logmsg samplesheetInfo_tsv command/;
+use SneakerNet qw/readMetrics exitOnSomeSneakernetOptions recordProperties readConfig logmsg samplesheetInfo_tsv command/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 our $VERSION = "2.0";
@@ -30,7 +30,6 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_readMetrics.pl (CG-Pipeline)'   => 'echo CG-Pipeline version unknown',
     }, $settings,
   );
 
@@ -150,21 +149,24 @@ sub addReadMetrics{
 
 sub readMetricsWorker{
   my($Q, $settings)=@_;
+  
+  my %metrics;
 
   my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
   while(defined(my $fastq=$Q->dequeue)){
     logmsg "read metrics for $fastq";
-    eval{
-      command("run_assembly_readMetrics.pl --numcpus 1 --fast $fastq >> $tempdir/readMetrics.tsv");
-      return 1;
-    };
-    if($@){
-      logmsg "There was an error running run_assembly_readMetrics.pl.  This might be because of a divide-by-zero error. This can be solved by running the metrics without subsampling the reads which is slower.\n";
-      logmsg "Rerunning without --fast.";
-      command("run_assembly_readMetrics.pl --numcpus 1 $fastq >> $tempdir/readMetrics.tsv");
-    } 
-
+    my $metricsHashRef = readMetrics([$fastq]);
+    %metrics = (%metrics, %$metricsHashRef);
   }
+
+  # Write to the output file
+  open(my $fh, ">>", "$tempdir/readMetrics.tsv") or die "ERROR: could not append to $tempdir/readMetrics.tsv: $!";
+  print $fh join("\t", qw(File avgReadLength totalBases minReadLength maxReadLength avgQuality numReads coverage))."\n";
+  while(my($fastq,$m) = each(%metrics)){
+    print $fh join("\t", basename($fastq), $$m{avgReadLength}, $$m{totalBases}, $$m{minReadLength}, 
+                         $$m{maxReadLength}, $$m{avgQuality}, $$m{numReads}, $$m{coverage}) . "\n";
+  }
+  close $fh;
 }
 
 

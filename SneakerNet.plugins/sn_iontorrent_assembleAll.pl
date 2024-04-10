@@ -30,7 +30,7 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_filterContigs.pl (CG-Pipeline)' => "echo CG Pipeline version unknown",
+      'seqtk'   => 'seqtk 2>&1 | grep Version',
       'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
       'spades.py (SPAdes)'                     => 'spades.py --version 2>&1',
       'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
@@ -51,7 +51,7 @@ sub main{
   mkdir "$dir/SneakerNet/forEmail";
 
   # Check for required executables
-  for (qw(spades.py prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
+  for (qw(spades.py prodigal run_prediction_metrics.pl)){
     fullPathToExec($_);
   }
  
@@ -89,7 +89,7 @@ sub assembleAll{
       # Save the assembly
       mkdir $outdir;
       mkdir "$outdir/prodigal"; # just make this directory right away
-      command("run_assembly_filterContigs.pl -l 500 $assembly > $outassembly");
+      command("seqtk seq -L 500 $assembly > $outassembly");
     }
 
     # Genome annotation

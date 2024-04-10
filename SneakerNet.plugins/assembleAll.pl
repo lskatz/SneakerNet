@@ -30,8 +30,6 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
-      'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
       cat                             => 'cat --version | head -n 1',
       sort                            => 'sort --version | head -n 1',
       head                            => 'head --version | head -n 1',
@@ -80,12 +78,12 @@ sub main{
  
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
-  my $metricsOut=assembleAll($dir,$settings);
-  logmsg "Metrics can be found in $metricsOut";
+  assembleAll($dir,$settings);
+  #logmsg "Metrics can be found in $metricsOut";
 
-  my $rawMultiQC = makeMultiQC($dir, $settings);
+  #my $rawMultiQC = makeMultiQC($dir, $settings);
 
-  recordProperties($dir,{version=>$VERSION,table=>$metricsOut, mqc=>$rawMultiQC,
+  recordProperties($dir,{version=>$VERSION,
     "Minimum contig length for assembly metrics" => "500bp",
   });
 
@@ -136,8 +134,7 @@ sub assembleAll{
     my $outassembly="$outdir/$sample.shovill.skesa.fasta";
     my $outgfa     ="$outdir/$sample.shovill.skesa.gfa";
     my $outgbk="$outdir/$sample.shovill.skesa.gbk";
-    #my $outassembly="$outdir/$sample.megahit.fasta";
-    #my $outgbk="$outdir/$sample.megahit.gbk";
+    my $outgff="$outdir/$sample.shovill.skesa.gff";
 
     # Run the assembly
     if(!-e $outassembly){
@@ -158,139 +155,21 @@ sub assembleAll{
       cp($assembly, $outassembly) or die "ERROR copying $assembly => $outassembly\n  $!";
       cp($gfa,      $outgfa)      or die "ERROR copying $gfa => $outgfa\n  $!";
 
-      mkdir "$outdir/prodigal"; # just make this directory right away
-    }
-
-    # Genome annotation
-    logmsg "PREDICT GENES FOR SAMPLE $sample";
-    if(!-e $outgbk){
-      my $gbk=annotateFasta($sample,$outassembly,$settings);
-      cp($gbk,$outgbk) or die "ERROR: could not copy $gbk to $outgbk: $!";
-    }
-
-  }
-  
-  # run assembly metrics with min contig size=0.5kb
-  my $metricsOut="$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
-  logmsg "Running metrics on the genbank files at $metricsOut";
-
-  my @thr;
-  my $Q=Thread::Queue->new(glob("$dir/SneakerNet/assemblies/*/*.shovill.skesa.gbk"));
-  for(0..$$settings{numcpus}-1){
-    $thr[$_]=threads->new(\&predictionMetricsWorker,$Q,$settings);
-    $Q->enqueue(undef);
-  }
-  for(@thr){
-    $_->join;
-  }
-  
-  command("cat $$settings{tempdir}/worker.*/metrics.tsv | head -n 1 > $metricsOut"); # header
-  #command("sort -k1,1 $$settings{tempdir}/worker.*/metrics.tsv | uniq -u >> $metricsOut"); # content
-  command("tail -q -n +2 $$settings{tempdir}/worker.*/metrics.tsv | sort | grep -Ev '^File\\b' >> $metricsOut");
-  
-  return $metricsOut;
-}
-
-sub predictionMetricsWorker{
-  my($Q,$settings)=@_;
-  my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
-  my $metricsOut    ="$tempdir/metrics.tsv";  # Combined metrics
-
-  #command("touch $predictionOut $assemblyOut");
-
-  my $numMetrics=0;
-  while(defined(my $gbk=$Q->dequeue)){
-    my $dir = dirname($gbk);
-    my $predictionOut ="$dir/predictionMetrics.tsv";
-    my $assemblyOut   ="$dir/assemblyMetrics.tsv";
-    my $coverageOut   ="$dir/depth.tsv.gz";
-    my $effectiveCoverage = "$dir/effectiveCoverage.tsv";
-
-    # Metrics for the fasta: the fasta file has the same
-    # base name but with a fasta extension
-    my $fasta=$gbk;
-    $fasta=~s/gbk$/fasta/;
-    my $bam  =$gbk;
-    $bam  =~s/gbk$/bam/;
-    
-    # Bring the shovill bam file over
-    my $srcBam = dirname($fasta)."/shovill/shovill.bam";
-    if(!-e $bam){
-      logmsg "hard linking: $srcBam => $bam";
-      link($srcBam, $bam) or logmsg "WARNING: could not hard link $srcBam => $bam: $!";
+      #mkdir "$outdir/prodigal"; # just make this directory right away
     }
     
-    logmsg "gbk metrics for $gbk";
-    command("run_prediction_metrics.pl $gbk > $predictionOut");
-    logmsg "asm metrics for $fasta";
-    command("run_assembly_metrics.pl --allMetrics --numcpus 1 $fasta > $assemblyOut");
-
-    if(-e $bam){
-      logmsg "Coverage for $bam";
-      command("samtools depth -aa $bam | gzip -c > $coverageOut");
-
-      logmsg "Effective coverage for $bam";
-      my $total = 0;
-      my $numSites = 0;
-      open(my $fh, "zcat $coverageOut |") or die "ERROR: could not zcat $coverageOut: $!";
-      while(my $line = <$fh>){
-        chomp($line);
-        my(undef, undef, $depth) = split(/\t/, $line);
-        $total+=$depth;
-        $numSites++;
-      }
-      close $fh;
-      open(my $outFh, ">", $effectiveCoverage) or die "ERROR: could not write to $effectiveCoverage: $!";
-      print $outFh join("\t", qw(File effectiveCoverage))."\n";
-      print $outFh join("\t", $bam, sprintf("%0.2f", $total/$numSites))."\n";
-      close $outFh;
-    } else {
-      logmsg "WARNING: cannot determine effective coverage: could not find bam at $bam";
-      # dummy data
-      open(my $outFh, ">", $effectiveCoverage) or die "ERROR: could not write to $effectiveCoverage: $!";
-      print $outFh join("\t", qw(File effectiveCoverage))."\n";
-      print $outFh join("\t", $bam, -1)."\n";
-      close $outFh;
+    if(!-e "$outdir/quast/report.html"){
+      logmsg "Running quast on $outassembly > $outdir/quast";
+      command("quast $outassembly --glimmer --output-dir $outdir/quast --threads $$settings{numcpus} --rna-finding");
+    }
+    else{
+      logmsg "Found $outdir/quast/report.html. Not rerunning";
     }
 
-    # Combine the metrics into one file
-    # We know that each file is one header and one values line
-    my %metric;
-    for my $file ($predictionOut, $effectiveCoverage, $assemblyOut){
-      open(my $metricsFh, $file) or die "ERROR: could not read file $file: $!";
-      my $header = <$metricsFh>;
-      my $values = <$metricsFh>;
-      chomp($header, $values);
-      close $metricsFh;
-
-      # Header and value match up
-      my @header = split(/\t/, $header);
-      my @value  = split(/\t/, $values);
-      for(my $i=0;$i<@header;$i++){
-        $metric{$header[$i]} = $value[$i];
-      }
-      # Remove the directory and suffix of the filename
-      $metric{File} = basename($metric{File}, qw(.shovill.skesa.fasta .shovill.skesa.gbk .shovill.skesa.bam));
-    }
-    # Combine the metrics
-    # Alphabetize the header but take care of Filename separately
-    my $filename = $metric{File};
-    my @header = sort keys(%metric);
-    @header = grep{!/File/} @header;
-
-    # Write combined metrics to file
-    open(my $combinedFh, ">>", $metricsOut) or die "ERROR: could not write to $metricsOut: $!";
-    print $combinedFh join("\t", "File", @header)."\n";
-    print $combinedFh $metric{File};
-    for my $h(@header){
-      print $combinedFh "\t" . $metric{$h};
-    }
-    print $combinedFh "\n";
-    close $combinedFh;
-
-    $numMetrics++;
   }
+  
 }
+
 
 
 sub assembleSample{
@@ -334,59 +213,6 @@ sub assembleSample{
   }
 
   return $outdir
-}
-
-# I _would_ use prokka, except it depends on having an up to date tbl2asn
-# which is not really necessary for what I'm doing here.
-sub annotateFasta{
-  my($sample,$assembly,$settings)=@_;
-
-  # Ensure a clean slate
-  my $outdir="$$settings{tempdir}/$sample/prodigal";
-  system("rm -rf $outdir");
-
-  mkdir "$$settings{tempdir}/$sample";
-  mkdir $outdir;
-
-  my $outgff="$outdir/prodigal.gff";
-  my $outgbk="$outdir/prodigal.gbk";
-
-  logmsg "Predicting genes on $sample with Prodigal";
-  eval{
-    command("prodigal -q -i $assembly -o $outgff -f gff -g 11 1>&2");
-  };
-  # If there is an issue, push ahead with a zero byte file
-  if($@){
-    logmsg "There was an issue with predicting genes on sample $sample. This might be caused by a poor assembly.";
-    open(my $fh, ">", $outgff) or die "ERROR: could not write to $outgff: $!";
-    close $fh;
-  }
-
-  # Read the assembly sequence
-  my %seqObj;
-  my $seqin=Bio::SeqIO->new(-file=>$assembly);
-  while(my $seq=$seqin->next_seq){
-    $seqObj{$seq->id}=$seq;
-  }
-  $seqin->close;
-
-  # Add seq features
-  my $gffin=Bio::FeatureIO->new(-file=>$outgff);
-  while(my $feat=$gffin->next_feature){
-    # put the features onto the seqobj and write it to file
-    my $id=$feat->seq_id;
-    $seqObj{$id}->add_SeqFeature($feat);
-  }
-  $gffin->close;
-
-  # Convert to gbk
-  my $gbkObj=Bio::SeqIO->new(-file=>">$outgbk",-format=>"genbank");
-  for my $seq(values(%seqObj)){
-    $gbkObj->write_seq($seq);
-  }
-  $gbkObj->close;
-
-  return $outgbk;
 }
 
 sub usage{

@@ -12,6 +12,7 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Find qw/find/;
 use Cwd qw/realpath/;
 use File::Temp qw/tempdir/;
+use MIME::Base64 qw/encode_base64/;
 use POSIX qw/strftime/;
 use IO::Compress::Zip qw(zip $ZipError);
 
@@ -19,7 +20,6 @@ $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
 our $VERSION = "3.0";
@@ -38,7 +38,8 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'sendmail -d0.4 -bv root 2>&1 | grep -m 1 Version'
+      sendmail  => 'apt-cache show sendmail 2>/dev/null | grep Version || rpm -qi sendmail 2>/dev/null | grep Version',
+      uuencode  => 'uuencode --version | grep uuencode',
     }, $settings,
   );
 
@@ -178,31 +179,27 @@ sub emailWhoever{
     $body.=$failureMessage;
   }
 
-  my $email=Email::Stuffer->from($from)
-                          ->subject($subject)
-                          ->to($to);
+  my $emailFile = "$$settings{tempdir}/email.txt";
+  open(my $fh, ">", $emailFile) or die "ERROR: could not write to $emailFile: $!";
+  print $fh "To: $to\n";
+  print $fh "From: $from\n";
+  print $fh "Subject: $subject\n";
+  print $fh "\n";
+  print $fh "$body\n";
 
-  #for my $file(glob("$dir/SneakerNet/forEmail/*")){
-  #  next if(!-f $file);
-  #  $email->attach_file($file);
-  #}
-  # Attach log files
+  # Append attachments to the email text file
   for my $file(glob("$dir/*.log")){
     next if(!-f $file);
-    $email->attach_file($file);
+    append_attachment($fh, $file);
   }
+  # Make the zip file
   my $zip = "$$settings{tempdir}/$runName.zip";
   zip_directory("$dir/SneakerNet/forEmail", $zip);
-  $email->attach_file($zip);
-  $email->attach_file("$dir/SneakerNet/forEmail/report.html");
-  $email->attach_file("$dir/SneakerNet/forEmail/multiqc_report.html");
-  $email->text_body($body);
+  append_attachment($fh, $zip);
+  append_attachment($fh, "$dir/SneakerNet/forEmail/report.html");
+  append_attachment($fh, "$dir/SneakerNet/forEmail/multiqc_report.html");
 
-  my $was_sent=$email->send;
-
-  if(!$was_sent){
-    logmsg "Warning: Email was not sent to $to!";
-  }
+  command("sendmail -t < $emailFile");
 
   return \@to;
 }
@@ -228,6 +225,22 @@ sub zip_directory {
     system("cd $dir && zip -9 -y -r -q $zip_file ./");
     die "Zip failed" if $?;
 }
+
+# Add an attachment to an email file handle
+sub append_attachment {
+    my ($fh, $file_path) = @_;
+
+    # Encode the attachment content using base64 encoding
+    my $attachment_name = basename($file_path);
+    my $encoded_content = `uuencode $file_path $attachment_name`;
+    die "Failed to encode attachment content from $file_path: $!" if $?;
+    
+    print $fh $encoded_content . "\n";
+
+    # Print a newline to separate MIME parts
+    print $fh "\n";
+}
+
 
 sub usage{
   print "Email a SneakerNet run's results

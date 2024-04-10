@@ -7,6 +7,7 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
+use File::Copy qw/cp/;
 use File::Spec;
 use Cwd qw/realpath/;
 use POSIX qw/strftime/;
@@ -147,8 +148,8 @@ sub main{
   logmsg "Report can be found in $outfile";
 
   command("multiqc --force $dir/SneakerNet/MultiQC-build --outdir $dir/SneakerNet/MultiQC.out");
-  link("$dir/SneakerNet/MultiQC.out/multiqc_report.html", "$dir/SneakerNet/forEmail/multiqc_report.html")
-    or die "ERROR: could not hard link multiqc_report.html to the forEmail folder: $!";
+  cp("$dir/SneakerNet/MultiQC.out/multiqc_report.html", "$dir/SneakerNet/forEmail/multiqc_report.html")
+    or die "ERROR: could not cp multiqc_report.html to the forEmail folder: $!";
 
   return 0;
 }
