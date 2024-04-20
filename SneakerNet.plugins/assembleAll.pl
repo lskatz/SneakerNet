@@ -83,6 +83,30 @@ sub main{
 
   #my $rawMultiQC = makeMultiQC($dir, $settings);
 
+  # Get multiQC to pick up on the quast results
+  mkdir "$dir/SneakerNet/MultiQC-build/quast";
+  for my $asmdir(glob("$dir/SneakerNet/assemblies/*")){
+    my $sample = basename($asmdir);
+    my $from = "$asmdir/quast/report.tsv";
+    # MultiQC is looking for 'report.tsv'
+    # The sample name is scraped from the file contents
+    # but also we need unique report.tsv files and so
+    # all the subdirectories.
+    my $to   = "$dir/SneakerNet/MultiQC-build/quast/$sample/report.tsv";
+    mkdir dirname($to);
+
+    # sed any shovill name to just sample name
+    logmsg "$from => $to";
+    open(my $inFh, $from)   or die "ERROR: could not read $from: $!";
+    open(my $outFh,">",$to) or die "ERROR: could not write to $to: $!";
+    while(my $line = <$inFh>){
+      $line =~ s/\Q$sample\E\S+/$sample/g;
+      print $outFh $line;
+    }
+    close $outFh;
+    close $inFh;
+  }
+
   recordProperties($dir,{version=>$VERSION,
     "Minimum contig length for assembly metrics" => "500bp",
   });

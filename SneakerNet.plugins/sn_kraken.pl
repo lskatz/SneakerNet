@@ -76,6 +76,10 @@ sub runKrakenOnDir{
     die "ERROR: output directory does not exist $outdir";
   }
 
+  my $mqcDir = "$dir/SneakerNet/MultiQC-build";
+  mkdir $mqcDir;
+  mkdir "$mqcDir/kraken";
+
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
   my @report; # reporting contamination in an array, in case I want to sort it later
@@ -110,6 +114,15 @@ sub runKrakenOnDir{
       $errors{"Kraken did not complete successfully for at least one sample"}++;
       next;
     }
+
+    #symlink to make MultiQC work on the raw data
+    my $symlinkFrom = "../../../$sampledir/kraken.report";
+    my $symlinkTo   = "$mqcDir/kraken/$sampleName";
+    if(-e $symlinkTo){
+      unlink($symlinkTo)
+        or die "ERROR: could not remove file $symlinkTo: $!";
+    }
+    symlink($symlinkFrom, $symlinkTo) or die "ERROR: could not symlink to the multiqc directory ($symlinkFrom => $symlinkTo): $!";
 
   }
 

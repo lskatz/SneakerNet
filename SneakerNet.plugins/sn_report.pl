@@ -13,6 +13,11 @@ use Cwd qw/realpath/;
 use POSIX qw/strftime/;
 use List::Util qw/min max/;
 
+# Attempt to use a core YAML writer here but the downside
+# is that this is not supposed to be a general purpose
+# YAML writer.
+use TAP::Parser::YAMLish::Writer;
+
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
@@ -44,10 +49,11 @@ sub main{
   # Make the summary table before writing properties
   # so that it can get encoded with the rest of the 
   # tables in the html.
-  my $file = "$dir/SneakerNet/forEmail/QC_summary.tsv";
-  makeSummaryTable($file, $dir, $settings);
+  my $summaryTable = makeSummaryTable($dir, $settings);
 
-  my $pathFromDir = File::Spec->abs2rel(realpath($file), realpath($dir));
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
+  my $pathFromDir = File::Spec->abs2rel(realpath($summaryTable), realpath($dir));
 
   # Special to this plugin: record any properties before
   # reading the properties.
@@ -57,6 +63,7 @@ sub main{
     date=>strftime("%Y-%m-%d", localtime()),
     time=>strftime("%H:%M:%S", localtime()),
     fullpath=>realpath($dir).'/SneakerNet',
+    mqc => $rawMultiQC,
   });
 
   my $properties = readProperties($dir);
@@ -147,15 +154,118 @@ sub main{
   close $fh;
   logmsg "Report can be found in $outfile";
 
-  command("multiqc --force $dir/SneakerNet/MultiQC-build --outdir $dir/SneakerNet/MultiQC.out");
+  my $run_name = basename(realpath($dir));
+  my $mqcConfig = makeMultiQC_config($dir, $settings);
+  system("cat $mqcConfig | nl -b a");
+  command("multiqc --config $mqcConfig --force $dir/SneakerNet/MultiQC-build --outdir $dir/SneakerNet/MultiQC.out");
   cp("$dir/SneakerNet/MultiQC.out/multiqc_report.html", "$dir/SneakerNet/forEmail/multiqc_report.html")
     or die "ERROR: could not cp multiqc_report.html to the forEmail folder: $!";
 
   return 0;
 }
 
+sub makeMultiQC_config{
+  my($dir, $settings) = @_;
+
+  my $yaml = "$$settings{tempdir}/mqc.conf";
+
+  # Build the yaml hash which will be written later
+  my %yamlHash = ();
+  $yamlHash{table_columns_placement}{general_stats_table} = {
+      emoji        => 900,
+      failure_code => 910,
+      score        => 915,
+      cov1         => 920,
+      cov2         => 922,
+      qual1        => 930,
+      qual2        => 932,
+  };
+  $yamlHash{custom_data}{sn_report_}{plot_type} = "generalstats";
+  $yamlHash{custom_data}{sn_report }{plot_type} = "generalstats";
+=cut
+  $yamlHash{module_order}[0] = {fastqc => {
+      name    => "fastqc R1",
+      anchor  => "fastqc_R1",
+      info    => "FastQC for R1",
+      target  => "",
+      path_filters => ["'*_1_fastqc.zip'"],
+  }};
+  $yamlHash{module_order}[1] = {fastqc => {
+      name    => "fastqc R2",
+      anchor  => "fastqc_R2",
+      info    => "FastQC for R2",
+      target  => "",
+      path_filters => ["'*_2_fastqc.zip'"],
+  }};
+=cut
+  
+  my $mqcBuildDir = "$dir/SneakerNet/MultiQC-build";
+
+  my $configStr = "";
+  my $yw = TAP::Parser::YAMLish::Writer->new;
+  $yw->write(\%yamlHash, \$configStr);
+
+  # Get rid of situations where the yaml writer makes a dash,
+  # then a new line, then the key for this element of the array.
+  # e.g.,
+  #   -
+  #     fastqc:
+  #     name: something
+  # and turn it into
+  #   - fastqc:
+  #       name: something
+  $configStr =~ s/(\-)\s*\n\s+(\w+)/$1 $2/gm;
+
+  # Remove the weird --- and ... opening and closing that
+  # the YAML writer gives.
+  #$configStr =~ s/\-{3}//;
+  #$configStr =~ s/\.{3}//;
+
+  open(my $fh, ">", $yaml) or die "ERROR writing to multiQC config file $yaml: $!";
+  print $fh $configStr;
+  close $fh;
+
+  return $yaml;
+
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/QC_summary.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/qcsummary_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"SneakerNet Summary\"\n";
+  print $outFh "#description: \"Quick stats from SneakerNet<br />$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  print $outFh "#plot_type: 'generalstats'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    s/ +/_/g;
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
+}
+
 sub makeSummaryTable{
-  my($outfile, $dir, $settings) = @_;
+  my($dir, $settings) = @_;
+
+  my $outfile = "$dir/SneakerNet/forEmail/QC_summary.tsv";
 
   # Gather some information
   my $sample   = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
@@ -185,7 +295,7 @@ sub makeSummaryTable{
   # Any knock on the perfection of a genome gets this penalty
   my $penalty = 1/scalar(@$happiness) * 100;
 
-  my @tableRow; # to be sorted
+  my %tableRow;
   while(my($sampleName, $s) = each(%$sample)){
     my $score = 100;
     my $emojiIdx= 0;
@@ -217,22 +327,48 @@ sub makeSummaryTable{
       $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
       $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
     }
+    $cov =~ s/\s+$//;
+    $qual=~ s/\s+$//;
+
+    my $cov1 = $readMetrics{basename($$s{fastq}[0])}{coverage};
+    my $cov2 = $readMetrics{basename($$s{fastq}[1])}{coverage};
+    my $qual1= $readMetrics{basename($$s{fastq}[0])}{avgQuality};
+    my $qual2= $readMetrics{basename($$s{fastq}[1])}{avgQuality};
     
     @failure_code = ("None") if(!@failure_code);
-    push(@tableRow, [$sampleName, $emoji, $score, join(", ", @failure_code),$qual, $cov, $$s{taxon}]);
+    $tableRow{$sampleName} = {
+      sample  => $sampleName,
+      emoji   => $emoji,
+      score   => $score,
+      failure_code => join(", ", @failure_code),
+      qual1   => $qual1,
+      qual2   => $qual2,
+      cov1    => $cov1,
+      cov2    => $cov2,
+      taxon   => $$s{taxon},
+    };
 
   }
-  my @sortedRow = sort{$$a[2] <=> $$b[2] || $$a[0] cmp $$b[0]} @tableRow;
+  my @sortedSample = sort{ $a cmp $b } keys(%tableRow);
 
   # Write the summary table
   open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
-  print $fh join("\t", qw(sample emoji score failure_code qual cov taxon))."\n";
-  for my $row(@sortedRow){
-    print $fh join("\t", @$row)."\n";
+  my @header = qw(sample emoji score failure_code qual1 qual2 cov1 cov2 taxon);
+  print $fh join("\t", @header)."\n";
+  for my $sample(@sortedSample){
+    my $info = $tableRow{$sample};
+    print $fh $sample;
+    for(my $i=1;$i<@header;$i++){
+      print $fh "\t".$tableRow{$sample}{$header[$i]};
+    }
+    print $fh "\n";
+    #print $fh join("\t", @$row)."\n";
   }
   print $fh "# Scores start at 100 percent and receive an equal percent penalty for each: assembly, low coverage, low quality, high percentage of Ns in the assembly, or high contamination in the Kraken report. See documentation for sn_passfail.pl for more information.\n";
   print $fh "# Current emoticons range from high score (100%) to low: ".join(" ",@$happiness);
   close $fh;
+
+  return $outfile;
 }
 
 # This function has the meat of the report for a given plugin

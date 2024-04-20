@@ -77,6 +77,7 @@ sub makeMultiQC{
   print $outFh "#section_name: \"Read metrics\"\n";
   print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
   print $outFh "#anchor: '$anchor'\n";
+  print $outFh "#plot_type: 'table'\n";
   # Print the rest of the table
   open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
   while(<$fh>){
@@ -84,6 +85,8 @@ sub makeMultiQC{
     print $outFh $_;
   }
   close $fh;
+
+  command("fastqc --nogroup $dir/*.fastq.gz -o $dir/SneakerNet/MultiQC-build/fastqc --noextract --threads $$settings{numcpus}");
 
   return $outtable;
 }

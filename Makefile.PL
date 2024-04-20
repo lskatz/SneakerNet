@@ -54,6 +54,7 @@ WriteMakefile(
     'Data::Dumper'   => 0,
     'List::Util'     => 0,
     'Exporter'       => 0,
+    'TAP::Parser::YAMLish::Writer' => '3.44',
     # Threads modules
     'threads'        => 0,
     'threads::shared'=> 0,

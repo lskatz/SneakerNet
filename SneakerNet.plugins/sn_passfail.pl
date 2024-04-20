@@ -171,6 +171,45 @@ sub identifyBadRuns{
       $assemblyMetrics{$newKey} = $metrics;
     }
   }
+  # If we don't have assembly metrics from the old version of assembleAll.pl, then
+  # maybe we're looking for quast metrics.
+  else {
+    for my $samplename(keys(%$sampleInfo)){
+      my $quastReport = "$dir/SneakerNet/assemblies/$samplename/quast/report.tsv";
+      next if(!-e $quastReport);
+
+      open(my $fh, $quastReport) or die "ERROR: could not read $quastReport: $!";
+      while(<$fh>){
+        chomp;
+        my ($key, $value) = split(/\t/, $_);
+
+        # I don't really need a pound sign for number sign.
+        $key =~ s/#\s*//;
+
+        # If the key describes a contig length >= than something,
+        # then let's go with 1kb.
+        if($key =~ /(.+?)\s*>=\s*(\d+)/){
+          my $size = $2;
+          next if($size != 1000);
+          #$key = $1;
+          $key =~ s/\s+\(.+//;
+        }
+        $key =~ s/\s+/_/g;
+
+        $assemblyMetrics{$samplename}{$key} = $value;
+      }
+      close $fh;
+
+      # change some headers to my own legacy names
+      $assemblyMetrics{$samplename}{largestContig} = $assemblyMetrics{$samplename}{Largest_contig};
+      $assemblyMetrics{$samplename}{genomeLength} = $assemblyMetrics{$samplename}{Total_length};
+      $assemblyMetrics{$samplename}{GC} = $assemblyMetrics{$samplename}{'GC_(%)'};
+      $assemblyMetrics{$samplename}{numContigs} = $assemblyMetrics{$samplename}{contigs};
+      $assemblyMetrics{$samplename}{percentNs} = $assemblyMetrics{$samplename}{'N\'s_per_100_kbp'} / 10e5;
+      # still don't have: avgContigLength assemblyScore effectiveCoverage expectedGenomeLength 
+      #                   kmer21 minContigLength 
+    }
+  }
 
   # Understand for each sample whether it passed or failed
   # on each category

@@ -97,11 +97,22 @@ sub makeMultiQC{
   print $outFh "#section_name: \"MLST (7-gene)\"\n";
   print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
   print $outFh "#anchor: '$anchor'\n";
+  print $outFh "#scale: false\n";
   # Print the rest of the table
   open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
   while(<$fh>){
     next if(/^#/);
-    print $outFh $_;
+    chomp;
+    my($File, $mlst_scheme, $ST, @loci) = split(/\t/, $_);
+
+    # Do these replacements if it isn't the header
+    if($File !~ /File/i){
+      # replace any filename extensions in the first field
+      $File =~ s/^(\S+?)\..+/$1/;
+      # Prepend "ST-" so that it gets treated like a string
+      $ST = "ST-$ST";
+    }
+    print $outFh join("\t", $File, $mlst_scheme, $ST, @loci)."\n";
   }
   close $fh;
 
