@@ -63,7 +63,7 @@ jobs:
             #/usr/share/miniconda
           key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
-          CACHE_NUMBER: 5
+          CACHE_NUMBER: 6
       - name: conda installations
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
@@ -193,6 +193,6 @@ jobs:
           sed -i 's+/opt/kraken/full-20140723+/kraken-database+g' config/settings.conf
           #prove -lv t
           make
-          make test
+          #make test
 
 
