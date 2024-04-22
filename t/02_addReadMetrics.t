@@ -22,7 +22,8 @@ if($?){
 }
 
 my $readMetricsLog = `addReadMetrics.pl --force $run 2>&1`;
-is $?, 0, "Adding read metrics";
+my $exit_code = $? >> 8;
+is $exit_code, 0, "Adding read metrics";
 
 note $readMetricsLog;
 
