@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename qw/dirname basename/;
+use List::Util qw/sum/;
 
 use Test::More tests => 3;
 
@@ -29,46 +30,45 @@ note $readMetricsLog;
 # The exception is that the Vibrio sample is only the
 # 3 Mb chromosome and so the coverage calculation
 # will be off.
+note "Reading from $run/readMetrics.tsv";
+
 subtest "Expected coverage" => sub {
-  plan tests => 8;
+  plan tests => 4;
   my %expected = (
-    "FA1090_1.fastq.gz"           => 5,
-    "FA1090_2.fastq.gz"           => 5,
-    "2010EL-1786_1.fastq.gz"      => 3.8,
-    "2010EL-1786_2.fastq.gz"      => 3.8,
-    "Philadelphia_CDC_1.fastq.gz" => 5,
-    "Philadelphia_CDC_2.fastq.gz" => 5,
-    "LT2_1.fastq.gz"              => 5,
-    "LT2_2.fastq.gz"              => 5,
+    "FA1090"                      => [5, 5],
+    "2010EL-1786"                 => [3.8, 3.8],
+    "Philadelphia_CDC"            => [5, 5],
+    "LT2"                         => [5, 5],
   );
   open(my $fh, "$run/readMetrics.tsv") or die "ERROR reading $run/readMetrics.tsv: $!";
-  #system("wc -l $run/readMetrics.tsv");
+  my $header = <$fh>;
+  chomp($header);
+  my @header = split(/\t/, $header);
   while(<$fh>){
     chomp;
-    my ($file, $avgReadLength, $totalBases, $minReadLength, $maxReadLength, $avgQuality, $numReads, $coverage) 
-        = split(/\t/, $_);
+    my %F;
+    @F{@header} = split /\t/;
 
-    $file = basename($file);
-    
-    # Skip header
-    if($file =~ /File/i){
+    my $sample = $F{Sample};
+
+    if(!$expected{$sample}){ 
+      note "Skipping sample $sample: not found in list of results to check against";
       next;
     }
-    if(!$expected{$file}){ 
-      note "Skipping fastq file $file: not found in list of results to check against";
-      next;
-    }
-    subtest "Coverage for $file" => sub{
+
+    subtest "Coverage for $sample" => sub{
       plan tests => 3;
-      my $is_numerical = isnt($coverage, '.', "Coverage is numerical");
+      my $expCoverage = sum(@{ $expected{$sample} });
+
+      my $is_numerical = isnt($F{coverage}, '.', "Coverage is numerical");
       if($is_numerical){
-        cmp_ok($coverage, '>', $expected{$file} - 1, "Coverage numerical test");
-        cmp_ok($coverage, '<', $expected{$file} + 1, "Coverage numerical test");
+        cmp_ok($F{coverage}, '>', $expCoverage - 1, "Coverage numerical test");
+        cmp_ok($F{coverage}, '<', $expCoverage + 1, "Coverage numerical test");
       } else {
         fail("Coverage");
         fail("Coverage");
       }
-    }
+    };
   }
   close $fh;
 };
