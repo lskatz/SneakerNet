@@ -26,7 +26,7 @@ use MIME::Base64 qw/encode_base64/;
 our $VERSION = "3.0";
 our $CITATION= "SneakerNet report by Lee Katz";
 
-local $0=fileparse $0;
+local $0=basename $0;
 exit(main());
 
 sub main{
@@ -171,33 +171,23 @@ sub makeMultiQC_config{
 
   # Build the yaml hash which will be written later
   my %yamlHash = ();
+  # hide fastqc from the general stats table
+  $yamlHash{table_columns_visible} = {
+    FastQC => "false",
+  };
+  # Sort the columns so that emojis are first
   $yamlHash{table_columns_placement}{general_stats_table} = {
       emoji        => 900,
       failure_code => 910,
       score        => 915,
-      cov1         => 920,
-      cov2         => 922,
+      cov          => 918,
+      #cov1         => 920,
+      #cov2         => 922,
       qual1        => 930,
       qual2        => 932,
   };
-  $yamlHash{custom_data}{sn_report_}{plot_type} = "generalstats";
-  $yamlHash{custom_data}{sn_report }{plot_type} = "generalstats";
-=cut
-  $yamlHash{module_order}[0] = {fastqc => {
-      name    => "fastqc R1",
-      anchor  => "fastqc_R1",
-      info    => "FastQC for R1",
-      target  => "",
-      path_filters => ["'*_1_fastqc.zip'"],
-  }};
-  $yamlHash{module_order}[1] = {fastqc => {
-      name    => "fastqc R2",
-      anchor  => "fastqc_R2",
-      info    => "FastQC for R2",
-      target  => "",
-      path_filters => ["'*_2_fastqc.zip'"],
-  }};
-=cut
+  # TODO software versions.
+  # maybe through SneakerNet.checkdeps.pl with a new --yaml parameter?
   
   my $mqcBuildDir = "$dir/SneakerNet/MultiQC-build";
 
@@ -280,8 +270,8 @@ sub makeSummaryTable{
       chomp;
       my %F;
       @F{@rmHeader}=split(/\t/,$_);
-      $F{File} = basename($F{File});
-      $readMetrics{$F{File}} = \%F;
+      #$F{File} = basename($F{File});
+      $readMetrics{$F{Sample}} = \%F;
     }
     close $readMetricsFh;
   }
@@ -318,22 +308,24 @@ sub makeSummaryTable{
     my $emoji = $$happiness[$emojiIdx];
 
     # Get the coverage and quality
-    my $cov = "";
-    my $qual= "";
-    for my $fastq(@{ $$s{fastq} }){
-      my $f = basename($fastq);
-      $readMetrics{$f}{coverage}   //= -1;
-      $readMetrics{$f}{avgQuality} //= -1;
-      $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
-      $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
-    }
-    $cov =~ s/\s+$//;
-    $qual=~ s/\s+$//;
+    #my $cov = "";
+    #my $qual= "";
+    #for my $fastq(@{ $$s{fastq} }){
+    #  my $f = basename($fastq);
+    #  $readMetrics{$f}{coverage}   //= -1;
+    #  $readMetrics{$f}{avgQuality} //= -1;
+    #  $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
+    #  $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
+    #}
+    #$cov =~ s/\s+$//;
+    #$qual=~ s/\s+$//;
 
-    my $cov1 = $readMetrics{basename($$s{fastq}[0])}{coverage};
-    my $cov2 = $readMetrics{basename($$s{fastq}[1])}{coverage};
-    my $qual1= $readMetrics{basename($$s{fastq}[0])}{avgQuality};
-    my $qual2= $readMetrics{basename($$s{fastq}[1])}{avgQuality};
+    # Add these columsn to the general stats table in multiqc
+    my $cov  = $readMetrics{$sampleName}{coverage};
+    my $cov1 = $readMetrics{$sampleName}{coverage1};
+    my $cov2 = $readMetrics{$sampleName}{coverage2};
+    my $qual1= $readMetrics{$sampleName}{avgQuality1};
+    my $qual2= $readMetrics{$sampleName}{avgQuality2};
     
     @failure_code = ("None") if(!@failure_code);
     $tableRow{$sampleName} = {
@@ -343,6 +335,7 @@ sub makeSummaryTable{
       failure_code => join(", ", @failure_code),
       qual1   => $qual1,
       qual2   => $qual2,
+      cov     => $cov,
       cov1    => $cov1,
       cov2    => $cov2,
       taxon   => $$s{taxon},
@@ -353,7 +346,7 @@ sub makeSummaryTable{
 
   # Write the summary table
   open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
-  my @header = qw(sample emoji score failure_code qual1 qual2 cov1 cov2 taxon);
+  my @header = qw(sample emoji score failure_code qual1 qual2 cov taxon);
   print $fh join("\t", @header)."\n";
   for my $sample(@sortedSample){
     my $info = $tableRow{$sample};
@@ -391,6 +384,13 @@ sub report{
 
   for my $key(@sortedKeys){
     my $value = $$p{$plugin}{$key};
+
+    # Don't parse things that are meant for MultiQC
+    # and those are marked with `mqc`.
+    if($key =~ /mqc/i){
+      next;
+    }
+
     # This is usually if a key is 'table'
     # but I don't want to stop a plugin from having 
     # two tables that collide with each other over
@@ -453,21 +453,30 @@ sub tableHtml{
   
   my $numColumns= 1;
   my $seen_footer = 0;
+  my $seen_content = 0;
   my $rowCounter = 0;
   my $abspath = File::Spec->rel2abs($value, $dir);
   open(my $fh, $abspath) or return "";
-  #logmsg("WARNING: could not open $abspath: $!");
   while(<$fh>){
     chomp;
 
+    # Don't make a footer if we haven't even seen the first row
+    # but do make a footer if we see # or NOTE
     if(/^#|^NOTE/i){
-      $seen_footer = 1;
-      s/^#//;
-      $html .= "</tbody>\n<tfoot>\n";
+      if($seen_content){
+        $seen_footer = 1;
+        s/^#//;
+        $html .= "</tbody>\n<tfoot>\n";
+      } else {
+        next;
+      }
     }
+
     if($rowCounter == 0){
       $html.="<thead>\n";
     }
+
+    $seen_content = 1;
 
     my @F = split /$sep/;
     my $colspan = 2;

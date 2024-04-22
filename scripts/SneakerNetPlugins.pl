@@ -108,6 +108,7 @@ sub main{
           logmsg "  ... however, --keep-going was specified and I will ignore that.";
           next;
         }
+        die "  ... crashing because --keep-going was not specified";
       }
     }
     chdir($cwd) or die "ERROR: could not change back to directory $cwd: $!"; # go back to original directory

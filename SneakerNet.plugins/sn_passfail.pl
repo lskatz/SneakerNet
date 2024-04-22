@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv @rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "7.0";
+our $VERSION = "8.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -144,8 +144,8 @@ sub identifyBadRuns{
       chomp;
       my %F;
       @F{@header}=split(/\t/,$_);
-      $F{File} = basename($F{File});
-      $readMetrics{$F{File}} = \%F;
+      #$F{File} = basename($F{File});
+      $readMetrics{$F{Sample}} = \%F;
     }
     close READMETRICS;
   }
@@ -227,75 +227,42 @@ sub identifyBadRuns{
     );
 
     # Skip anything that says undetermined.
-    if($samplename=~/^Undetermined/i){
+    if($samplename=~/^(Undetermined)/i){
+      logmsg "Sample name $samplename contains '$1' and will therefore be skipped." if($$settings{debug});
       next;
     }
 
     # Get the name of all files linked to this file through the sample.
     $$sampleInfo{$samplename}{fastq}//=[]; # Set {fastq} to an empty list if it does not exist
-    my @file=@{$$sampleInfo{$samplename}{fastq}};
 
     # Get metrics from the fastq files
     my $totalCoverage = 0;
-    my %is_passing_quality = (); # Whether a read passes quality
-    for my $fastq(@file){
-      my $fastqMetrics = $readMetrics{basename($fastq)};
 
-      # Coverage
-      $$fastqMetrics{coverage} //= '.';    # by default, dot.
-      if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
-        logmsg "Coverage calculation undefined for $samplename" if($$settings{debug});
-        $totalCoverage = -1; # -1 means 'unknown' coverage
+    # Uncover the total coverage for the sample
+    if(defined $readMetrics{$samplename}{coverage}){
+      $totalCoverage = $readMetrics{$samplename}{coverage};
+      logmsg "Coverage calculation: Sample $samplename => ${totalCoverage}x" if($$settings{debug});
+      if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
+        logmsg "  I will fail this sample for coverage: $samplename" if($$settings{debug});
+        $fail{coverage} = 1;
       } else {
-        $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
-        $totalCoverage += $$fastqMetrics{coverage};
-        logmsg "Coverage calculation: Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
-      }
-
-      $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
-      # If avgQual is missing, then -1 for unknown pass status
-      $$fastqMetrics{avgQuality} //= '.';
-      if($$fastqMetrics{avgQuality} eq '.'){
-        #logmsg "$samplename/".basename($fastq)." qual is $$fastqMetrics{avgQuality}" if($$settings{debug});
-        $is_passing_quality{$fastq} = -1;
-      }
-      # Set whether this fastq passes quality by the > comparison:
-      # if yes, then bool=true, if less than, bool=false
-      else {
-        $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
-        $is_passing_quality{$fastq} += 0; # force to int/boolean
-        #logmsg "$samplename/".basename($fastq)." passes quality?  $is_passing_quality{$fastq} (boolean)" if($$settings{debug});
+        logmsg "  I will not fail this sample for coverage: $samplename" if($$settings{debug});
+        $fail{coverage} = 0;
       }
     }
 
-    # Set whether the sample fails coverage
-    #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
-    if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
-      logmsg "  I will fail this sample for coverage: $samplename" if($$settings{debug});
-      $fail{coverage} = 1;
+    # Check R1 and R2 quality to be above threshold
+    $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
+    # Quality scores are either defined or are the biggest int possible ~0.
+    my $Q1 = $readMetrics{$samplename}{avgQuality1} // ~0;
+    my $Q2 = $readMetrics{$samplename}{avgQuality2} // ~0;
+    my $qThreshold = $$sampleInfo{$samplename}{taxonRules}{quality};
+    if($Q1 >= $qThreshold && $Q2 >= $qThreshold){
+      logmsg "Sample passed quality: $samplename" if($$settings{debug});
+      $fail{quality} = 0;
     } else {
-      logmsg "  I will not fail this sample for coverage: $samplename" if($$settings{debug});
-      $fail{coverage} = 0;
-    }
-    if($totalCoverage == -1){
-      logmsg "  Calculation for the coverage for this sample is undefined: $samplename" if($$settings{debug});
-      $fail{coverage} = -1;
-    }
-
-    # if any filename fails quality, then overall quality fails
-    while(my($fastq,$passed) = each(%is_passing_quality)){
-      # If
-      if($passed == 0){
-        $fail{quality} = 1;
-        logmsg "  I will fail sample $samplename on quality because ".basename($fastq) if($$settings{debug});
-        last;
-      }
-      # Likewise if a file's quality is unknown, then it's all unknown
-      if($passed == -1){
-        $fail{quality} = -1;
-        logmsg "  I will set quality failure as unknown for sample $samplename because ".basename($fastq) if($$settings{debug});
-        last;
-      }
+      logmsg "Sample failed quality: $samplename (Q1:$Q1 Q2:$Q2)" if($$settings{debug});
+      $fail{quality} = 1;
     }
 
     # Did it pass by kraken / read classification
@@ -336,7 +303,6 @@ sub identifyBadRuns{
     # Did it pass by kraken / read classification
     # Start with a stance that we do not know (value: -1)
 
-    #die Dumper [\%assemblyMetrics, {%{$assemblyMetrics{$samplename}}}, $samplename];
     my $minNs = $$sampleInfo{$samplename}{taxonRules}{assembly_percentN};
     my $longestContigThreshold = $$sampleInfo{$samplename}{taxonRules}{longest_contig};
     if(defined($minNs) && defined($longestContigThreshold)){

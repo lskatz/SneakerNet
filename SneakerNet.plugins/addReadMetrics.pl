@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Data::Dumper;
-use File::Copy qw/move copy/;
+use File::Copy qw/mv cp/;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use FindBin;
@@ -45,10 +45,8 @@ sub main{
   # Mark this file as something to attach for an email later
   mkdir "$dir/SneakerNet" if(!-d "$dir/SneakerNet");
   mkdir "$dir/SneakerNet/forEmail" if(!-d "$dir/SneakerNet/forEmail");
-  if(! -f "$dir/SneakerNet/forEmail/readMetrics.tsv"){
-    link("$dir/readMetrics.tsv","$dir/SneakerNet/forEmail/readMetrics.tsv")
-      or die "ERROR: could not hard link readMetrics.tsv to $dir/SneakerNet/forEmail/ - $!";
-  }
+  cp("$dir/readMetrics.tsv", "$dir/SneakerNet/forEmail/readMetrics.tsv")
+    or die "ERROR: could not cp $dir/readMetrics.tsv => $dir/SneakerNet/forEmail/readMetrics.tsv: $!";
 
   my $rawMultiQC = makeMultiQC($dir, $settings);
 
@@ -86,7 +84,18 @@ sub makeMultiQC{
   }
   close $fh;
 
-  command("fastqc --nogroup $dir/*.fastq.gz -o $dir/SneakerNet/MultiQC-build/fastqc --noextract --threads $$settings{numcpus}");
+  # Get all the fastq files
+  my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
+  #my %fastq;
+  my @fastq;
+  while(my($sample,$info) = each(%$sampleInfo)){
+    #$fastq{$sample} = $$info{fastq};
+    push(@fastq, @{ $$info{fastq} });
+  }
+  my $fastqs = join(" ", @fastq);
+
+  mkdir("$dir/SneakerNet/MultiQC-build/fastqc");
+  command("fastqc --nogroup $fastqs -o $dir/SneakerNet/MultiQC-build/fastqc --noextract --threads $$settings{numcpus}");
 
   return $outtable;
 }
@@ -101,7 +110,15 @@ sub addReadMetrics{
 
   logmsg "Running fast read metrics";
 
-  my $Q=Thread::Queue->new(glob("$dir/*.fastq.gz"));
+  # Get all the fastq files
+  my %fastq;
+  my @fastq;
+  while(my($sample,$info) = each(%$sampleInfo)){
+    $fastq{$sample} = $$info{fastq};
+    push(@fastq, @{ $$info{fastq} });
+  }
+
+  my $Q=Thread::Queue->new(@fastq);
   my @thr;
   for (0..$$settings{numcpus}-1){
     $thr[$_]=threads->new(\&readMetricsWorker, $Q, $settings);
@@ -113,71 +130,50 @@ sub addReadMetrics{
     my $subMetrics = $_->join;
     %metrics = (%metrics, %$subMetrics);
   }
+
+  # Start generating the output file as a tmp file,
+  # to be mv'd later
   open(my $fh, ">", "$dir/readMetrics.tsv.tmp") or die "ERROR: could not write to $dir/readMetrics.tsv.tmp: $!";
-  my @header = qw(File avgReadLength totalBases minReadLength maxReadLength avgQuality numReads coverage);
+
+  # Figure out the headers
+  my @metricsHeader = qw(coverage avgQuality avgReadLength totalBases minReadLength maxReadLength numReads);
+  my @m1Header = map{$_."1"} @metricsHeader;
+  my @m2Header = map{$_."2"} @metricsHeader;
+  my @header = ("Sample", @m1Header, @m2Header, "coverage");
+  
+  # Print the headers
   print $fh join("\t", @header)."\n";
-  for my $fastq(sort(keys(%metrics))){
-    my $m = $metrics{$fastq};
-    print $fh join("\t", basename($fastq), $$m{avgReadLength}, $$m{totalBases}, $$m{minReadLength}, 
-                         $$m{maxReadLength}, $$m{avgQuality}, $$m{numReads}, $$m{coverage}) . "\n";
-  }
-  close $fh;
+  for my $sample(sort(keys(%fastq))){
+    print $fh $sample;
+    my $totalCoverage = 0;
 
+    for my $fastq(@{ $fastq{$sample} }){
+      my $m = $metrics{$fastq};
 
-=cut
-  # Write to the output file
-  open(my $fh, ">>", "$tempdir/readMetrics.tsv") or die "ERROR: could not append to $tempdir/readMetrics.tsv: $!";
-  print $fh join("\t", qw(File avgReadLength totalBases minReadLength maxReadLength avgQuality numReads coverage))."\n";
-  while(my($fastq,$m) = each(%metrics)){
-    print $fh join("\t", basename($fastq), $$m{avgReadLength}, $$m{totalBases}, $$m{minReadLength}, 
-                         $$m{maxReadLength}, $$m{avgQuality}, $$m{numReads}, $$m{coverage}) . "\n";
-  }
-  close $fh;
+      # Quickly calculate coverage here
+      my $genomeSize = $$sampleInfo{$sample}{taxonRules}{genomesize};
+      $$m{coverage} = sprintf("%0.2f", $$m{totalBases} / $genomeSize);
+      $totalCoverage += $$m{coverage};
 
-  return "$tempdir/readMetrics.tsv";
-
-  system("cat $$settings{tempdir}/*/readMetrics.tsv | head -n 1 > $dir/readMetrics.tsv.tmp"); # header
-  system("sort -k3,3n $$settings{tempdir}/*/readMetrics.tsv | uniq -u >> $dir/readMetrics.tsv.tmp"); # content
-  die if $?;
-=cut
-
-  # edit read metrics to include genome sizes
-  logmsg "Backfilling values in $dir/readMetrics.tsv";
-  my $newReadMetrics;
-  open(READMETRICS,"$dir/readMetrics.tsv.tmp") or die "ERROR: could not open $dir/readMetrics.tsv.tmp because $!";
-  open(READMETRICSFINAL,">","$dir/readMetrics.tsv") or die "ERROR: could not open $dir/readMetrics.tsv for writing: $!";
-
-  # get the header and also put it into the final output file
-  my $header=<READMETRICS>;
-  print READMETRICSFINAL $header;
-  #chomp($header);
-  #my @header=split(/\t/,$header);
-  while(<READMETRICS>){
-    chomp;
-    # read in each line into the appropriate header
-    my %h;
-    @h{@header}=split(/\t/);
-
-    # find the genome size based on the filename
-    my $coverage=calculateCoverage(\%h,$sampleInfo,$settings);
-    $h{coverage}=$coverage;
-    $h{File}=basename($h{File});
-
-    for(@header){
-      print READMETRICSFINAL "$h{$_}\t";
+      for(my $i=0;$i<@metricsHeader;$i++){
+        my $value = $$m{$metricsHeader[$i]} || "UNKNOWN";
+        print $fh "\t$value";
+      }
     }
-    print READMETRICSFINAL "\n";
-  }
-  close READMETRICSFINAL;
-  close READMETRICS;
+    print $fh "\t$totalCoverage";
+    print $fh "\n";
 
-  # Clean up by removing the temporary file
-  unlink("$dir/readMetrics.tsv.tmp");
+  }
+  close $fh;
+
+  mv("$dir/readMetrics.tsv.tmp", "$dir/readMetrics.tsv")
+    or die "ERROR: could not mv $dir/readMetrics.tsv.tmp => $dir/readMetrics.tsv: $!";
+
 }
 
 sub readMetricsWorker{
   my($Q, $settings)=@_;
-  
+
   my %metrics;
 
   my $tempdir=tempdir("worker.XXXXXX", DIR=>$$settings{tempdir}, CLEANUP=>1);
