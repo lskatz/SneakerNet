@@ -186,8 +186,24 @@ sub makeMultiQC_config{
       qual1        => 930,
       qual2        => 932,
   };
+
+  my $pluginProperties = readProperties($dir);
+  while(my($plugin, $info) = each(%$pluginProperties)){
+    while(my($key, $value) = each(%$info)){
+      if($key eq 'version'){
+        $yamlHash{software_versions}{$plugin} = "'$value'";
+      }
+      elsif($key =~ /(.+?)-version/){
+        $yamlHash{software_versions}{"${plugin}__${1}"} = "'$value'";
+      }
+    }
+  }
+
   # TODO software versions.
   # maybe through SneakerNet.checkdeps.pl with a new --yaml parameter?
+  # Probably solve this by adding a version subroutine inside of the SN library
+  # and standardize how each software version is determined across scripts.
+  # Then, add the software versions in properties.txt.
   
   my $mqcBuildDir = "$dir/SneakerNet/MultiQC-build";
 

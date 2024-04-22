@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 my %errors = ();
@@ -61,7 +61,9 @@ sub main{
   my $outdir=runKrakenOnDir($dir,$settings);
 
   my $errorsMsg = join(" ", keys(%errors));
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
+  my $krakenVersion = `kraken --version | grep -m 1 version`; 
+  chomp($krakenVersion);
+  recordProperties($dir,{'kraken-version'=>$krakenVersion, version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
 
   return 0;
 }
