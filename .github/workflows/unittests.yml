@@ -193,6 +193,6 @@ jobs:
           sed -i 's+/opt/kraken/full-20140723+/kraken-database+g' config/settings.conf
           #prove -lv t
           make
-          #make test
+          make test
 
 
