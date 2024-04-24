@@ -30,14 +30,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(minpercent|min_percent|min-percent=f minwarning|min_warning|min-warning=f version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  my @exe = qw(zip kraken kraken-translate kraken-report ktImportText);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      zip       => 'zip --version | grep "This is Zip"',
-      kraken    => 'kraken --version | grep -m 1 version',
-      'kraken-translate (Kraken)' => 'kraken-translate --version | grep -m 1 version',
-      'kraken-report (Kraken)'    => 'kraken-report --version | grep -m 1 version',
-      'ktImportText (Krona)'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -70,6 +67,7 @@ sub main{
     table          => "$dir/SneakerNet/forEmail/kraken.tsv",
     warnings       => $warningsMsg,
     mqc            => $rawMultiQC,
+    exe            => \@exe,
   });
   # also record if there are any potentially contaminated samples
 

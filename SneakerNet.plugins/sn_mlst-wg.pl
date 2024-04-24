@@ -26,13 +26,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help debug tempdir=s numcpus=i force )) or die $!;
+  my @exe = qw(zip python3 chewBBACA.py blastn);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      zip       => 'zip --version | grep "This is Zip"',
-      'python3 (Python3)'   => 'python3 --version',
-      'chewBBACA.py (chewBBACA)' => 'chewBBACA.py -h 2>&1 | grep -m 1 -i version',
-      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -95,7 +93,7 @@ sub main{
   print $fh "# ASM: similar to ALM but for alleles 20% smaller than length mode distribution of the matched loci\n";
   close $fh;
 
-  recordProperties($dir,{version=>$VERSION,table=>$outputTsv});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION,table=>$outputTsv});
 
   return 0;
 }

@@ -27,39 +27,19 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  my @exe = (
+    "cat", "sort", "head", "uniq", "touch", "shovill", "prodigal", "quast",
+    # shovill requires a ton of things:
+    "seqtk", "pigz", "mash", "pigz", "trimmomatic",
+    "lighter", "flash", "spades.py", "skesa", "gfa_connector",
+    "bwa", "samtools", "samclip", "java", "pilon",
+    # not using megahit or velvet in this instance of shovill
+    "megahit", "megahit_toolkit", "velveth", "velvetg",
+  );
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      cat                             => 'cat --version | head -n 1',
-      sort                            => 'sort --version | head -n 1',
-      head                            => 'head --version | head -n 1',
-      uniq                            => 'uniq --version | head -n 1',
-      touch                           => 'touch --version | head -n 1',
-      shovill                         => 'shovill --version',
-      prodigal                        => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
-
-      # shovill requires a ton of things:
-      'seqtk'       => 'seqtk 2>&1 | grep Version',
-      'pigz'        => 'pigz --version 2>&1',
-      'mash'        => 'mash --version 2>&1',
-      'pigz'        => 'pigz --version 2>&1',
-      'trimmomatic' => 'trimmomatic -version 2>&1 | grep -v _JAVA',
-      'lighter'     => 'lighter -v 2>&1',
-      'flash'       => 'flash --version 2>&1 | grep FLASH',
-      'spades.py'   => 'spades.py  --version 2>&1',
-      'skesa'       => 'skesa --version 2>&1 | grep SKESA',
-      'gfa_connector' => 'gfa_connector --version 2>/dev/null | grep gfa_connector',
-      'bwa'         => 'bwa 2>&1 | grep Version:',
-      'samtools'    => 'samtools 2>&1 | grep Version:',
-      'samclip'     => 'samclip --version 2>&1',
-      'java'        => 'java -version 2>&1 | grep version',
-      'pilon'       => 'pilon --version 2>&1 | grep -v _JAVA',
-
-      # not using megahit or velvet in this instance of shovill
-      'megahit'     => 'megahit --version 2>&1',
-      'megahit_toolkit' => 'megahit_toolkit dumpversion 2>&1',
-      'velveth'     => 'velveth 2>&1 | grep Version',
-      'velvetg'     => 'velvetg 2>&1 | grep Version',
+      exe => \@exe,
     }, $settings,
   );
 
@@ -108,7 +88,8 @@ sub main{
   }
 
   recordProperties($dir,{version=>$VERSION,
-    "Minimum contig length for assembly metrics" => "500bp",
+    "Minimum contig length for assembly metrics" => "1000bp",
+    exe => \@exe,
   });
 
   return 0;

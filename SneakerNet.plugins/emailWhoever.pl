@@ -35,11 +35,11 @@ sub main{
   GetOptions($settings,qw(citation check-dependencies version help force numcpus=i debug tempdir=s email-only|email|just=s)) or die $!;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
 
+  my @exe = qw(sendmail uuencode);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'apt-cache show sendmail 2>/dev/null | grep Version || rpm -qi sendmail 2>/dev/null | grep Version',
-      uuencode  => 'uuencode --version | grep uuencode',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -55,6 +55,7 @@ sub main{
     reportSentTo=>join(", ", @$to),
     dateSent=>strftime("%Y-%m-%d", localtime()),
     timeSent=>strftime("%H:%M:%S", localtime()),
+    exe => \@exe,
   });
 
   return 0;

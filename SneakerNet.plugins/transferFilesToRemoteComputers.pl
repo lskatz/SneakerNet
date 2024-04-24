@@ -25,11 +25,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version careful citation check-dependencies tempdir=s help inbox=s debug force force-transfer numcpus=i)) or die $!;
+  my @exe = qw(rsync ssh);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      rsync     => 'rsync --version | grep version',
-      ssh       => 'ssh -V 2>&1',
+      exe => \@exe,
     }, $settings,
   );
 
@@ -85,6 +85,7 @@ sub main{
     version=>$VERSION,
     dateSent=>strftime("%Y-%m-%d", localtime()),
     timeSent=>strftime("%H:%M:%S", localtime()),
+    exe     => \@exe,
   });
 
   return 0;

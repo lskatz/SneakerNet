@@ -27,9 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(help force citation check-dependencies inbox=s debug test numcpus=i tempdir=s version)) or die $!;
+  my @exe = qw(seqtk fastqc);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
+      exe => \@exe,
     }, $settings,
   );
 
@@ -50,7 +52,7 @@ sub main{
 
   my $rawMultiQC = makeMultiQC($dir, $settings);
 
-  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv", mqc=>$rawMultiQC});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION, table=>"$dir/SneakerNet/forEmail/readMetrics.tsv", mqc=>$rawMultiQC});
 
   return 0;
 }

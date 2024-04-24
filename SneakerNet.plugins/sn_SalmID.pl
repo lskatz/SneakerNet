@@ -26,12 +26,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help numcpus=i debug tempdir=s force)) or die $!;
+  my @exe = qw(cat mv SalmID.py);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      "cat (GNU coreutils)"   => 'cat --version | head -n 1',
-      "mv  (GNU coreutils)"   => 'mv --version | head -n 1',
-      'SalmID.py (SalmID)'    => 'echo Unknown Version',
+      exe => \@exe,
     }, $settings,
   );
 
@@ -48,7 +47,7 @@ sub main{
 
   command("cat $dir/SneakerNet/SalmID/*/*.tsv > $dir/SneakerNet/forEmail/SalmID.tsv");
 
-  recordProperties($dir,{version=>$VERSION,table=>"$dir/SneakerNet/forEmail/SalmID.tsv"});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION,table=>"$dir/SneakerNet/forEmail/SalmID.tsv"});
 
   return 0;
 }

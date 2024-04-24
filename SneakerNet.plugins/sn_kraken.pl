@@ -29,14 +29,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  my @exe = qw(zip kraken kraken-translate kraken-report ktImportText);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      zip       => 'zip --version | grep "This is Zip"',
-      kraken    => 'kraken --version | grep -m 1 version',
-      'kraken-translate (Kraken)' => 'kraken-translate --version | grep -m 1 version',
-      'kraken-report (Kraken)'    => 'kraken-report --version | grep -m 1 version',
-      'ktImportText (Krona)'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -63,7 +60,7 @@ sub main{
   my $errorsMsg = join(" ", keys(%errors));
   my $krakenVersion = `kraken --version | grep -m 1 version`; 
   chomp($krakenVersion);
-  recordProperties($dir,{'kraken-version'=>$krakenVersion, version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
 
   return 0;
 }

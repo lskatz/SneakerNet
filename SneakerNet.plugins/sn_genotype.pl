@@ -24,10 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(kma);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      kma       => "kma -v",
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -53,7 +54,7 @@ sub main{
 
   my $kmaVersion = `kma -v`;
   chomp($kmaVersion);
-  recordProperties($dir,{version=>$VERSION, table=>$table, kma_version=>$kmaVersion, mqc=>$rawMultiQC});
+  recordProperties($dir,{exe => \@exe, version=>$VERSION, table=>$table, kma_version=>$kmaVersion, mqc=>$rawMultiQC});
 
   logmsg "Table can be found in $table";
 

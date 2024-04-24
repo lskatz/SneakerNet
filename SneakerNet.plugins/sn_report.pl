@@ -32,9 +32,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(multiqc cat);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -64,6 +66,7 @@ sub main{
     time=>strftime("%H:%M:%S", localtime()),
     fullpath=>realpath($dir).'/SneakerNet',
     mqc => $rawMultiQC,
+    exe => \@exe,
   });
 
   my $properties = readProperties($dir);
@@ -187,6 +190,7 @@ sub makeMultiQC_config{
       qual2        => 932,
   };
 
+  # Versioning
   my $pluginProperties = readProperties($dir);
   while(my($plugin, $info) = each(%$pluginProperties)){
     while(my($key, $value) = each(%$info)){
@@ -198,6 +202,7 @@ sub makeMultiQC_config{
       }
     }
   }
+  $yamlHash{software_versions}{SneakerNet} = "'".$SneakerNet::VERSION."'";
 
   # TODO software versions.
   # maybe through SneakerNet.checkdeps.pl with a new --yaml parameter?

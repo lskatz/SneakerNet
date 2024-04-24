@@ -9,7 +9,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use File::Copy qw/mv/;
+use File::Copy qw/mv cp/;
 use FindBin;
 
 use threads;
@@ -37,7 +37,7 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      cp        => 'cp --version | head -n 1',
+      exe => [ ],
     }, $settings,
   );
 
@@ -49,7 +49,8 @@ sub main{
 
   my $out=baseBalanceAll($dir,$settings);
   
-  command("cp -v $out $dir/SneakerNet/forEmail/ >&2");
+  my $target = "$dir/SneakerNet/forEmail/".basename($out);
+  cp($out, $target) or die "ERROR: could not copy $out => $target";
 
   my $rawMultiQC = makeMultiQC($dir, $settings);
 
@@ -157,9 +158,11 @@ sub baseBalanceWorker{
 sub baseBalance{
   my($sHash,$outdir,$settings)=@_;
 
-  logmsg $$sHash{sample_id};
   my $outfile="$outdir/$$sHash{sample_id}.tsv";;
-  return $outfile if(-e $outfile && (-s $outfile > 0));
+  logmsg "Running base balance for $$sHash{sample_id} => $outfile";
+  if(!$$settings{force}){
+    return $outfile if(-e $outfile && (-s $outfile > 0));
+  }
 
   open(my $outFh,">","$outfile.tmp") or die "ERROR: could not open $outfile.tmp for writing: $!";
 

@@ -24,11 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help quality=i k|kmer=i force debug tempdir=s numcpus=i mlstfasta=s)) or die $!;
+  my @exe = qw(mlst colorid);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'mlst (tseemann mlst)'      => 'mlst --version',
-      'colorid (ColorID)'   => 'colorid --version',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -85,7 +85,7 @@ sub main{
   my $rawMultiQC = makeMultiQC($dir, $settings);
   logmsg "Made the MultiQC report at $rawMultiQC";
 
-  recordProperties($dir,{version=>$VERSION, table=>$finalReport, mqc=>$rawMultiQC});
+  recordProperties($dir,{exe=>\@exe, version=>$VERSION, table=>$finalReport, mqc=>$rawMultiQC});
 
   return 0;
 }

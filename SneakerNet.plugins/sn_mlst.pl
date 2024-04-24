@@ -27,12 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(mlst blastn rm);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      mlst      => 'mlst --version',
-      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
-      rm        => 'rm --version | head -n 1',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -72,7 +71,7 @@ sub main{
 
   my $rawMultiQC = makeMultiQC($dir, $settings);
 
-  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv", mqc=>$rawMultiQC});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv", mqc=>$rawMultiQC});
 
   return 0;
 }

@@ -24,11 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version emails=s citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(sendmail uuencode);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'apt-cache show sendmail 2>/dev/null | grep Version || rpm -qi sendmail 2>/dev/null | grep Version',
-      uuencode  => 'uuencode --version | grep uuencode',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -116,18 +116,19 @@ sub main{
      $body.= "\nDocumentation can be found at https://github.com/lskatz/SneakerNet/blob/master/docs/plugins/sn_immediateStatus.pl.md\n";
   
   my $emailFile = "$$settings{tempdir}/email.txt";
-  open(my $fh, ">", $emailFile) or die "ERROR: could not write to $emailFile: $!";
-  print $fh "To: $to\n";
-  print $fh "From: $from\n";
-  print $fh "Subject: $subject\n";
-  print $fh "\n";
-  print $fh "$body\n\n";
-  append_attachment($fh, $outfile);
+  open(my $fh2, ">", $emailFile) or die "ERROR: could not write to $emailFile: $!";
+  print $fh2 "To: $to\n";
+  print $fh2 "From: $from\n";
+  print $fh2 "Subject: $subject\n";
+  print $fh2 "\n";
+  print $fh2 "$body\n\n";
+  append_attachment($fh2, $outfile);
 
   recordProperties($dir,{
       version=>$VERSION, reportTo=>$to, 
       warnings=>$warningMsg, errors=>$errorMsg,
       table=>"$dir/SneakerNet/forEmail/immediateReaction.tsv",
+      exe  => \@exe,
     });
 
   return 0;

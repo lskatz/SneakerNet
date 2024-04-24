@@ -34,23 +34,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  my @exe = qw(run_assembly_metrics.pl cat wget samtools bcftools trimmomatic seqtk bgzip tabix bowtie2 bowtie2-build);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      #'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
-      'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
-      cat                             => 'cat --version | head -n 1',
-      # wget needed in SneakerNet.pm
-      wget                            => 'wget --version | head -n 1',
-      samtools                        => 'samtools 2>&1 | grep Version:',
-      bcftools                        => 'bcftools 2>&1 | grep Version:',
-      'trimmomatic'                   => 'trimmomatic -version 2>&1 | grep -v _JAVA',
-      seqtk                           => 'seqtk 2>&1 | grep -m 1 Version:',
-      # note: buggy bgzip                           => 'bgzip --version | head -n1',
-      bgzip                           => 'which bgzip',
-      tabix                           => 'tabix --version | head -n1',
-      bowtie2                         => 'bowtie2 --version | grep -m 1 version',
-      'bowtie2-build'                   => 'bowtie2-build --version | grep -m 1 version',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -80,6 +68,7 @@ sub main{
     table    => $metricsOut,
     warnings => $warningMsg,
     image    => $imagePath,
+    exe      => \@exe,
   });
 
   return 0;
@@ -190,7 +179,7 @@ sub assembleAll{
     logmsg "Combining metrics into $metricsOut";
     open(my $fh, ">", $metricsOut.".tmp") or die "ERROR: could not write to $metricsOut.tmp: $!";
     my @sample = sort {$a cmp $b} keys(%sampleMetrics);
-    my @header = grep {!/File/} sort{$a cmp $b} keys($sampleMetrics{$sample[0]});
+    my @header = grep {!/File/} sort{$a cmp $b} keys(%{ $sampleMetrics{$sample[0]} });
     print $fh join("\t", "File", @header) ."\n";
     for my $sample(@sample){
       print $fh basename($sampleMetrics{$sample}{File});

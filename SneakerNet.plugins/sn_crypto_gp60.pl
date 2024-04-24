@@ -27,12 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(blastn rm countGP60repeats.pl);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
-      rm        => 'rm --version | head -n 1',
-      'countGP60repeats.pl (GP60_Counter - private repo)' => 'echo GP60 counter unknown version',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -68,7 +67,7 @@ sub main{
 
   logmsg "Results found in $reportFile";
 
-  recordProperties($dir,{version=>$VERSION, table=>$reportFile});
+  recordProperties($dir,{exe => \@exe, version=>$VERSION, table=>$reportFile});
 
   return 0;
 }

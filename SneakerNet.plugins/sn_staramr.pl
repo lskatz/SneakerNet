@@ -24,12 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(staramr blastn mlst);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      staramr   => 'staramr --version',
-      'blastn (BLAST+)'    => 'blastn -version 2>&1',
-      'mlst (tseemann mlst)'      => 'mlst --version',
+      exe => \@exe,
     }, $settings,
   );
 
@@ -90,7 +89,7 @@ sub main{
 
   my $rawMultiQC = makeMultiQC($dir, $settings);
 
-  recordProperties($dir,{version=>$VERSION, table=>$outfile, mqc=>$rawMultiQC});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION, table=>$outfile, mqc=>$rawMultiQC});
 
   # staramr has additional properties for its database
   logmsg "Recording database properties";
