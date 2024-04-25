@@ -89,6 +89,13 @@ our %toolVersion = (
   kma           => 'kma -v',
   multiqc       => 'multiqc --version',
   quast         => 'quast --version',
+  'SalmID.py'   => 'SalmID.py --version',
+
+  # CGP doesn't have a simple version check
+  # and so just have something idiotic
+  'run_assembly_metrics.pl'     => "which run_assembly_metrics.pl >/dev/null 2>&1 && echo 0.0.1",
+  'run_assembly_readMetrics.pl' => "which run_assembly_readMetrics.pl >/dev/null 2>&1 && echo 0.0.1",
+  'run_prediction_metrics.pl'  => "which run_prediction_metrics.pl >/dev/null 2>&1 && echo 0.0.1",
 
   # shovill requires a ton of things:
   'seqtk'       => 'seqtk 2>&1 | grep Version',

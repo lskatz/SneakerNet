@@ -35,7 +35,7 @@ jobs:
           miniforge-variant: Mambaforge
           miniforge-version: latest
           channel-priority: strict
-          channels: conda-forge,bioconda,defaults
+          channels: lskatz,conda-forge,bioconda,defaults
           mamba-version: "*"
           auto-activate-base: true
           activate-environment: "~/conda_pkgs_dir/my-env"
@@ -68,7 +68,7 @@ jobs:
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
-          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal perl-app-cpanminus perl-statistics-descriptive perl-config-simple perl-file-slurp perl-moo perl-list-moreutils kma=1.4 multiqc fastqc bowtie2 perl-gd perl-gdgraph salmid
+          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal perl-app-cpanminus perl-statistics-descriptive perl-config-simple perl-file-slurp perl-moo perl-list-moreutils kma=1.4 multiqc fastqc bowtie2 perl-gd perl-gdgraph salmid perl-text-fuzzy perl-bio-kmer
       - name: check installation
         shell: bash -el {0}
         run: | 
