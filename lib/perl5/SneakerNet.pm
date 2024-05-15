@@ -540,6 +540,7 @@ sub samplesheetInfo_tsv{
     my $ref_commas=join(",", @$ref_id);
     if(defined($ref_id)){
       my $dir = realpath($RealBin."/../db/fasta");
+      mkdir($dir);
       my $ref = "$dir/$ref_name.fasta";
       my $gbk = "$dir/$ref_name.gbk";
 
