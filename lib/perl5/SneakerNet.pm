@@ -758,6 +758,8 @@ sub samplesheetInfo_tsv{
       if(!-e $ref){
         logmsg "Did not find @$ref_id in the SneakerNet installation. Downloading @$ref_id into $gbk and $ref";
         logmsg "  Wget log can be found at $dir/*.log";
+        mkdir dirname($dir);
+        mkdir $dir;
         my $wgetxopts = "";
         if($ENV{NCBI_API_KEY}){
           $wgetxopts .= "&ncbi_api_key=$ENV{NCBI_API_KEY}";
@@ -781,6 +783,8 @@ sub samplesheetInfo_tsv{
       my $bed = "$dir/".basename($primers);
       if(!-e $bed){
         logmsg "Did not find local bed and so I am downloading $primers to $bed";
+        mkdir dirname($dir);
+        mkdir $dir;
         command("wget '$primers' -O $bed");
       }
       $sample{$sampleName}{taxonRules}{primers_bed} = $bed;
