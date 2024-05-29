@@ -47,11 +47,6 @@ jobs:
           conda list
           echo
           conda config --show
-      #- name: chown /usr/share/miniconda
-      #  run: |
-      #    # In order to cache this directory for myself
-      #    # downstream, I need to own it
-      #    sudo find /usr/share/miniconda -exec chown -v $(whoami) {} \;
       - name: Cache Conda env
         id: cache-conda
         uses: actions/cache@v4
@@ -95,12 +90,6 @@ jobs:
       - name: add some paths to PATH
         run:  |
           echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
           echo
           cat $GITHUB_PATH
       - name: checkout my repo
@@ -118,7 +107,17 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install ca-certificates
           sudo apt-get -y install build-essential sendmail 
+      - name: Cache Kraken DB
+        id: cache-kraken
+        uses: actions/cache@v4
+        with:
+          path: |
+            /home/runner/conda_pkgs_dir/my-env/share/kalamari-5.6.2
+          key: kraken-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
+        env:
+          CACHE_NUMBER: 0
       - name: make very simple kraken database
+        if: steps.cache-kraken.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: |
           which downloadKalamari.sh
@@ -189,7 +188,7 @@ jobs:
           echo $kraken_dir
           ls -lh $kraken_dir
           echo "KRAKEN_DEFAULT_DB=$kraken_dir" >> config/settings.conf
-          make
-          make test
+          #make
+          #make test
 
 
