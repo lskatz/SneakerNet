@@ -93,11 +93,11 @@ jobs:
           echo
           cat $GITHUB_PATH
       - name: checkout my repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: SneakerNet
       - name: checkout CG-Pipeline
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: lskatz/CG-Pipeline
           path: CG-Pipeline
