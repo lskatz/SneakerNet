@@ -73,7 +73,7 @@ jobs:
             spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal \
             perl-app-cpanminus perl-statistics-descriptive perl-config-simple \
             perl-file-slurp perl-moo perl-list-moreutils kma=1.4 \
-            multiqc fastqc bowtie2 perl-gd perl-gdgraph salmid staramr
+            multiqc fastqc bowtie2 perl-gd perl-gdgraph salmid staramr kalamari
       - name: check installation
         shell: bash -el {0}
         run: | 
