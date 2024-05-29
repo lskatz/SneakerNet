@@ -112,7 +112,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            /home/runner/conda_pkgs_dir/my-env/share/kalamari-5.6.2
+            /home/runner/conda_pkgs_dir/my-env/share/kalamari-*
           key: kraken-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
           CACHE_NUMBER: 0
