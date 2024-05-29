@@ -188,7 +188,7 @@ jobs:
           echo $kraken_dir
           ls -lh $kraken_dir
           echo "KRAKEN_DEFAULT_DB=$kraken_dir" >> config/settings.conf
-          #make
+          make
           #make test
 
 
