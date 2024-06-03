@@ -17,8 +17,10 @@ subtest 'Perl modules' => sub{
   plan tests => scalar(@module);
 
   for my $module(@module){
-    system("perl -M$module -e 1");
-    is($?, 0, $module);
+    #system("perl -M$module -e 1");
+    #is($?, 0, $module);
+    eval "use $module;";
+    ok(!$@, $module);
   }
 };
 
