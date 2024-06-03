@@ -107,7 +107,7 @@ jobs:
         run:  |
           sudo apt-get update
           sudo apt-get -y install ca-certificates
-          sudo apt-get -y install build-essential sendmail 
+          sudo apt-get -y install build-essential sendmail tree
       - name: Cache Kraken DB
         id: cache-kraken
         uses: actions/cache@v4
@@ -123,6 +123,9 @@ jobs:
         run: |
           which downloadKalamari.sh
           KALAMARI_DEBUG=1 downloadKalamari.sh
+          echo
+          tree $(dirname $(which downloadKalamari.sh))/../share
+          echo
           buildTaxonomy.sh
           filterTaxonomy.sh
           buildKraken1.sh
