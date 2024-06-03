@@ -29,12 +29,11 @@ sub main{
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i coverage=f)) or die $!;
   $$settings{coverage} //= 10;
 
-  my $rsyncVersion=`rsync --version | grep version`;
-  chomp($rsyncVersion);
+  my @exe = qw(rsync);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      rsync     => $rsyncVersion,
+      exe => \@exe,
     }, $settings,
   );
 
@@ -58,6 +57,7 @@ sub main{
     version=>$VERSION,
     table=>$table,
     warnings => $warningsMsg,
+    exe      => \@exe,
   });
 
   return 0;

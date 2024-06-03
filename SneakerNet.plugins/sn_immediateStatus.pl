@@ -14,7 +14,6 @@ use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
 use Text::Fuzzy;
-use Email::Stuffer;
 
 our $VERSION = "1.7";
 our $CITATION= "Immediate status report by Lee Katz";
@@ -25,10 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version emails=s citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(sendmail uuencode);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'sendmail -d0.4 -bv root 2>&1 | grep -m 1 Version',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -114,19 +114,21 @@ sub main{
   my $subject="Initial SneakerNet status for ".basename(File::Spec->rel2abs($dir));
   my $body = "If you see errors below, please contact the bioinformatics team with your run number and when you deposited the run. Include this file in your message.\nRun can be found at ".File::Spec->abs2rel($dir)."\n";
      $body.= "\nDocumentation can be found at https://github.com/lskatz/SneakerNet/blob/master/docs/plugins/sn_immediateStatus.pl.md\n";
-  my $email=Email::Stuffer->from($from)
-                          ->subject($subject)
-                          ->to($to)
-                          ->text_body($body)
-                          ->attach_file($outfile);
-  if(!$email->send){
-    die "ERROR: email was not sent to $to!";
-  }
+  
+  my $emailFile = "$$settings{tempdir}/email.txt";
+  open(my $fh2, ">", $emailFile) or die "ERROR: could not write to $emailFile: $!";
+  print $fh2 "To: $to\n";
+  print $fh2 "From: $from\n";
+  print $fh2 "Subject: $subject\n";
+  print $fh2 "\n";
+  print $fh2 "$body\n\n";
+  append_attachment($fh2, $outfile);
 
   recordProperties($dir,{
       version=>$VERSION, reportTo=>$to, 
       warnings=>$warningMsg, errors=>$errorMsg,
       table=>"$dir/SneakerNet/forEmail/immediateReaction.tsv",
+      exe  => \@exe,
     });
 
   return 0;
@@ -183,6 +185,20 @@ sub doubleCheckRun{
   return \%errHash;
 }
 
+# Add an attachment to an email file handle
+sub append_attachment {
+    my ($fh, $file_path) = @_;
+
+    # Encode the attachment content using base64 encoding
+    my $attachment_name = basename($file_path);
+    my $encoded_content = `uuencode $file_path $attachment_name`;
+    die "Failed to encode attachment content from $file_path: $!" if $?;
+    
+    print $fh $encoded_content . "\n";
+
+    # Print a newline to separate MIME parts
+    print $fh "\n";
+}
 
 sub usage{
   print "Double check a run and its completeness. Email a report.

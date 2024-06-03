@@ -19,10 +19,12 @@ diag `addReadMetrics.pl --check-dependencies 2>&1`;
 if($?){
   BAIL_OUT("Plugin addReadMetrics.pl does not have all dependencies met");
 }
+
 plan tests=>1;
 
 my $readMetricsLog = `addReadMetrics.pl --force $run 2>&1`;
-is $?, 0, "Adding read metrics";
-
 note $readMetricsLog;
+my $exit_code = $? >> 8;
+is $exit_code, 0, "Adding read metrics";
+
 

@@ -89,3 +89,9 @@ inc/
 /*.zip
 
 
+.vscode
+
+t/M00123-18-001-test/wget-log*
+t/M00123-18-001-test/*.log
+t/M00123-18-003-metagenomics/
+t/M00123-20-001-sarscov2

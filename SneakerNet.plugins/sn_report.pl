@@ -7,28 +7,36 @@ use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
+use File::Copy qw/cp/;
 use File::Spec;
 use Cwd qw/realpath/;
 use POSIX qw/strftime/;
 use List::Util qw/min max/;
+
+# Attempt to use a core YAML writer here but the downside
+# is that this is not supposed to be a general purpose
+# YAML writer.
+use TAP::Parser::YAMLish::Writer;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec passfail/;
 use MIME::Base64 qw/encode_base64/;
 
-our $VERSION = "2.7.1";
+our $VERSION = "3.0";
 our $CITATION= "SneakerNet report by Lee Katz";
 
-local $0=fileparse $0;
+local $0=basename $0;
 exit(main());
 
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(multiqc cat);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -43,10 +51,11 @@ sub main{
   # Make the summary table before writing properties
   # so that it can get encoded with the rest of the 
   # tables in the html.
-  my $file = "$dir/SneakerNet/forEmail/QC_summary.tsv";
-  makeSummaryTable($file, $dir, $settings);
+  my $summaryTable = makeSummaryTable($dir, $settings);
 
-  my $pathFromDir = File::Spec->abs2rel(realpath($file), realpath($dir));
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
+  my $pathFromDir = File::Spec->abs2rel(realpath($summaryTable), realpath($dir));
 
   # Special to this plugin: record any properties before
   # reading the properties.
@@ -56,6 +65,8 @@ sub main{
     date=>strftime("%Y-%m-%d", localtime()),
     time=>strftime("%H:%M:%S", localtime()),
     fullpath=>realpath($dir).'/SneakerNet',
+    mqc => $rawMultiQC,
+    exe => \@exe,
   });
 
   my $properties = readProperties($dir);
@@ -146,11 +157,126 @@ sub main{
   close $fh;
   logmsg "Report can be found in $outfile";
 
+  my $run_name = basename(realpath($dir));
+  my $mqcConfig = makeMultiQC_config($dir, $settings);
+  system("cat $mqcConfig | nl -b a");
+  command("multiqc --config $mqcConfig --force $dir/SneakerNet/MultiQC-build --outdir $dir/SneakerNet/MultiQC.out");
+  cp("$dir/SneakerNet/MultiQC.out/multiqc_report.html", "$dir/SneakerNet/forEmail/multiqc_report.html")
+    or die "ERROR: could not cp multiqc_report.html to the forEmail folder: $!";
+
   return 0;
 }
 
+sub makeMultiQC_config{
+  my($dir, $settings) = @_;
+
+  my $yaml = "$$settings{tempdir}/mqc.conf";
+
+  # Build the yaml hash which will be written later
+  my %yamlHash = ();
+  # hide fastqc from the general stats table
+  $yamlHash{table_columns_visible} = {
+    FastQC => "false",
+  };
+  # Sort the columns so that emojis are first
+  $yamlHash{table_columns_placement}{general_stats_table} = {
+      emoji        => 900,
+      failure_code => 910,
+      score        => 915,
+      cov          => 918,
+      #cov1         => 920,
+      #cov2         => 922,
+      qual1        => 930,
+      qual2        => 932,
+  };
+
+  # Versioning
+  my $pluginProperties = readProperties($dir);
+  while(my($plugin, $info) = each(%$pluginProperties)){
+    while(my($key, $value) = each(%$info)){
+      if($key eq 'version'){
+        $yamlHash{software_versions}{$plugin} = "'$value'";
+      }
+      elsif($key =~ /(.+?)-version/){
+        $yamlHash{software_versions}{"${plugin}__${1}"} = "'$value'";
+      }
+    }
+  }
+  $yamlHash{software_versions}{SneakerNet} = "'".$SneakerNet::VERSION."'";
+
+  # TODO software versions.
+  # maybe through SneakerNet.checkdeps.pl with a new --yaml parameter?
+  # Probably solve this by adding a version subroutine inside of the SN library
+  # and standardize how each software version is determined across scripts.
+  # Then, add the software versions in properties.txt.
+  
+  my $mqcBuildDir = "$dir/SneakerNet/MultiQC-build";
+
+  my $configStr = "";
+  my $yw = TAP::Parser::YAMLish::Writer->new;
+  $yw->write(\%yamlHash, \$configStr);
+
+  # Get rid of situations where the yaml writer makes a dash,
+  # then a new line, then the key for this element of the array.
+  # e.g.,
+  #   -
+  #     fastqc:
+  #     name: something
+  # and turn it into
+  #   - fastqc:
+  #       name: something
+  $configStr =~ s/(\-)\s*\n\s+(\w+)/$1 $2/gm;
+
+  # Remove the weird --- and ... opening and closing that
+  # the YAML writer gives.
+  #$configStr =~ s/\-{3}//;
+  #$configStr =~ s/\.{3}//;
+
+  open(my $fh, ">", $yaml) or die "ERROR writing to multiQC config file $yaml: $!";
+  print $fh $configStr;
+  close $fh;
+
+  return $yaml;
+
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/QC_summary.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/qcsummary_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"SneakerNet Summary\"\n";
+  print $outFh "#description: \"Quick stats from SneakerNet<br />$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  print $outFh "#plot_type: 'generalstats'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    s/ +/_/g;
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
+}
+
 sub makeSummaryTable{
-  my($outfile, $dir, $settings) = @_;
+  my($dir, $settings) = @_;
+
+  my $outfile = "$dir/SneakerNet/forEmail/QC_summary.tsv";
 
   # Gather some information
   my $sample   = samplesheetInfo_tsv("$dir/samples.tsv", $settings);
@@ -165,8 +291,8 @@ sub makeSummaryTable{
       chomp;
       my %F;
       @F{@rmHeader}=split(/\t/,$_);
-      $F{File} = basename($F{File});
-      $readMetrics{$F{File}} = \%F;
+      #$F{File} = basename($F{File});
+      $readMetrics{$F{Sample}} = \%F;
     }
     close $readMetricsFh;
   }
@@ -180,7 +306,7 @@ sub makeSummaryTable{
   # Any knock on the perfection of a genome gets this penalty
   my $penalty = 1/scalar(@$happiness) * 100;
 
-  my @tableRow; # to be sorted
+  my %tableRow;
   while(my($sampleName, $s) = each(%$sample)){
     my $score = 100;
     my $emojiIdx= 0;
@@ -203,31 +329,60 @@ sub makeSummaryTable{
     my $emoji = $$happiness[$emojiIdx];
 
     # Get the coverage and quality
-    my $cov = "";
-    my $qual= "";
-    for my $fastq(@{ $$s{fastq} }){
-      my $f = basename($fastq);
-      $readMetrics{$f}{coverage}   //= -1;
-      $readMetrics{$f}{avgQuality} //= -1;
-      $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
-      $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
-    }
+    #my $cov = "";
+    #my $qual= "";
+    #for my $fastq(@{ $$s{fastq} }){
+    #  my $f = basename($fastq);
+    #  $readMetrics{$f}{coverage}   //= -1;
+    #  $readMetrics{$f}{avgQuality} //= -1;
+    #  $cov .= sprintf("%0.0f",$readMetrics{$f}{coverage}).' ';
+    #  $qual.= sprintf("%0.0f",$readMetrics{$f}{avgQuality}).' ';
+    #}
+    #$cov =~ s/\s+$//;
+    #$qual=~ s/\s+$//;
+
+    # Add these columsn to the general stats table in multiqc
+    my $cov  = $readMetrics{$sampleName}{coverage};
+    my $cov1 = $readMetrics{$sampleName}{coverage1};
+    my $cov2 = $readMetrics{$sampleName}{coverage2};
+    my $qual1= $readMetrics{$sampleName}{avgQuality1};
+    my $qual2= $readMetrics{$sampleName}{avgQuality2};
     
     @failure_code = ("None") if(!@failure_code);
-    push(@tableRow, [$sampleName, $emoji, $score, join(", ", @failure_code),$qual, $cov, $$s{taxon}]);
+    $tableRow{$sampleName} = {
+      sample  => $sampleName,
+      emoji   => $emoji,
+      score   => $score,
+      failure_code => join(", ", @failure_code),
+      qual1   => $qual1,
+      qual2   => $qual2,
+      cov     => $cov,
+      cov1    => $cov1,
+      cov2    => $cov2,
+      taxon   => $$s{taxon},
+    };
 
   }
-  my @sortedRow = sort{$$a[2] <=> $$b[2] || $$a[0] cmp $$b[0]} @tableRow;
+  my @sortedSample = sort{ $a cmp $b } keys(%tableRow);
 
   # Write the summary table
   open(my $fh, '>', $outfile) or die "ERROR: could not write to $outfile: $!";
-  print $fh join("\t", qw(sample emoji score failure_code qual cov taxon))."\n";
-  for my $row(@sortedRow){
-    print $fh join("\t", @$row)."\n";
+  my @header = qw(sample emoji score failure_code qual1 qual2 cov taxon);
+  print $fh join("\t", @header)."\n";
+  for my $sample(@sortedSample){
+    my $info = $tableRow{$sample};
+    print $fh $sample;
+    for(my $i=1;$i<@header;$i++){
+      print $fh "\t".$tableRow{$sample}{$header[$i]};
+    }
+    print $fh "\n";
+    #print $fh join("\t", @$row)."\n";
   }
   print $fh "# Scores start at 100 percent and receive an equal percent penalty for each: assembly, low coverage, low quality, high percentage of Ns in the assembly, or high contamination in the Kraken report. See documentation for sn_passfail.pl for more information.\n";
   print $fh "# Current emoticons range from high score (100%) to low: ".join(" ",@$happiness);
   close $fh;
+
+  return $outfile;
 }
 
 # This function has the meat of the report for a given plugin
@@ -250,6 +405,13 @@ sub report{
 
   for my $key(@sortedKeys){
     my $value = $$p{$plugin}{$key};
+
+    # Don't parse things that are meant for MultiQC
+    # and those are marked with `mqc`.
+    if($key =~ /mqc/i){
+      next;
+    }
+
     # This is usually if a key is 'table'
     # but I don't want to stop a plugin from having 
     # two tables that collide with each other over
@@ -312,21 +474,30 @@ sub tableHtml{
   
   my $numColumns= 1;
   my $seen_footer = 0;
+  my $seen_content = 0;
   my $rowCounter = 0;
   my $abspath = File::Spec->rel2abs($value, $dir);
   open(my $fh, $abspath) or return "";
-  #logmsg("WARNING: could not open $abspath: $!");
   while(<$fh>){
     chomp;
 
+    # Don't make a footer if we haven't even seen the first row
+    # but do make a footer if we see # or NOTE
     if(/^#|^NOTE/i){
-      $seen_footer = 1;
-      s/^#//;
-      $html .= "</tbody>\n<tfoot>\n";
+      if($seen_content){
+        $seen_footer = 1;
+        s/^#//;
+        $html .= "</tbody>\n<tfoot>\n";
+      } else {
+        next;
+      }
     }
+
     if($rowCounter == 0){
       $html.="<thead>\n";
     }
+
+    $seen_content = 1;
 
     my @F = split /$sep/;
     my $colspan = 2;

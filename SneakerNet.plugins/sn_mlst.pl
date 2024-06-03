@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.1";
+our $VERSION = "2.0";
 our $CITATION= "MLST plugin by Lee Katz. Uses mlst by Torsten Seemann.";
 
 local $0=fileparse $0;
@@ -27,12 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(mlst blastn rm);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      mlst      => 'mlst --version',
-      'blastn (BLAST+)'    => 'blastn -version | head -n 1',
-      rm        => 'rm --version | head -n 1',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -70,9 +69,53 @@ sub main{
   print $fh "# For more details: https://github.com/tseemann/mlst\n";
   close $fh;
 
-  recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv"});
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION, table=>"$dir/SneakerNet/forEmail/mlst.tsv", mqc=>$rawMultiQC});
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/mlst.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/mlst_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"MLST (7-gene)\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  print $outFh "#scale: false\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    chomp;
+    my($File, $mlst_scheme, $ST, @loci) = split(/\t/, $_);
+
+    # Do these replacements if it isn't the header
+    if($File !~ /File/i){
+      # replace any filename extensions in the first field
+      $File =~ s/^(\S+?)\..+/$1/;
+      # Prepend "ST-" so that it gets treated like a string
+      $ST = "ST-$ST";
+    }
+    print $outFh join("\t", $File, $mlst_scheme, $ST, @loci)."\n";
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub mlst{

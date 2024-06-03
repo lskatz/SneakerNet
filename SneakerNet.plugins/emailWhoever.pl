@@ -12,6 +12,7 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Find qw/find/;
 use Cwd qw/realpath/;
 use File::Temp qw/tempdir/;
+use MIME::Base64 qw/encode_base64/;
 use POSIX qw/strftime/;
 use IO::Compress::Zip qw(zip $ZipError);
 
@@ -19,10 +20,9 @@ $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
-use Email::Stuffer;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "2.2.1";
+our $VERSION = "3.0";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -35,10 +35,11 @@ sub main{
   GetOptions($settings,qw(citation check-dependencies version help force numcpus=i debug tempdir=s email-only|email|just=s)) or die $!;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
 
+  my @exe = qw(sendmail uuencode);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      sendmail  => 'sendmail -d0.4 -bv root 2>&1 | grep -m 1 Version'
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -54,9 +55,41 @@ sub main{
     reportSentTo=>join(", ", @$to),
     dateSent=>strftime("%Y-%m-%d", localtime()),
     timeSent=>strftime("%H:%M:%S", localtime()),
+    exe => \@exe,
   });
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/assemblyMetrics_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Assembly metrics\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub emailWhoever{
@@ -147,30 +180,27 @@ sub emailWhoever{
     $body.=$failureMessage;
   }
 
-  my $email=Email::Stuffer->from($from)
-                          ->subject($subject)
-                          ->to($to);
+  my $emailFile = "$$settings{tempdir}/email.txt";
+  open(my $fh, ">", $emailFile) or die "ERROR: could not write to $emailFile: $!";
+  print $fh "To: $to\n";
+  print $fh "From: $from\n";
+  print $fh "Subject: $subject\n";
+  print $fh "\n";
+  print $fh "$body\n";
 
-  #for my $file(glob("$dir/SneakerNet/forEmail/*")){
-  #  next if(!-f $file);
-  #  $email->attach_file($file);
-  #}
-  # Attach log files
+  # Append attachments to the email text file
   for my $file(glob("$dir/*.log")){
     next if(!-f $file);
-    $email->attach_file($file);
+    append_attachment($fh, $file);
   }
+  # Make the zip file
   my $zip = "$$settings{tempdir}/$runName.zip";
   zip_directory("$dir/SneakerNet/forEmail", $zip);
-  $email->attach_file($zip);
-  $email->attach_file("$dir/SneakerNet/forEmail/report.html");
-  $email->text_body($body);
+  append_attachment($fh, $zip);
+  append_attachment($fh, "$dir/SneakerNet/forEmail/report.html");
+  append_attachment($fh, "$dir/SneakerNet/forEmail/multiqc_report.html");
 
-  my $was_sent=$email->send;
-
-  if(!$was_sent){
-    logmsg "Warning: Email was not sent to $to!";
-  }
+  command("sendmail -t < $emailFile");
 
   return \@to;
 }
@@ -196,6 +226,22 @@ sub zip_directory {
     system("cd $dir && zip -9 -y -r -q $zip_file ./");
     die "Zip failed" if $?;
 }
+
+# Add an attachment to an email file handle
+sub append_attachment {
+    my ($fh, $file_path) = @_;
+
+    # Encode the attachment content using base64 encoding
+    my $attachment_name = basename($file_path);
+    my $encoded_content = `uuencode $file_path $attachment_name`;
+    die "Failed to encode attachment content from $file_path: $!" if $?;
+    
+    print $fh $encoded_content . "\n";
+
+    # Print a newline to separate MIME parts
+    print $fh "\n";
+}
+
 
 sub usage{
   print "Email a SneakerNet run's results

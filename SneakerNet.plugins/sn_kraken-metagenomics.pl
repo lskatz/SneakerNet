@@ -27,10 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  my @exe = qw(ktImportKrona);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'ktImportKrona (Krona)'     => 'ktImportKrona | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportKrona"',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -64,7 +65,12 @@ sub main{
   system("ktImportKrona $kronaPosArgs -o $outHtml");
   die "ERROR with ktImportKrona\n  ".join("\n  ",@kronaHtml) if $?;
   
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},html=>$outHtml,table=>"$dir/SneakerNet/forEmail/kraken.metagenomics.tsv"});
+  recordProperties($dir,{exe=>\@exe,
+                         version=>$VERSION,
+                         krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB},
+                         html=>$outHtml,
+                         table=>"$dir/SneakerNet/forEmail/kraken.metagenomics.tsv",
+                       });
 
   return 0;
 }

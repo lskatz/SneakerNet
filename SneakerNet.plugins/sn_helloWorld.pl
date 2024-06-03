@@ -24,10 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(perl);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      perl      => 'perl --version | grep "This is perl"',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -47,7 +48,7 @@ sub main{
   my $outfile = makeTable($dir, $settings);
   logmsg "Table can be found at $outfile";
 
-  recordProperties($dir,{version=>$VERSION, table=>$outfile});
+  recordProperties($dir,{exe=>\@exe, version=>$VERSION, table=>$outfile});
 
   return 0;
 }

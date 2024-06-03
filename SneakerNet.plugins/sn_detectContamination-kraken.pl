@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "4.3";
+our $VERSION = "5.0";
 our $CITATION= "Detect contamination with Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 # Get the executable directories
@@ -30,14 +30,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(minpercent|min_percent|min-percent=f minwarning|min_warning|min-warning=f version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  my @exe = qw(zip kraken kraken-translate kraken-report ktImportText);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      zip       => 'zip --version | grep "This is Zip"',
-      kraken    => 'kraken --version | grep -m 1 version',
-      'kraken-translate (Kraken)' => 'kraken-translate --version | grep -m 1 version',
-      'kraken-report (Kraken)'    => 'kraken-report --version | grep -m 1 version',
-      'ktImportText (Krona)'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -61,15 +58,51 @@ sub main{
   if(@contaminatedSamples){
     $warningsMsg .= "There is at least one potentially contaminated sample ( >=$$settings{minwarning}%) ";
   }
+
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
   recordProperties($dir,{
     version        => $VERSION,
     krakenDatabase => $$settings{KRAKEN_DEFAULT_DB},
     table          => "$dir/SneakerNet/forEmail/kraken.tsv",
     warnings       => $warningsMsg,
+    mqc            => $rawMultiQC,
+    exe            => \@exe,
   });
   # also record if there are any potentially contaminated samples
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/kraken.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/kraken_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Contamination detection (Kraken)\"\n";
+  print $outFh "#description: \"Estimating contamination using Kraken1.<br />Database $$settings{KRAKEN_DEFAULT_DB}<br />$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub runKrakenOnDir{

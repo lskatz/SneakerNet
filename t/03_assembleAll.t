@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Data::Dumper;
-use File::Basename qw/dirname/;
+use File::Basename qw/dirname basename/;
 
 use threads;
 
@@ -14,7 +14,10 @@ use FindBin qw/$RealBin/;
 use lib "$RealBin/../lib/perl5";
 
 my $numcpus = 2;
-#note "DEBUG"; $numcpus=24;
+if($ENV{DEBUG}){
+  $numcpus=12;
+  note "DEBUG: CPUS set to $numcpus"; 
+}
 
 if($ENV{CI}){
   plan 'skip_all' => "Detected CI environment. Skipping assembly";
@@ -32,8 +35,13 @@ if($?){
 
 my $tsv = "$run/SneakerNet/forEmail/assemblyMetrics.tsv";
 unlink($tsv); # ensure that assembleAll.pl doesn't skimp
-#note "DEBUG"; is system("assembleAll.pl --numcpus $numcpus $run"), 0, "Assembling all";
-is system("assembleAll.pl --numcpus $numcpus --force $run"), 0, "Assembling all";
+
+my $cmd = "assembleAll.pl --numcpus $numcpus --force $run";
+if($ENV{DEBUG}){
+  note "DEBUG";
+  $cmd =  "assembleAll.pl --numcpus $numcpus $run";
+}
+is system($cmd), 0, "Assembling all";
 
 # Double check assembly metrics.
 # Let the checks be loose though because of different
@@ -63,28 +71,32 @@ subtest "Expected assembly stats" => sub {
   );
   diag `echo;column -t $tsv`;
   open(my $fh, "$tsv") or die "ERROR reading $tsv: $!";
+  my $header = <$fh>;
+  chomp($header);
+  $header =~ s/#\s*//g; # remove the pound signs
+  my @header = split(/\t/, $header);
   while(<$fh>){
     chomp;
-    s/\%//g; # remove percentage symbols
-    #my ($file,$genomeLength,$CDS,$N50,$longestContig,$numContigs,$avgContigLength,$assemblyScore,$minContigLength,$expectedGenomeLength,$kmer21,$GC,$effectiveCoverage)
-    my ($file, $CDS, $GC, $N50, $assemblyScore, $avgContigLength, $effectiveCoverage, $expectedGenomeLength, $genomeLength, $kmer21, $longestContig, $minContigLength, $numContigs)
-        = split(/\t/, $_);
-    
-    diag "Testing $file stats";
-    next if(!$genomeLength{$file}); # avoid header
+    my @F = split(/\t/);
+    my %F;
+    @F{@header} = @F;
+    #die Dumper \%F;
 
-    # Tolerance of 10k assembly length diff
-    #ok $genomeLength > $genomeLength{$file} - 100000 && $genomeLength < $genomeLength{$file} + 100000, "Genome length for $file (expected:$genomeLength{$file} found:$genomeLength)";
-    # tolerance of 50 CDS
-    #ok $CDS > $CDS{$file} - 1000 && $CDS < $CDS{$file} + 1000, "CDS count for $file (expected:$CDS{$file} found:$CDS)";
+    my $file = $F{'Assembly'};
+    my $sample = basename($file, qw(.shovill.skesa .shovill.skesa.fasta)); # quast already removes .fasta
+    diag "Testing $file stats";
 
     # Let's make this super lax for now
-    cmp_ok($genomeLength, '>', 1, "Genome length for $file (expected:$genomeLength{$file} found:$genomeLength)");
-    cmp_ok($CDS, '>', 1, "CDS count for $file (expected:$CDS{$file} found:$CDS)");
+    cmp_ok($F{'Total length'}, '>', 1, "Genome length for $file (expected:$genomeLength{$sample}");
+    # predicted genes is non-numerical: usually in the format of confirmedGenes + partialGenes,
+    # and so I am simplifying it to just confirmed genes.
+    $F{'predicted genes (>= 0 bp)'} =~ s/\s+.*//;
+    cmp_ok($F{'predicted genes (>= 0 bp)'}, '>', 1, "CDS count for $file (expected:$CDS{$sample})");
 
     # Depth of coverage
-    cmp_ok($effectiveCoverage, '>', 1, "Effective coverage > 1x (expected:$depth{$file} found: $effectiveCoverage)");
-    cmp_ok($effectiveCoverage, '<', 200, "Effective coverage < 200x (sanity check)");
+    # edit: Depth of coverage isn't part of assembly metrics at the moment
+    #cmp_ok($effectiveCoverage, '>', 1, "Effective coverage > 1x (expected:$depth{$file} found: $effectiveCoverage)");
+    #cmp_ok($effectiveCoverage, '<', 200, "Effective coverage < 200x (sanity check)");
   }
   close $fh;
 };

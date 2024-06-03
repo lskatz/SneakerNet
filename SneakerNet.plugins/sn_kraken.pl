@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 our $CITATION= "Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 my %errors = ();
@@ -29,14 +29,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help debug tempdir=s numcpus=i force)) or die $!;
+  my @exe = qw(zip kraken kraken-translate kraken-report ktImportText);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      zip       => 'zip --version | grep "This is Zip"',
-      kraken    => 'kraken --version | grep -m 1 version',
-      'kraken-translate (Kraken)' => 'kraken-translate --version | grep -m 1 version',
-      'kraken-report (Kraken)'    => 'kraken-report --version | grep -m 1 version',
-      'ktImportText (Krona)'     => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -61,7 +58,9 @@ sub main{
   my $outdir=runKrakenOnDir($dir,$settings);
 
   my $errorsMsg = join(" ", keys(%errors));
-  recordProperties($dir,{version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
+  my $krakenVersion = `kraken --version | grep -m 1 version`; 
+  chomp($krakenVersion);
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION,krakenDatabase=>$$settings{KRAKEN_DEFAULT_DB}, errors=>$errorsMsg,});
 
   return 0;
 }
@@ -75,6 +74,10 @@ sub runKrakenOnDir{
   if(!-e $outdir){
     die "ERROR: output directory does not exist $outdir";
   }
+
+  my $mqcDir = "$dir/SneakerNet/MultiQC-build";
+  mkdir $mqcDir;
+  mkdir "$mqcDir/kraken";
 
   my $sampleInfo=samplesheetInfo_tsv("$dir/samples.tsv",$settings);
 
@@ -110,6 +113,15 @@ sub runKrakenOnDir{
       $errors{"Kraken did not complete successfully for at least one sample"}++;
       next;
     }
+
+    #symlink to make MultiQC work on the raw data
+    my $symlinkFrom = "../../../$sampledir/kraken.report";
+    my $symlinkTo   = "$mqcDir/kraken/$sampleName";
+    if(-e $symlinkTo){
+      unlink($symlinkTo)
+        or die "ERROR: could not remove file $symlinkTo: $!";
+    }
+    symlink($symlinkFrom, $symlinkTo) or die "ERROR: could not symlink to the multiqc directory ($symlinkFrom => $symlinkTo): $!";
 
   }
 

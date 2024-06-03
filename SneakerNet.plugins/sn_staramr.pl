@@ -14,7 +14,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.5";
+our $VERSION = "2.0";
 our $CITATION = "StarAMR plugin by Lee Katz and Jess Chen";
 
 my($basename, $thisDir) = fileparse $0;
@@ -24,12 +24,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
+  my @exe = qw(staramr blastn mlst);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      staramr   => 'staramr --version',
-      'blastn (BLAST+)'    => 'blastn -version 2>&1',
-      'mlst (tseemann mlst)'      => 'mlst --version',
+      exe => \@exe,
     }, $settings,
   );
 
@@ -88,8 +87,9 @@ sub main{
   print $fh "# The predicted phenotypes/drug resistances are for microbiological resistance and not clinical resistance. Predictions are provided with support from the NARMS/CIPARS Molecular Working Group with an emphasis on Salmonella, Shigella, E. coli, and Campylobacter and are continually being improved.\n";
   close $fh;
 
+  my $rawMultiQC = makeMultiQC($dir, $settings);
 
-  recordProperties($dir,{version=>$VERSION, table=>$outfile});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION, table=>$outfile, mqc=>$rawMultiQC});
 
   # staramr has additional properties for its database
   logmsg "Recording database properties";
@@ -107,6 +107,38 @@ sub main{
   logmsg "Output table is in $outfile";
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/staramr.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/staramr_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"AMR\"\n";
+  print $outFh "#description: \"Staramr AMR results<br />$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    s/ /_/g;
+    print $outFh $_;
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub staramr{

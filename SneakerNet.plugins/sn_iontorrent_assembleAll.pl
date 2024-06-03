@@ -27,18 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  my @exe = qw(seqtk run_prediction_metrics.pl spades.py prodigal cat sort head uniq touch);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'run_assembly_filterContigs.pl (CG-Pipeline)' => "echo CG Pipeline version unknown",
-      'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
-      'spades.py (SPAdes)'                     => 'spades.py --version 2>&1',
-      'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
-      cat                             => 'cat --version | head -n 1',
-      sort                            => 'sort --version | head -n 1',
-      head                            => 'head --version | head -n 1',
-      uniq                            => 'uniq --version | head -n 1',
-      touch                           => 'touch --version | head -n 1',
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -51,7 +44,7 @@ sub main{
   mkdir "$dir/SneakerNet/forEmail";
 
   # Check for required executables
-  for (qw(spades.py prodigal run_assembly_filterContigs.pl run_prediction_metrics.pl)){
+  for (qw(spades.py prodigal run_prediction_metrics.pl)){
     fullPathToExec($_);
   }
  
@@ -60,7 +53,7 @@ sub main{
   my $metricsOut=assembleAll($dir,$settings);
   logmsg "Metrics can be found in $metricsOut";
 
-  recordProperties($dir,{version=>$VERSION,table=>$metricsOut});
+  recordProperties($dir,{exe=>\@exe,version=>$VERSION,table=>$metricsOut});
 
   return 0;
 }
@@ -89,7 +82,7 @@ sub assembleAll{
       # Save the assembly
       mkdir $outdir;
       mkdir "$outdir/prodigal"; # just make this directory right away
-      command("run_assembly_filterContigs.pl -l 500 $assembly > $outassembly");
+      command("seqtk seq -L 500 $assembly > $outassembly");
     }
 
     # Genome annotation

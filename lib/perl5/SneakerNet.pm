@@ -4,11 +4,14 @@ use warnings;
 use Exporter qw(import);
 use File::Basename qw/fileparse basename dirname/;
 use File::Copy qw/mv/;
+use File::Temp qw/tempdir/;
 #use File::Spec ();
 use Config::Simple;
 use Data::Dumper;
 use Carp qw/croak confess carp/;
 use Cwd qw/realpath/;
+use List::Util qw/sum min max/;
+use version 0.77;
 
 use FindBin qw/$Bin $Script $RealBin $RealScript/;
 
@@ -17,6 +20,7 @@ our @EXPORT_OK = qw(
   readTsv readKrakenDir
   command logmsg fullPathToExec version recordProperties readProperties
   exitOnSomeSneakernetOptions
+  readMetrics
   @rankOrder %rankOrder $VERSION
 );
 
@@ -32,12 +36,100 @@ TODO
 
 =cut
 
-our $VERSION  = '0.24.0';
+our $VERSION  = version->declare('0.26.0');
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);
 
 my $thisdir=dirname($INC{'SneakerNet.pm'});
+
+# Tools and how to detect their versions
+# The ommands will generate the semver on a single line
+# somewhere.
+# We'd have to run the semver regex to really know the semver however.
+our %toolVersion = (
+  # GNU/Linux core
+  cat         => 'cat --version | head -n 1',
+  cp          => 'cp --version | head -n 1',
+  "mv"        => 'mv --version | head -n 1',
+  rm          => 'rm --version | head -n 1',
+  sendmail    => 'apt-cache show sendmail 2>/dev/null | grep Version || rpm -qi sendmail 2>/dev/null | grep Version',
+  uuencode    => 'uuencode --version | grep uuencode',
+  sort        => 'sort --version | head -n 1',
+  head        => 'head --version | head -n 1',
+  uniq        => 'uniq --version | head -n 1',
+  touch       => 'touch --version | head -n 1',
+  zip         => 'zip --version | grep "This is Zip"',
+  'python3'   => 'python3 --version',
+  perl        => 'perl -v',
+  wget        => 'wget --version | head -n 1',
+  rsync       => 'rsync --version | grep version',
+  ssh         => 'ssh -V 2>&1',
+
+  # Misc binfie tools
+  fastqc        => "fastqc --version",
+  shovill       => 'shovill --version',
+  prodigal      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
+  'blastn'      => 'blastn -version | head -n 1',
+  mlst          => 'mlst --version',
+  'chewBBACA.py'=> 'chewBBACA.py -h 2>&1 | grep -m 1 -i version',
+  samtools      => 'samtools 2>&1 | grep Version:',
+  bcftools      => 'bcftools 2>&1 | grep Version:',
+  'trimmomatic' => 'trimmomatic -version 2>&1 | grep -v _JAVA',
+  seqtk         => 'seqtk 2>&1 | grep -m 1 Version:',
+  # note: bgzip older versions are buggy for detecting
+  # version and so this is a hack
+  bgzip         => 'which bgzip && echo "0.0.1"',
+  # buggy bgzip => 'bgzip --version | head -n1',
+  tabix         => 'tabix --version | head -n1',
+  bowtie2       => 'bowtie2 --version | grep -m 1 version',
+  'bowtie2-build' => 'bowtie2-build --version | grep -m 1 version',
+  staramr       => 'staramr --version 2>/dev/null',
+  colorid       => 'colorid --version',
+  kma           => 'kma -v',
+  multiqc       => 'multiqc --version',
+  quast         => 'quast --version',
+  'SalmID.py'   => 'SalmID.py --version',
+
+  # CGP doesn't have a simple version check
+  # and so just have something idiotic
+  'run_assembly_metrics.pl'     => "which run_assembly_metrics.pl >/dev/null 2>&1 && echo 0.0.1",
+  'run_assembly_readMetrics.pl' => "which run_assembly_readMetrics.pl >/dev/null 2>&1 && echo 0.0.1",
+  'run_prediction_metrics.pl'  => "which run_prediction_metrics.pl >/dev/null 2>&1 && echo 0.0.1",
+
+  # shovill requires a ton of things:
+  'seqtk'       => 'seqtk 2>&1 | grep Version',
+  'pigz'        => 'pigz --version 2>&1',
+  'mash'        => 'mash --version 2>&1',
+  'pigz'        => 'pigz --version 2>&1',
+  'trimmomatic' => 'trimmomatic -version 2>&1 | grep -v _JAVA',
+  'lighter'     => 'lighter -v 2>&1',
+  'flash'       => 'flash --version 2>&1 | grep FLASH',
+  'spades.py'   => 'spades.py  --version 2>&1',
+  'skesa'       => 'skesa --version 2>&1 | grep SKESA',
+  'gfa_connector' => 'gfa_connector --version 2>/dev/null | grep gfa_connector',
+  'bwa'         => 'bwa 2>&1 | grep Version:',
+  'samtools'    => 'samtools 2>&1 | grep Version:',
+  'samclip'     => 'samclip --version 2>&1',
+  'java'        => 'java -version 2>&1 | grep version',
+  'pilon'       => 'pilon --version 2>&1 | grep -v _JAVA',
+
+  # not using megahit or velvet in this instance of shovill
+  # but why not have these ready just in case
+  'megahit'     => 'megahit --version 2>&1',
+  'megahit_toolkit' => 'megahit_toolkit dumpversion 2>&1',
+  'velveth'     => 'velveth 2>&1 | grep Version',
+  'velvetg'     => 'velvetg 2>&1 | grep Version',
+
+  # krona
+  'ktImportKrona'     => 'ktImportKrona | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportKrona"',
+  'ktImportText'      => 'ktImportText | grep "/" | grep -P -m 1 -o "KronaTools .*ktImportText"',
+
+  # kraken
+  kraken              => 'kraken --version | grep -m 1 version',
+  'kraken-translate'  => 'kraken-translate --version | grep -m 1 version',
+  'kraken-report'     => 'kraken-report --version | grep -m 1 version',
+);
 
 =pod
 
@@ -106,6 +198,121 @@ sub fullPathToExec($;$) {
 
 =pod
 
+=head3 versionOf
+
+Find the specific version of an executable in the environment.
+However, to find the version of a SneakerNet plugin, use the
+plugin executable with `--version`.
+Uses the `%toolVersion` hash that is global for this library.
+
+Arguments: 
+
+  $exe      => the executable, e.g., `blastn`.
+  $settings => a hash of yet undetermined settings
+
+Returns: semver-formatted version string or empty string if not found
+
+=cut
+
+sub versionOf{
+  my($exe, $settings) = @_;
+  
+  # Suggested regex on https://semver.org/
+  # Except I removed the anchors ^ and $
+  # and I added a capture group for the whole thing which
+  # should help avoid accidentally capturing only one
+  # piece of the semver or another.
+  my $semverRegex = qr/((?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)/;
+
+  my $cmd = $toolVersion{$exe}
+    or die "ERROR: I do not know how to find the version of $exe. To add a new tool, go to \%toolVersion in SneakerNet.pm and add it.";
+  my $version = `$cmd`;
+  chomp($version);
+  
+  my $semver = "";
+
+  if($version =~ $semverRegex){
+    $semver = $1;
+  } else{
+    # If we see a major/minor number, 
+    # try to add a ".0" for the patch number just in case that helps
+    $version =~ s/(\d+\.\d+)/$1.0/;
+    if($version =~ $semverRegex){
+      $semver = $1;
+    }
+  }
+
+  return $semver;
+}
+
+=pod
+
+=head3 versionsOf
+
+Find the specific versions of groups of executables.
+Uses similarly named subroutine `versionOf` internally.
+
+Arguments: 
+
+  $group    => the executables group which could be one of the following
+  $settings => a hash of yet undetermined settings
+
+Returns: list of semver-formatted version strings
+
+Named groups:
+
+=over
+
+=item all - get all available software versions
+
+=back
+
+=cut
+
+sub versionsOf{
+  my($group, $settings) = @_;
+  my @semver;
+
+  # Set to lowercase to make str comparisons easy
+  my $lcGroup = lc($group);
+
+  if($lcGroup eq 'all'){
+    for my $exe(sort(keys(%toolVersion))){
+      my $tmp = versionOf($exe, $settings);
+      push(@semver, "$exe $tmp");
+    }
+  }
+
+  # See if this is a workflow
+  else {
+    my $snSettings = readConfig();
+    my $workflows = $$snSettings{obj}{'plugins.conf'}->param(-block=>'plugins');
+
+    my $plugins = $$workflows{$lcGroup};
+    if(defined($plugins)){
+      for my $p(@$plugins){
+        my @version = `$p --check-dependencies 2>&1 >/dev/null`;
+        for my $v(@version){
+          chomp($v);
+          if($v =~ /([\w\.]+):\s+(\w+)\s+(.+)/){
+            my $plugin = $1;
+            my $key = join("-", $2, "version");
+            my $value = $3;
+            push(@semver, "$plugin $key $value");
+          }
+        }
+      }
+    } else {
+      carp "ERROR: could not determine what to get versions of with keyword $lcGroup (did you try to use an undefined workflow name?";
+    }
+  }
+
+
+  return \@semver;
+}
+
+=pod
+
 =head3 exitOnSomeSneakernetOptions
 
 exitOnSomeSneakernetOptions Takes a hash in the form of {executables => `way to check version`}
@@ -119,7 +326,7 @@ Arguments:
     _CITATION          => bool   (prints $$settings{citation} and exits 0)
     _VERSION           => bool   (prints $$settings{version} and exits 0)
   $settings   (hash ref)
-    version            => int
+    version            => bool
     citation           => string
     check-dependencies => bool
 
@@ -129,6 +336,7 @@ Returns: 0
 
 sub exitOnSomeSneakernetOptions{
   my($properties, $settings) = @_;
+  $$properties{exe} //= [];
 
   if($$settings{version}){
     print $$properties{_VERSION}."\n";
@@ -141,10 +349,7 @@ sub exitOnSomeSneakernetOptions{
   if($$settings{'check-dependencies'}){
     
     logmsg "$0: ".$$properties{_VERSION};
-    my @exe = sort(
-      grep {!/^_/}
-      keys(%$properties)
-    );
+    my @exe = sort(@{ $$properties{exe} });
 
     # Print off all executable names before possible errors
     # down below.
@@ -167,17 +372,24 @@ sub exitOnSomeSneakernetOptions{
         next;
       }
 
-      my $ver = 'UNKNOWN VERSION';
-      if(my $vcmd = $$properties{$exe}){
-        ($ver) = qx($vcmd);
-        if(!$ver){
-          logmsg "ERROR: could not determine version of '$desc' via '$vcmd'";
-          $numNotFound++;
-        } else {
-          chomp($ver);
-          logmsg "$exe: $ver";
-        }
+      my $ver = versionOf($exe, $settings);
+      if($ver){
+        logmsg "$exe $ver";
+      } else {
+        logmsg "ERROR: I could not find the version of $exe";
+        $numNotFound++;
       }
+      #my $ver = 'UNKNOWN VERSION';
+      #if(my $vcmd = $toolVersion{$exe}){
+      #  ($ver) = qx($vcmd);
+      #  if(!$ver){
+      #    logmsg "ERROR: could not determine version of '$desc' via '$vcmd'";
+      #    $numNotFound++;
+      #  } else {
+      #    chomp($ver);
+      #    logmsg "$exe: $ver";
+      #  }
+      #}
 
     }
     if($numNotFound > 0){
@@ -547,6 +759,8 @@ sub samplesheetInfo_tsv{
       if(!-e $ref){
         logmsg "Did not find @$ref_id in the SneakerNet installation. Downloading @$ref_id into $gbk and $ref";
         logmsg "  Wget log can be found at $dir/*.log";
+        mkdir dirname($dir);
+        mkdir $dir;
         my $wgetxopts = "";
         if($ENV{NCBI_API_KEY}){
           $wgetxopts .= "&ncbi_api_key=$ENV{NCBI_API_KEY}";
@@ -570,6 +784,8 @@ sub samplesheetInfo_tsv{
       my $bed = "$dir/".basename($primers);
       if(!-e $bed){
         logmsg "Did not find local bed and so I am downloading $primers to $bed";
+        mkdir dirname($dir);
+        mkdir $dir;
         command("wget '$primers' -O $bed");
       }
       $sample{$sampleName}{taxonRules}{primers_bed} = $bed;
@@ -845,6 +1061,7 @@ Arguments:
     table     =>  string (path to a results file in tsv format)
     date      =>  string (date of when results finished in YYYY-MM-DD format
     time      =>  string (time of when results finished in HH:MM:SS format
+    exe       =>  list of executables that can be defined in `versionOf()`
 
 Returns:  number of characters written to F<properties.txt>
 
@@ -867,7 +1084,20 @@ sub recordProperties{
       carp "WARNING: in SneakerNet::recordProperties(), the value for key '$key' was not defined";
       next;
     }
-    $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";
+    if($key eq 'exe'){
+      if(ref($$writeHash{$key}) ne 'ARRAY'){
+        confess "ERROR: key $key does not contain an array";
+      }
+      for my $exe(sort @{ $$writeHash{$key} }){
+        $writeString .= join("\t", basename($0),
+          "$exe-version", versionOf($exe, $settings))."\n";
+      }
+    }
+    # If the key isn't special like 'exe' then it's a string and just
+    # treat it normally
+    else {
+      $writeString.=join("\t",basename($0), $key, $$writeHash{$key})."\n";
+    }
   }
 
   open(my $fh, ">>", $propertiesFile) or croak "ERROR writing to $propertiesFile: $!";
@@ -927,6 +1157,88 @@ sub readProperties{
   return \%prop;
 }
 
+=head3 readMetrics(\@fastq, $expectedGenomeSize, $settings)
+
+Read metrics.
+Replacing CG-Pipeline's run_assembly_readMetrics.pl
+
+Arguments:
+
+  \@fastq              The list of fastq files
+  $expectedGenomeSize  in nucleotides
+  $settings            hash
+
+Returns
+
+  $properties:  hash ref with keys.  E.g.,
+    File
+    avgReadLength
+    totalBases
+    minReadLength
+    maxReadLength
+    avgQuality
+    numReads
+    coverage
+
+=cut
+
+sub readMetrics{
+  my($fastqs, $expectedGenomeSize, $settings) = @_;
+  my %metrics;
+
+  my @fastq = sort{$a cmp $b} @$fastqs;
+
+  my $tempdir = tempdir(basename($0).".readMetrics.XXXXXX",TMPDIR=>1,CLEANUP=>1);
+
+  for(my $i=0; $i<@fastq; $i++){
+    my $seqtkComp = "$tempdir/".basename($fastq[$i]).".seqtkcomp";
+    my $seqtkFqchk= "$tempdir/".basename($fastq[$i]).".seqtkfqchk";
+    command("seqtk comp $fastq[$i] > $seqtkComp");
+    command("seqtk fqchk $fastq[$i]> $seqtkFqchk");
+
+    my(@lengths,@A,@C,@G,@T);
+    open(my $fh, $seqtkComp) or die "ERROR: could not read seqtk comp file $seqtkComp: $!";
+    while(<$fh>){
+      # chomp; # <- not including the last field and so no need to remove last newline char
+      my($readName, $length, $A, $C, $G, $T) = split /\t/;
+      push(@lengths, $length);
+      push(@A, $A);
+      push(@C, $C);
+      push(@G, $G);
+      push(@T, $T);
+    }
+    close $fh;
+
+    # parse Fqchk to get average qual
+    my $avgQual = -1;
+    open(my $fh2, $seqtkFqchk) or die "ERROR: could not read seqtk fqchk file $seqtkFqchk: $!";
+    while(<$fh2>){
+      next if(!/^ALL/);
+      chomp;
+      my(undef, $bases, $A,$C,$G,$T,$N, $avgQ, $errQ, $low, $high) = split /\t/;
+      $avgQual = $avgQ;
+      last;
+    }
+    close $fh2;
+
+    my $totalBases = sum(@lengths);
+    my $numReads   = scalar(@lengths);
+    my $coverage   = -1;
+    if($expectedGenomeSize){
+      $coverage = $totalBases / $expectedGenomeSize;
+    }
+    $metrics{$fastq[$i]} = {
+      avgReadLength  => ($totalBases/$numReads),
+      totalBases     => $totalBases,
+      minReadLength  => min(@lengths),
+      maxReadLength  => max(@lengths),
+      avgQuality     => $avgQual,
+      numReads       => $numReads,
+      coverage       => $coverage,
+    };
+  }
+  return \%metrics;
+}
 
 1;
 

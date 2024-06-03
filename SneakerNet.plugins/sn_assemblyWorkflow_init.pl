@@ -27,12 +27,11 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help tempdir=s debug numcpus=i force)) or die $!;
+  my @exe = ('prodigal', 'run_assembly_metrics.pl', 'run_prediction_metrics.pl');
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      'prodigal'                      => "prodigal -v 2>&1 | grep -i '^Prodigal V'",
-      'run_assembly_metrics.pl (CG-Pipeline)'       => "echo CG Pipeline version unknown",
-      'run_prediction_metrics.pl (CG-Pipeline)'     => "echo CG Pipeline version unknown",
+      exe       => \@exe,
     }, $settings,
   );
 
@@ -49,7 +48,7 @@ sub main{
 
   my $metricsOut = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
   evaluateAssemblies($dir,$settings);
-  recordProperties($dir,{version=>$VERSION, table=>$metricsOut});
+  recordProperties($dir,{exe => \@exe, version=>$VERSION, table=>$metricsOut});
 
   logmsg "Metrics can be found in $metricsOut";
 

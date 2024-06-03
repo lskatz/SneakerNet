@@ -16,6 +16,7 @@ jobs:
       matrix:
         os: ['ubuntu-20.04' ]
         perl: [ '5.36.0' ]
+        python-version: ['3.10']
     defaults:
       run:
         shell: bash -el {0}
@@ -28,7 +29,7 @@ jobs:
           echo $today
           echo "today=$today" >> $GITHUB_OUTPUT
       - name: set up conda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: ${{ matrix.python-version }}
           use-mamba: true
@@ -47,14 +48,9 @@ jobs:
           conda list
           echo
           conda config --show
-      #- name: chown /usr/share/miniconda
-      #  run: |
-      #    # In order to cache this directory for myself
-      #    # downstream, I need to own it
-      #    sudo find /usr/share/miniconda -exec chown -v $(whoami) {} \;
       - name: Cache Conda env
         id: cache-conda
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/conda_pkgs_dir
@@ -63,12 +59,17 @@ jobs:
             #/usr/share/miniconda
           key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
         env:
-          CACHE_NUMBER: 5
+          CACHE_NUMBER: 7
       - name: conda installations
         shell: bash -el {0}
         if: steps.cache-conda.outputs.cache-hit != 'true'
         run: | 
-          mamba install -y perl shovill krona samclip flash mash seqtk kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal perl-app-cpanminus perl-statistics-descriptive perl-config-simple perl-file-slurp perl-moo perl-list-moreutils kma=1.4
+          mamba install -y perl shovill krona samclip flash mash seqtk \
+            kmc lighter megahit pilon trimmomatic perl-bioperl kraken=1 \
+            spades skesa=2.4 python=3.7 perl-cg-pipeline perl-gd blast prodigal \
+            perl-app-cpanminus perl-statistics-descriptive perl-config-simple \
+            perl-file-slurp perl-moo perl-list-moreutils kma=1.4 \
+            multiqc fastqc bowtie2 perl-gd perl-gdgraph salmid staramr kalamari
       - name: check installation
         shell: bash -el {0}
         run: | 
@@ -90,20 +91,14 @@ jobs:
       - name: add some paths to PATH
         run:  |
           echo "$GITHUB_WORKSPACE/CG-Pipeline/scripts" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/shovill/bin" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/.local/bin" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/krona" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/SPAdes-${spadesVer}-Linux/bin" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/kmc" >> $GITHUB_PATH
-          #echo "$GITHUB_WORKSPACE/Lighter-1.1.1" >> $GITHUB_PATH
           echo
           cat $GITHUB_PATH
       - name: checkout my repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: SneakerNet
       - name: checkout CG-Pipeline
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: lskatz/CG-Pipeline
           path: CG-Pipeline
@@ -112,28 +107,28 @@ jobs:
         run:  |
           sudo apt-get update
           sudo apt-get -y install ca-certificates
-          sudo apt-get -y install build-essential sendmail 
-      #- name: Cache Kraken DB
-      #  id: cache-kraken
-      #  uses: actions/cache@v3
-      #  with:
-      #    path: /kraken-database
-      #    key: conda-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
-      #  env:
-      #    CACHE_NUMBER: 0
-      #- name: make very simple kraken database
-      #  shell: bash -el {0}
-      #  if: steps.cache-kraken.outputs.cache-hit != 'true'
-      #  run: |
-      #    sudo mkdir -v $KRAKEN_DEFAULT_DB
-      #    sudo chown -v $USER $KRAKEN_DEFAULT_DB
-      #    chmod -v 775 $KRAKEN_DEFAULT_DB
-      #    gunzip -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.fasta.gz
-      #    find $GITHUB_WORKSPACE/SneakerNet/t/asm -name '*.fasta' -exec kraken-build --db $KRAKEN_DEFAULT_DB --add-to-library {} \;
-      #    mkdir $KRAKEN_DEFAULT_DB/taxonomy --work-on-disk
-      #    cp -v $GITHUB_WORKSPACE/SneakerNet/t/asm/*.dmp.gz $KRAKEN_DEFAULT_DB/taxonomy
-      #    gunzip -v $KRAKEN_DEFAULT_DB/taxonomy/*.gz
-      #    kraken-build --db $KRAKEN_DEFAULT_DB --threads 1 --build --work-on-disk
+          sudo apt-get -y install build-essential sendmail tree
+      - name: Cache Kraken DB
+        id: cache-kraken
+        uses: actions/cache@v4
+        with:
+          path: |
+            /home/runner/conda_pkgs_dir/my-env/share/kalamari-*
+          key: kraken-${{ runner.os }}--${{ runner.arch }}--${{ steps.get-date.outputs.today }}-perl_v${{ matrix.perl }}--${{env.CACHE_NUMBER}}
+        env:
+          CACHE_NUMBER: 0
+      - name: make very simple kraken database
+        if: steps.cache-kraken.outputs.cache-hit != 'true'
+        shell: bash -el {0}
+        run: |
+          which downloadKalamari.sh
+          KALAMARI_DEBUG=1 downloadKalamari.sh
+          buildTaxonomy.sh
+          filterTaxonomy.sh
+          echo
+          tree $(dirname $(which downloadKalamari.sh))/../share/kalamari-*
+          echo
+          buildKraken1.sh || echo "ERROR building Kraken1 database with exit code $?"
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
@@ -186,12 +181,17 @@ jobs:
         name: prove-lv-t
         shell: bash -el {0}
         run:  |
-          #eval $(perl -I $HOME/perl5/lib/perl5/ -Mlocal::lib)
           mkdir -v $GITHUB_WORKSPACE/tmp
           export TMPDIR=$GITHUB_WORKSPACE/tmp
           cd $GITHUB_WORKSPACE/SneakerNet
-          sed -i 's+/opt/kraken/full-20140723+/kraken-database+g' config/settings.conf
-          #prove -lv t
+          #sed -i 's+/opt/kraken/full-20140723+/kraken-database+g' config/settings.conf
+          sed -i '/KRAKEN_DEFAULT_DB/d' config/settings.conf
+          condabin=$(dirname $(which downloadKalamari.sh))
+          kalamari_ver=$(downloadKalamari.pl --version)
+          kraken_dir="$condabin/../share/kalamari-$kalamari_ver/kalamari-kraken"
+          echo $kraken_dir
+          ls -lh $kraken_dir
+          echo "KRAKEN_DEFAULT_DB  $kraken_dir" >> config/settings.conf
           make
           make test
 
