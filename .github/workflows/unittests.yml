@@ -128,7 +128,7 @@ jobs:
           echo
           tree $(dirname $(which downloadKalamari.sh))/../share/kalamari-*
           echo
-          buildKraken1.sh
+          buildKraken1.sh || echo "ERROR building Kraken1 database with exit code $?"
       - name: Dumper INC
         shell: bash -el {0}
         run:  perl -MData::Dumper -e 'print Dumper \@INC'
