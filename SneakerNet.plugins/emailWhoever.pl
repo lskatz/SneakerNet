@@ -22,7 +22,7 @@ use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "3.0";
+our $VERSION = "3.1";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -197,8 +197,9 @@ sub emailWhoever{
   my $zip = "$$settings{tempdir}/$runName.zip";
   zip_directory("$dir/SneakerNet/forEmail", $zip);
   append_attachment($fh, $zip);
-  append_attachment($fh, "$dir/SneakerNet/forEmail/report.html");
-  append_attachment($fh, "$dir/SneakerNet/forEmail/multiqc_report.html");
+  append_attachment($fh, zip_file("$dir/SneakerNet/forEmail/report.html", $settings));
+  append_attachment($fh, zip_file("$dir/SneakerNet/forEmail/multiqc_report.html", $settings));
+  logmsg "NEW SENDMAIL ZIP";
 
   command("sendmail -t < $emailFile");
 
@@ -225,6 +226,22 @@ sub zip_directory {
 
     system("cd $dir && zip -9 -y -r -q $zip_file ./");
     die "Zip failed" if $?;
+}
+
+sub zip_file {
+  my($file, $settings) = @_;
+
+  my $zip_file = $$settings{tempdir}."/".basename($file).".zip";
+
+  # zip the file but exclude directory information
+  my $dir = dirname($file);
+  system("cd $dir && zip -9 -y -q -j $zip_file ". basename($file));
+  die "Zip failed on $zip_file" if $?;
+
+  #system("zip -9 -y -q $zip_file $file");
+  #die "Zip failed on $zip_file" if $?;
+
+  return $zip_file;
 }
 
 # Add an attachment to an email file handle
