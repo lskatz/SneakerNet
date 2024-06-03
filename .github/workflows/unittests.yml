@@ -123,11 +123,11 @@ jobs:
         run: |
           which downloadKalamari.sh
           KALAMARI_DEBUG=1 downloadKalamari.sh
+          buildTaxonomy.sh
+          filterTaxonomy.sh
           echo
           tree $(dirname $(which downloadKalamari.sh))/../share/kalamari-*
           echo
-          buildTaxonomy.sh
-          filterTaxonomy.sh
           buildKraken1.sh
       - name: Dumper INC
         shell: bash -el {0}
