@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "3.0";
+our $VERSION = "3.1";
 our $CITATION= "Assembly plugin by Lee Katz. Uses SHOvill.";
 
 local $0=fileparse $0;
@@ -59,9 +59,7 @@ sub main{
   mkdir "$dir/SneakerNet";
   mkdir "$dir/SneakerNet/assemblies";
   assembleAll($dir,$settings);
-  #logmsg "Metrics can be found in $metricsOut";
-
-  #my $rawMultiQC = makeMultiQC($dir, $settings);
+  my $assemblyMetrics = compileAssemblyMetrics($dir,$settings);
 
   # Get multiQC to pick up on the quast results
   mkdir "$dir/SneakerNet/MultiQC-build/quast";
@@ -93,6 +91,33 @@ sub main{
   });
 
   return 0;
+}
+
+sub compileAssemblyMetrics{
+  my($dir,$settings)=@_;
+
+  # Compile the assembly metrics
+  my $assemblyMetrics = "$dir/SneakerNet/forEmail/assemblyMetrics.tsv";
+  my $printed_header = 0; # Did I print the header yet?
+  open(my $outFh, ">", $assemblyMetrics) or die "ERROR: could not write to $assemblyMetrics: $!";
+  for my $sampledir(glob("$dir/SneakerNet/assemblies/*")){
+    # concatenate the transposed assembly metrics into SneakerNet/forEmail/
+    my $sampleMetrics = "$sampledir/quast/transposed_report.tsv";
+    open(my $inFh, $sampleMetrics) or die "ERROR: could not read $sampleMetrics: $!";
+    my $header = <$inFh>;
+    if(! $printed_header){
+      print $outFh $header;
+      $printed_header = 1;
+    }
+    # Print the sample line but I guess theoretically there could be multiple lines??
+    while(<$inFh>){
+      print $outFh $_;
+    }
+    close $inFh;
+  }
+  close $outFh;
+
+  return $assemblyMetrics;
 }
 
 # Make a table suitable for MultiQC
