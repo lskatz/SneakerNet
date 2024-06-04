@@ -20,6 +20,11 @@ if($ENV{CI}){
   exit 0;
 }
 
+my $numcpus = 2;
+if($ENV{DEBUG}){
+  $numcpus = 12;
+  note "DEBUG: using $numcpus cpus";
+}
 
 subtest 'addReadMetrics' => sub {
 
@@ -31,7 +36,7 @@ subtest 'addReadMetrics' => sub {
   }
 
   is $?, 0, "addReadMetrics.pl dependency check";
-  my $readMetricsLog = `addReadMetrics.pl --numcpus 1 --force $run 2>&1`;
+  my $readMetricsLog = `addReadMetrics.pl --numcpus $numcpus --force $run 2>&1`;
   is $?, 0, "Adding read metrics";
   if($?){
     note $readMetricsLog;

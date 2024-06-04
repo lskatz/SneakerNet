@@ -26,7 +26,7 @@ plan tests=>2;
 my $numcpus = 2;
 if($ENV{DEBUG}){
   $numcpus = 12;
-  logmsg "DEBUG: using $numcpus cpus";
+  note "DEBUG: using $numcpus cpus";
 }
 
 subtest 'kraken' => sub {
