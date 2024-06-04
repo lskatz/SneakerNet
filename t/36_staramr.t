@@ -41,7 +41,7 @@ subtest 'staramr' => sub{
   # Spot check the output
   subtest 'results' => sub{
     my $results = readTsv("$run/SneakerNet/forEmail/staramr.tsv");
-    is($$results{LT2}{"Predicted Phenotype"}, "Sensitive", "LT2 phenotype");
+    ok($$results{LT2}{"Predicted Phenotype"} =~ /"Sensitive|Susceptible/i, "LT2 phenotype");
     isnt($$results{"2010EL-1786"}{"Predicted Phenotype"}, "Sensitive", "2010EL-1786 phenotype is not sensitive");
     ok($$results{"2010EL-1786"}{"Predicted Phenotype"} =~ /streptomycin|kanamycin|trimethoprim|chloramphenicol|sulfisoxazole"/i, "2010EL-1786 phenotype is at least streptomycin, kanamycin, trimethoprim, chloramphenicol, and/or sulfisoxazole");
   };
