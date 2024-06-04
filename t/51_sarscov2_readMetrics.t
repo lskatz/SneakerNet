@@ -20,6 +20,11 @@ if($ENV{CI}){
   exit 0;
 }
 
+my $numcpus = 2;
+if($ENV{DEBUG}){
+  $numcpus = 12;
+  note "DEBUG: using $numcpus cpus";
+}
 
 subtest 'addReadMetrics' => sub {
 
@@ -31,7 +36,7 @@ subtest 'addReadMetrics' => sub {
   }
 
   is $?, 0, "addReadMetrics.pl dependency check";
-  my $readMetricsLog = `addReadMetrics.pl --numcpus 1 --force $run 2>&1`;
+  my $readMetricsLog = `addReadMetrics.pl --numcpus $numcpus --force $run 2>&1`;
   is $?, 0, "Adding read metrics";
   if($?){
     note $readMetricsLog;
@@ -40,10 +45,8 @@ subtest 'addReadMetrics' => sub {
   subtest 'expected coverage plus or minus 10x' => sub{
     my $tolerance = 10;
     my %expected = (
-      'SRR11826835_1.fastq.gz' => 596,
-      'SRR11826835_2.fastq.gz' => 596,
-      'SRR12530737_1.fastq.gz' => 883,
-      'SRR12530737_2.fastq.gz' => 883,
+      'SRR11826835' => 1193,
+      'SRR12530737' => 1766,
     );
     plan tests => scalar(keys(%expected)) * 2;
     my $obs = readTsv("$run/readMetrics.tsv");

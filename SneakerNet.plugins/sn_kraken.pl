@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 our $CITATION= "Kraken plugin by Lee Katz.  Uses Kraken1.";
 
 my %errors = ();
@@ -116,7 +116,7 @@ sub runKrakenOnDir{
 
     #symlink to make MultiQC work on the raw data
     my $symlinkFrom = "../../../$sampledir/kraken.report";
-    my $symlinkTo   = "$mqcDir/kraken/$sampleName";
+    my $symlinkTo   = "$mqcDir/kraken/$sampleName".basename($symlinkFrom);
     if(-e $symlinkTo){
       unlink($symlinkTo)
         or die "ERROR: could not remove file $symlinkTo: $!";
