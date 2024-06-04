@@ -23,13 +23,19 @@ if($ENV{CI}){
 }
 plan tests=>2;
 
+my $numcpus = 2;
+if($ENV{DEBUG}){
+  $numcpus = 12;
+  logmsg "DEBUG: using $numcpus cpus";
+}
+
 subtest 'kraken' => sub {
   diag `sn_kraken.pl --check-dependencies 2>&1`;
   if($?){
     plan 'skip_all' => "sn_kraken.pl dependency check failed";
   }
   # run kraken and print log messages as it goes
-  open(my $fh, "sn_kraken.pl --numcpus 2 --force $run 2>&1 | ") or BAIL_OUT("ERROR: running Kraken plugin: $!");
+  open(my $fh, "sn_kraken.pl --numcpus $numcpus --force $run 2>&1 | ") or BAIL_OUT("ERROR: running Kraken plugin: $!");
   while(my $msg = <$fh>){
     chomp($msg);
     diag $msg;
