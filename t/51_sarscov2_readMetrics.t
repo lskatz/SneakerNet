@@ -45,10 +45,8 @@ subtest 'addReadMetrics' => sub {
   subtest 'expected coverage plus or minus 10x' => sub{
     my $tolerance = 10;
     my %expected = (
-      'SRR11826835_1.fastq.gz' => 596,
-      'SRR11826835_2.fastq.gz' => 596,
-      'SRR12530737_1.fastq.gz' => 883,
-      'SRR12530737_2.fastq.gz' => 883,
+      'SRR11826835' => 1193,
+      'SRR12530737' => 1766,
     );
     plan tests => scalar(keys(%expected)) * 2;
     my $obs = readTsv("$run/readMetrics.tsv");
