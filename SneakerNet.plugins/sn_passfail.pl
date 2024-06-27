@@ -13,7 +13,7 @@ use List::Util qw/sum/;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/readTsv @rankOrder %rankOrder readKrakenDir exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg/;
 
-our $VERSION = "6.2";
+our $VERSION = "8.0";
 our $CITATION="SneakerNet pass/fail by Lee Katz";
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
@@ -48,13 +48,57 @@ sub main{
   my $outfile=passfail($dir,$settings);
   logmsg "The pass/fail file is under $outfile";
   
+  my $rawMultiQC = makeMultiQC($dir, $settings);
+
   recordProperties($dir,{
       version=>$VERSION,table=>$outfile,
       kraken_contamination_min_rank  => $$settings{kraken_contamination_min_rank},
       kraken_contamination_threshold => $$settings{kraken_contamination_threshold},
+      mqc => $rawMultiQC,
   });
 
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/passfail.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/passfail_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Pass/fail information\"\n";
+  print $outFh "#description: \"$plugin v$VERSION $docLink $pluginLink\"\n";
+  print $outFh "#anchor: '$anchor'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  while(<$fh>){
+    next if(/^#/);
+    chomp;
+
+    my($sample, @F) = split /\t/;
+
+    # Change integers to pass/fail strings
+    for(@F){
+      s/-1/unknown/;
+      s/1/fail/;
+      s/0/pass/;
+    }
+    print $outFh join("\t", $sample, @F)."\n";
+  }
+  close $fh;
+
+  return $outtable;
 }
 
 sub passfail{
@@ -100,8 +144,8 @@ sub identifyBadRuns{
       chomp;
       my %F;
       @F{@header}=split(/\t/,$_);
-      $F{File} = basename($F{File});
-      $readMetrics{$F{File}} = \%F;
+      #$F{File} = basename($F{File});
+      $readMetrics{$F{Sample}} = \%F;
     }
     close READMETRICS;
   }
@@ -127,6 +171,45 @@ sub identifyBadRuns{
       $assemblyMetrics{$newKey} = $metrics;
     }
   }
+  # If we don't have assembly metrics from the old version of assembleAll.pl, then
+  # maybe we're looking for quast metrics.
+  else {
+    for my $samplename(keys(%$sampleInfo)){
+      my $quastReport = "$dir/SneakerNet/assemblies/$samplename/quast/report.tsv";
+      next if(!-e $quastReport);
+
+      open(my $fh, $quastReport) or die "ERROR: could not read $quastReport: $!";
+      while(<$fh>){
+        chomp;
+        my ($key, $value) = split(/\t/, $_);
+
+        # I don't really need a pound sign for number sign.
+        $key =~ s/#\s*//;
+
+        # If the key describes a contig length >= than something,
+        # then let's go with 1kb.
+        if($key =~ /(.+?)\s*>=\s*(\d+)/){
+          my $size = $2;
+          next if($size != 1000);
+          #$key = $1;
+          $key =~ s/\s+\(.+//;
+        }
+        $key =~ s/\s+/_/g;
+
+        $assemblyMetrics{$samplename}{$key} = $value;
+      }
+      close $fh;
+
+      # change some headers to my own legacy names
+      $assemblyMetrics{$samplename}{largestContig} = $assemblyMetrics{$samplename}{Largest_contig};
+      $assemblyMetrics{$samplename}{genomeLength} = $assemblyMetrics{$samplename}{Total_length};
+      $assemblyMetrics{$samplename}{GC} = $assemblyMetrics{$samplename}{'GC_(%)'};
+      $assemblyMetrics{$samplename}{numContigs} = $assemblyMetrics{$samplename}{contigs};
+      $assemblyMetrics{$samplename}{percentNs} = $assemblyMetrics{$samplename}{'N\'s_per_100_kbp'} / 10e5;
+      # still don't have: avgContigLength assemblyScore effectiveCoverage expectedGenomeLength 
+      #                   kmer21 minContigLength 
+    }
+  }
 
   # Understand for each sample whether it passed or failed
   # on each category
@@ -144,75 +227,42 @@ sub identifyBadRuns{
     );
 
     # Skip anything that says undetermined.
-    if($samplename=~/^Undetermined/i){
+    if($samplename=~/^(Undetermined)/i){
+      logmsg "Sample name $samplename contains '$1' and will therefore be skipped." if($$settings{debug});
       next;
     }
 
     # Get the name of all files linked to this file through the sample.
     $$sampleInfo{$samplename}{fastq}//=[]; # Set {fastq} to an empty list if it does not exist
-    my @file=@{$$sampleInfo{$samplename}{fastq}};
 
     # Get metrics from the fastq files
     my $totalCoverage = 0;
-    my %is_passing_quality = (); # Whether a read passes quality
-    for my $fastq(@file){
-      my $fastqMetrics = $readMetrics{basename($fastq)};
 
-      # Coverage
-      $$fastqMetrics{coverage} //= '.';    # by default, dot.
-      if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
-        logmsg "Coverage calculation undefined for $samplename" if($$settings{debug});
-        $totalCoverage = -1; # -1 means 'unknown' coverage
+    # Uncover the total coverage for the sample
+    if(defined $readMetrics{$samplename}{coverage}){
+      $totalCoverage = $readMetrics{$samplename}{coverage};
+      logmsg "Coverage calculation: Sample $samplename => ${totalCoverage}x" if($$settings{debug});
+      if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
+        logmsg "  I will fail this sample for coverage: $samplename" if($$settings{debug});
+        $fail{coverage} = 1;
       } else {
-        $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
-        $totalCoverage += $$fastqMetrics{coverage};
-        logmsg "Coverage calculation: Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
-      }
-
-      $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
-      # If avgQual is missing, then -1 for unknown pass status
-      $$fastqMetrics{avgQuality} //= '.';
-      if($$fastqMetrics{avgQuality} eq '.'){
-        #logmsg "$samplename/".basename($fastq)." qual is $$fastqMetrics{avgQuality}" if($$settings{debug});
-        $is_passing_quality{$fastq} = -1;
-      }
-      # Set whether this fastq passes quality by the > comparison:
-      # if yes, then bool=true, if less than, bool=false
-      else {
-        $is_passing_quality{$fastq} =  $$fastqMetrics{avgQuality} >= $$sampleInfo{$samplename}{taxonRules}{quality};
-        $is_passing_quality{$fastq} += 0; # force to int/boolean
-        #logmsg "$samplename/".basename($fastq)." passes quality?  $is_passing_quality{$fastq} (boolean)" if($$settings{debug});
+        logmsg "  I will not fail this sample for coverage: $samplename" if($$settings{debug});
+        $fail{coverage} = 0;
       }
     }
 
-    # Set whether the sample fails coverage
-    #logmsg "DEBUG"; $$sampleInfo{$samplename}{taxonRules}{coverage} = 5;
-    if($totalCoverage < $$sampleInfo{$samplename}{taxonRules}{coverage}){
-      logmsg "  I will fail this sample for coverage: $samplename" if($$settings{debug});
-      $fail{coverage} = 1;
+    # Check R1 and R2 quality to be above threshold
+    $$sampleInfo{$samplename}{taxonRules}{quality} ||= 0;
+    # Quality scores are either defined or are the biggest int possible ~0.
+    my $Q1 = $readMetrics{$samplename}{avgQuality1} // ~0;
+    my $Q2 = $readMetrics{$samplename}{avgQuality2} // ~0;
+    my $qThreshold = $$sampleInfo{$samplename}{taxonRules}{quality};
+    if($Q1 >= $qThreshold && $Q2 >= $qThreshold){
+      logmsg "Sample passed quality: $samplename" if($$settings{debug});
+      $fail{quality} = 0;
     } else {
-      logmsg "  I will not fail this sample for coverage: $samplename" if($$settings{debug});
-      $fail{coverage} = 0;
-    }
-    if($totalCoverage == -1){
-      logmsg "  Calculation for the coverage for this sample is undefined: $samplename" if($$settings{debug});
-      $fail{coverage} = -1;
-    }
-
-    # if any filename fails quality, then overall quality fails
-    while(my($fastq,$passed) = each(%is_passing_quality)){
-      # If
-      if($passed == 0){
-        $fail{quality} = 1;
-        logmsg "  I will fail sample $samplename on quality because ".basename($fastq) if($$settings{debug});
-        last;
-      }
-      # Likewise if a file's quality is unknown, then it's all unknown
-      if($passed == -1){
-        $fail{quality} = -1;
-        logmsg "  I will set quality failure as unknown for sample $samplename because ".basename($fastq) if($$settings{debug});
-        last;
-      }
+      logmsg "Sample failed quality: $samplename (Q1:$Q1 Q2:$Q2)" if($$settings{debug});
+      $fail{quality} = 1;
     }
 
     # Did it pass by kraken / read classification
@@ -253,7 +303,6 @@ sub identifyBadRuns{
     # Did it pass by kraken / read classification
     # Start with a stance that we do not know (value: -1)
 
-    #die Dumper [\%assemblyMetrics, {%{$assemblyMetrics{$samplename}}}, $samplename];
     my $minNs = $$sampleInfo{$samplename}{taxonRules}{assembly_percentN};
     my $longestContigThreshold = $$sampleInfo{$samplename}{taxonRules}{longest_contig};
     if(defined($minNs) && defined($longestContigThreshold)){

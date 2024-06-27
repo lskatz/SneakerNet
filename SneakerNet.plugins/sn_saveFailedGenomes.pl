@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.4";
+our $VERSION = "1.4.1";
 our $CITATION = "Save failed genomes by Lee Katz";
 
 # For any warnings in the SN report
@@ -28,10 +28,12 @@ sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version citation check-dependencies help force tempdir=s debug numcpus=i coverage=f)) or die $!;
   $$settings{coverage} //= 10;
+
+  my @exe = qw(rsync);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      rsync     => 'rsync --version | grep version',
+      exe => \@exe,
     }, $settings,
   );
 
@@ -50,10 +52,12 @@ sub main{
 
   my $table = saveGenomes($dir, $settings);
 
+  chomp($warningsMsg);
   recordProperties($dir,{
     version=>$VERSION,
     table=>$table,
     warnings => $warningsMsg,
+    exe      => \@exe,
   });
 
   return 0;

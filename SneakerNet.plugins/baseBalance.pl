@@ -9,7 +9,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename qw/fileparse basename dirname/;
-use File::Copy qw/mv/;
+use File::Copy qw/mv cp/;
 use FindBin;
 
 use threads;
@@ -21,7 +21,7 @@ use List::MoreUtils qw/uniq/;
 
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
-our $VERSION = "1.4";
+our $VERSION = "3.0";
 our $CITATION = "Base Balance by Lee Katz";
 
 # Global
@@ -37,7 +37,7 @@ sub main{
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
-      cp        => 'cp --version | head -n 1',
+      exe => [ ],
     }, $settings,
   );
 
@@ -45,15 +45,66 @@ sub main{
   $$settings{numcpus}||=1;
   
   my $dir=$ARGV[0];
-  mkdir "$dir/forEmail";
+  mkdir "$dir/SneakerNet/forEmail";
 
   my $out=baseBalanceAll($dir,$settings);
   
-  command("cp -v $out $dir/SneakerNet/forEmail/ >&2");
+  my $target = "$dir/SneakerNet/forEmail/".basename($out);
+  cp($out, $target) or die "ERROR: could not copy $out => $target";
+
+  my $rawMultiQC = makeMultiQC($dir, $settings);
 
   recordProperties($dir,{version=>$VERSION, table=>"$dir/SneakerNet/forEmail/".basename($out)});
   
   return 0;
+}
+
+# Make a table suitable for MultiQC
+# Example found at https://github.com/MultiQC/test-data/blob/main/data/custom_content/issue_1883/4056145068.variant_counts_mqc.tsv
+sub makeMultiQC{
+  my($dir, $settings) = @_;
+  my $intable = "$dir/SneakerNet/forEmail/basebalance.tsv";
+  my $mqcDir  = "$dir/SneakerNet/MultiQC-build";
+  my $outtable= "$mqcDir/bb_mqc.tsv";
+  mkdir($mqcDir);
+
+  my $plugin = basename($0);
+  my $anchor = basename($0, ".pl");
+
+  my $docLink = "<a title='documentation' href='https://github.com/lskatz/sneakernet/blob/master/docs/plugins/$plugin.md'>&#128196;</a>";
+  my $pluginLink = "<a title='$plugin on github' href='https://github.com/lskatz/sneakernet/blob/master/SneakerNet.plugins/$plugin'><span style='font-family:monospace;font-size:small'>1011</span></a>";
+
+  open(my $outFh, ">", $outtable) or die "ERROR: could not write to multiqc table $outtable: $!";
+  print $outFh "#id: $anchor'\n";
+  print $outFh "#section_name: \"Base balances\"\n";
+  print $outFh "#description: Each A/T and C/G should equal about 1 and almost always between 0.7 and 1.3.<br />$plugin v$VERSION $docLink $pluginLink\n";
+  print $outFh "#anchor: '$anchor'\n";
+  print $outFh "#plot_type: 'bargraph'\n";
+  # Print the rest of the table
+  open(my $fh, $intable) or die "ERROR: could not read table $intable: $!";
+  my $header = <$fh>;
+  chomp($header);
+  my @header = split(/\t/, $header);
+  my %sample;
+  while(<$fh>){
+    next if(/^#/);
+    my @F = split /\t/;
+    my %F;
+    @F{@header} = @F;
+    $sample{$F{File}} = \%F;
+  }
+  close $fh;
+
+  print $outFh join("\t", qw(sample ratio))."\n";
+  while(my($sample, $values) = each(%sample)){
+    print $outFh join("\t", $sample."-A/T", $$values{"A/T"})."\n";
+    print $outFh join("\t", $sample."-C/G", $$values{"C/G"})."\n";
+  }
+  close $outFh;
+
+  logmsg "Wrote $outtable";
+
+  return $outtable;
 }
 
 sub baseBalanceAll{
@@ -107,9 +158,11 @@ sub baseBalanceWorker{
 sub baseBalance{
   my($sHash,$outdir,$settings)=@_;
 
-  logmsg $$sHash{sample_id};
   my $outfile="$outdir/$$sHash{sample_id}.tsv";;
-  return $outfile if(-e $outfile && (-s $outfile > 0));
+  logmsg "Running base balance for $$sHash{sample_id} => $outfile";
+  if(!$$settings{force}){
+    return $outfile if(-e $outfile && (-s $outfile > 0));
+  }
 
   open(my $outFh,">","$outfile.tmp") or die "ERROR: could not open $outfile.tmp for writing: $!";
 

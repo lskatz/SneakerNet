@@ -16,8 +16,9 @@ Therefore for example, a warning from a plugin will be "erased"
 if the plugin is run again and it records a value describing zero warnings.
 There are some special keys that are treated differently:
 
-* table - the relative path to a `.tsv` file from the main folder that describes a summary table from a plugin, e.g., `SneakerNet/forEmail/kraken.tsv`
+* table - the relative path to a `.tsv` file from the main folder that describes a summary table from a plugin, e.g., `SneakerNet/forEmail/kraken.tsv`. This can also be a csv file.
 * version - the version number of the plugin that was run in the format of simple integers separated by periods, e.g., `2.3.1`
+* XX-version - the version number of some software used in this specific plugin
 * warnings - a summary of warnings from the plugin, e.g., `5 samples do not have fastq files`. Use "0" for no warnings.
 * errors - a summary of errors from the plugin, e.g., `Error reading summary table`. Use "0" for no errors.
 * date - date of analysis in YYYY-MM-DD format

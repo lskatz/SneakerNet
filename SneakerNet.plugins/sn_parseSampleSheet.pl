@@ -10,9 +10,10 @@ use Cwd qw/realpath/;
 use File::Temp;
 use File::Copy qw/cp/;
 use FindBin;
+use lib "$FindBin::RealBin/../lib/perl5";
+
 use Config::Simple;
 
-use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo samplesheetInfo_tsv passfail command logmsg version/;
 
 our $VERSION = "1.2";

@@ -1,14 +1,17 @@
-config/*
+/bin
+/config/*
 lib/perl5/auto
 lib/perl5/Bio
 lib/perl5/Capture
 lib/perl5/Class
+lib/perl5/Compress
 lib/perl5/Config
 lib/perl5/Data
 lib/perl5/Devel
 lib/perl5/Email
 lib/perl5/ExtUtils
 lib/perl5/File
+lib/perl5/IO
 lib/perl5/Method
 lib/perl5/MIME
 lib/perl5/Module
@@ -23,8 +26,10 @@ lib/perl5/Role
 lib/perl5/StackTrace
 lib/perl5/Sub
 lib/perl5/Test
+lib/perl5/Text
 lib/perl5/Throwable
 lib/perl5/Throwable.pm
+lib/perl5/Time
 lib/perl5/Try
 lib/perl5/x86_64-linux-thread-multi
 lib/perl5/GD
@@ -84,3 +89,9 @@ inc/
 /*.zip
 
 
+.vscode
+
+t/M00123-18-001-test/wget-log*
+t/M00123-18-001-test/*.log
+t/M00123-18-003-metagenomics/
+t/M00123-20-001-sarscov2

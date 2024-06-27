@@ -73,13 +73,20 @@ sub makeSneakernetDir{
   my $sampleSheet = "$dir/Data/Intensities/BaseCalls/SampleSheet.csv";
   my $sampleSheet2= "$dir/SampleSheet.csv"; # backup in case the first is not found
   my $sampleSheet3= (glob("$dir/*.csv"))[0]; # backup in case the first is not found
+  my $sampleSheet4= "$dir/samples.txt";      # 2024-03-07: adding as last option in case user saved from Excel
   my $config      =  "$dir/Data/Intensities/BaseCalls/config.xml";
   my @interop     =  glob("$dir/InterOp/*");
-  my @xml         = ("$dir/CompletedJobInfo.xml",
-                     "$dir/runParameters.xml",
-                     "$dir/GenerateFASTQRunStatistics.xml",
-                     "$dir/RunInfo.xml",
-                    );
+  #my @xml         = ("$dir/CompletedJobInfo.xml",
+  #                   "$dir/runParameters.xml",
+  #                   "$dir/GenerateFASTQRunStatistics.xml",
+  #                   "$dir/RunInfo.xml",
+  #                  );
+  #2024-03-04:  changed xml location to QC subfolder, since that's where things are now
+  my @xml         = ("$dir/QC/CompletedJobInfo.xml",
+                     "$dir/QC/RunParameters.xml",
+                     "$dir/QC/GenerateFASTQRunStatistics.xml",
+                     "$dir/QC/RunInfo.xml",
+                     );
   
   if(! -e $sampleSheet){
     if(! -e $sampleSheet2){
@@ -90,6 +97,10 @@ sub makeSneakernetDir{
       elsif(-e $sampleSheet3){
         logmsg "Found $sampleSheet3 and so I will use it.";
         $sampleSheet2 = $sampleSheet3;
+      }
+      elsif(-e $sampleSheet4){
+        logmsg "Found $sampleSheet4 as last resort.";
+        $sampleSheet2 = $sampleSheet4;
       } else {
         die "ERROR: could not find the samplesheet in either $sampleSheet or $sampleSheet2";
       }

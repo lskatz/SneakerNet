@@ -32,21 +32,10 @@ WriteMakefile(
   #ABSTRACT_FROM => 'lib/perl5/SneakerNet.pm',
   AUTHOR => q{Lee S. Katz <gzu2@cdc.gov>},
   EXE_FILES    => [
-    "scripts/SneakerNet.ionTorrent.ro.pl",
-    "scripts/SneakerNet.pl",
-    "scripts/SneakerNetPlugins.pl",
-    "scripts/SneakerNet.roRun.pl",
-    "SneakerNet.plugins/addReadMetrics.pl",
-    "SneakerNet.plugins/assembleAll.pl",
-    "SneakerNet.plugins/baseBalance.pl",
-    "SneakerNet.plugins/emailWhoever.pl",
-    "SneakerNet.plugins/read_length_quality_stats_fastq.py",
-    "SneakerNet.plugins/sn_detectContamination.pl",
-    "SneakerNet.plugins/sn_detectContamination-kraken.pl",
-    "SneakerNet.plugins/sn_mlst.pl",
-    "SneakerNet.plugins/sn_parseSampleSheet.pl",
-    "SneakerNet.plugins/sn_passfail.pl",
-    "SneakerNet.plugins/transferFilesToRemoteComputers.pl",
+    glob("scripts/*.pl"),
+    glob("SneakerNet.plugins/*.pl"),
+    glob("SneakerNet.plugins/*.py"),
+    glob("SneakerNet.plugins/*.sh"),
   ],
   PREREQ_PM    => {
     # Core modules
@@ -54,6 +43,7 @@ WriteMakefile(
     'Data::Dumper'   => 0,
     'List::Util'     => 0,
     'Exporter'       => 0,
+    'TAP::Parser::YAMLish::Writer' => '3.44',
     # Threads modules
     'threads'        => 0,
     'threads::shared'=> 0,
@@ -62,10 +52,9 @@ WriteMakefile(
     'Statistics::Descriptive' => 0,
     'Config::Simple' => '4.58',
     'File::Slurp'    => 0,
-    'Bio::Kmer'      => 0,
+    #'Bio::Kmer'      => 0, # Bio::Kmer currently requires Jellyfish v2 but Kraken1 requires Jellyfish v1
     'Bio::SeqIO'     => 0,
     'Text::Fuzzy'    => 0,
-    'Email::Stuffer' => 0,
     'Bio::FeatureIO' => 0,
     # MLST module
     'Moo'            => 0,

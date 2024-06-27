@@ -41,7 +41,7 @@ subtest 'ColorID' => sub{
   subtest 'results' => sub{
     my $results = readTsv("$run/SneakerNet/forEmail/mlst-contamination-detection.tsv");
     is($$results{FA1090}{Scheme}, "neisseria", "Scheme for FA1090");
-    is($$results{LT2}{Scheme}, "senterica", "Scheme for LT2");
+    ok($$results{LT2}{Scheme} =~ /senterica/, "Scheme for LT2"); # we went from `senterica` in early mlst versions and now `senterica_achtman_2` in newer versions
     is($$results{LT2}{NumLociFound}, 7, "Loci found for LT2");
   };
 };
