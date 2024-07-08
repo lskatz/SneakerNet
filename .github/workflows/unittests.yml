@@ -196,7 +196,7 @@ jobs:
           kalamari_ver=$(downloadKalamari.pl --version)
           kraken_dir="$condabin/../share/kalamari-$kalamari_ver/kalamari-kraken"
           echo $kraken_dir
-          ls -lh $kraken_dir
+          ls -lh $kraken_dir || echo "ERROR: could not ls $kraken_dir"
           echo "KRAKEN_DEFAULT_DB  $kraken_dir" >> config/settings.conf
           make
           make test
