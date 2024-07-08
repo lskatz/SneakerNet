@@ -15,7 +15,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 
 use Text::Fuzzy;
 
-our $VERSION = "1.8";
+our $VERSION = "1.9";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -24,7 +24,7 @@ exit(main());
 sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(version emails=s citation check-dependencies help force tempdir=s debug numcpus=i)) or die $!;
-  my @exe = qw(sendmail uuencode);
+  my @exe = qw(sendmail);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -194,10 +194,18 @@ sub append_attachment {
 
     # Encode the attachment content using base64 encoding
     my $attachment_name = basename($file_path);
-    my $encoded_content = `uuencode $file_path $attachment_name`;
+
+    open(my $attachment_fh, "<", $file_path) or die "Failed to open attachment file $file_path: $!";
+    binmode $attachment_fh;
+    my $attachment_content = do { local $/; <$attachment_fh> };
+    close $attachment_fh;
+
+    my $encoded_content = pack("u", $attachment_content);
     die "Failed to encode attachment content from $file_path: $!" if $?;
     
+    print $fh "begin 644 $attachment_name\n";
     print $fh $encoded_content . "\n";
+    print $fh "end\n";
 
     # Print a newline to separate MIME parts
     print $fh "\n";
