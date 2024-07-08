@@ -22,7 +22,7 @@ use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "3.1";
+our $VERSION = "3.3";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -34,6 +34,7 @@ sub main{
   my $settings=readConfig();
   GetOptions($settings,qw(citation check-dependencies version help force numcpus=i debug tempdir=s email-only|email|just=s)) or die $!;
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
+  #$$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1);
 
   my @exe = qw(sendmail uuencode);
   exitOnSomeSneakernetOptions({
@@ -188,19 +189,48 @@ sub emailWhoever{
   print $fh "\n";
   print $fh "$body\n";
 
-  # Append attachments to the email text file
+  # Save a list of files to be attached
+  my @attachment;
+  push(@attachment,
+    zip_directory("$dir/SneakerNet/forEmail", "$$settings{tempdir}/$runName.zip"),
+    zip_file("$dir/SneakerNet/forEmail/report.html", $settings),
+    zip_file("$dir/SneakerNet/forEmail/multiqc_report.html", $settings),
+  );
+  # Append log attachments to the email text file
   for my $file(glob("$dir/*.log")){
     next if(!-f $file);
+    push(@attachment,
+      zip_file($file, $settings),
+    );
+  }
+
+  # Test attachments to make sure we want to keep them
+  my @finalAttachment;
+  for my $file(@attachment){
+    if(-s $file > 1e7){
+      logmsg "NOTE: $file is too big. I will not attach it.";
+    } else {
+      push(@finalAttachment, $file);
+    }
+  }
+
+  if(scalar(@attachment) != scalar(@finalAttachment)){
+    print $fh "\nSome files were not attached, probably because they are too large. \n";
+    print $fh "You can view these files in " . realpath($dir) . " .\n";
+    for my $file(@attachment){
+      if(!grep{$_ eq $file} @finalAttachment){
+        print $fh " - " . basename($file) . "\n";
+      }
+    }
+  }
+
+  # Finally, attach the files
+  for my $file(@finalAttachment){
     append_attachment($fh, $file);
   }
-  # Make the zip file
-  my $zip = "$$settings{tempdir}/$runName.zip";
-  zip_directory("$dir/SneakerNet/forEmail", $zip);
-  append_attachment($fh, $zip);
-  append_attachment($fh, zip_file("$dir/SneakerNet/forEmail/report.html", $settings));
-  append_attachment($fh, zip_file("$dir/SneakerNet/forEmail/multiqc_report.html", $settings));
-  logmsg "NEW SENDMAIL ZIP";
 
+  
+  close $fh;
   command("sendmail -t < $emailFile");
 
   return \@to;
@@ -222,10 +252,24 @@ sub zip_directory {
     my @files;
 
     # Find all files in the directory
-    find(sub { push @files, $File::Find::name if -f }, $dir);
+    find(sub {
+      # Skip if not a file
+      return if(!-f);
+      # Skip if it's an HTML (presumably a report file)
+      return if($_ =~ /\.html$/);
+      # Record the list of files in the forEmail directory
+      push @files, $File::Find::name;
+    }, $dir);
 
-    system("cd $dir && zip -9 -y -r -q $zip_file ./");
+    # Zip the directory but exclude HTML files which are presumably report files
+    #   -9 best compression
+    #   -y store symlink and do not resolve
+    #   -r recursive
+    #   -q quiet
+    system("cd $dir && zip --exclude '*.html' -9 -y -r -q $zip_file ./");
     die "Zip failed" if $?;
+
+    return $zip_file;
 }
 
 sub zip_file {
