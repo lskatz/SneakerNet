@@ -118,7 +118,8 @@ jobs:
         env:
           CACHE_NUMBER: 0
       - name: make very simple kraken database
-        if: steps.cache-kraken.outputs.cache-hit != 'true'
+        if: false
+        #if: steps.cache-kraken.outputs.cache-hit != 'true'
         shell: bash -el {0}
         run: |
           which downloadKalamari.sh
