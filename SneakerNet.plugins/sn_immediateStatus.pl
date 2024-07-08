@@ -15,7 +15,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 
 use Text::Fuzzy;
 
-our $VERSION = "1.7";
+our $VERSION = "1.8";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
