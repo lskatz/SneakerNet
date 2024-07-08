@@ -125,8 +125,11 @@ jobs:
           KALAMARI_DEBUG=1 downloadKalamari.sh
           echo "Running buildTaxonomy.sh"
           buildTaxonomy.sh
+          echo
+          tree $(dirname $(which downloadKalamari.sh))/../share/kalamari-*
+          echo
           echo "Running filterTaxonomy.sh"
-          filterTaxonomy.sh
+          bash -x filterTaxonomy.sh
           echo
           tree $(dirname $(which downloadKalamari.sh))/../share/kalamari-*
           echo
