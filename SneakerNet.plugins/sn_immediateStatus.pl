@@ -123,6 +123,9 @@ sub main{
   print $fh2 "\n";
   print $fh2 "$body\n\n";
   append_attachment($fh2, $outfile);
+  close $fh2;
+
+  command("sendmail -t < $emailFile");
 
   recordProperties($dir,{
       version=>$VERSION, reportTo=>$to, 
