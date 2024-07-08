@@ -15,7 +15,7 @@ use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig sample
 
 use Text::Fuzzy;
 
-our $VERSION = "1.7";
+our $VERSION = "1.8";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -123,6 +123,9 @@ sub main{
   print $fh2 "\n";
   print $fh2 "$body\n\n";
   append_attachment($fh2, $outfile);
+  close $fh2;
+
+  command("sendmail -t < $emailFile");
 
   recordProperties($dir,{
       version=>$VERSION, reportTo=>$to, 
