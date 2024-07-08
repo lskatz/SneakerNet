@@ -22,7 +22,7 @@ use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "3.1";
+our $VERSION = "3.2";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -222,9 +222,21 @@ sub zip_directory {
     my @files;
 
     # Find all files in the directory
-    find(sub { push @files, $File::Find::name if -f }, $dir);
+    find(sub {
+      # Skip if not a file
+      return if(!-f);
+      # Skip if it's an HTML (presumably a report file)
+      return if($_ =~ /\.html$/);
+      # Record the list of files in the forEmail directory
+      push @files, $File::Find::name;
+    }, $dir);
 
-    system("cd $dir && zip -9 -y -r -q $zip_file ./");
+    # Zip the directory but exclude HTML files which are presumably report files
+    #   -9 best compression
+    #   -y store symlink and do not resolve
+    #   -r recursive
+    #   -q quiet
+    system("cd $dir && zip --exclude '*.html' -9 -y -r -q $zip_file ./");
     die "Zip failed" if $?;
 }
 
