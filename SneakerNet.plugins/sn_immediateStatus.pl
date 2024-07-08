@@ -13,9 +13,9 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-use Text::Fuzzy;
+use Text::Levenshtein qw/distance/;
 
-our $VERSION = "1.9";
+our $VERSION = "2.0";
 our $CITATION= "Immediate status report by Lee Katz";
 
 local $0=fileparse $0;
@@ -166,8 +166,9 @@ sub doubleCheckRun{
     }
 
     if($errHash{sample}{$sample}{fastqNotFound}){
-      my $tf = Text::Fuzzy->new($sample);
-      my $nearest = $tf->nearestv(\@fastq);
+      my $nearest = nearestString($sample, \@fastq, $settings);
+      #my $tf = Text::Fuzzy->new($sample);
+      #my $nearest = $tf->nearestv(\@fastq);
       $errHash{sample}{$sample}{fastqNotFound} = "For sample $sample, the closest named fastq files are $nearest";
     }
 
@@ -179,13 +180,30 @@ sub doubleCheckRun{
     my $basename = basename($filename);
     $basename =~ s/_.*//;
     if(!$$sampleInfo{$basename}){
-      my $tf = Text::Fuzzy->new($filename);
-      my $nearest = $tf->nearestv(\@sample);
+      #my $tf = Text::Fuzzy->new($filename);
+      #my $nearest = $tf->nearestv(\@sample);
+      my $nearest = nearestString($filename, \@sample, $settings);
       $errHash{fastq}{$filename}{sampleNotFound} = "Found fastq $filename but no entry in the sample sheet matching $basename.  Did you mean $nearest?";
     }
   }
 
   return \%errHash;
+}
+
+sub nearestString{
+  my($query, $strings, $settings) = @_;
+
+  my $minDist = ~0; # max int
+  my $nearest = "";
+  for my $string(@$strings){
+    my $dist = distance($query, $string);
+    if($dist < $minDist){
+      $minDist = $dist;
+      $nearest = $string;
+    }
+  }
+
+  return $nearest;
 }
 
 # Add an attachment to an email file handle
