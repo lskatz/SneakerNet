@@ -126,7 +126,7 @@ jobs:
           echo "Running buildTaxonomy.sh"
           buildTaxonomy.sh
           echo "Running filterTaxonomy.sh"
-          filterTaxonomy.sh
+          bash -x filterTaxonomy.sh
           echo
           tree $(dirname $(which downloadKalamari.sh))/../share/kalamari-*
           echo
