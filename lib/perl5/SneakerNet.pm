@@ -36,7 +36,7 @@ TODO
 
 =cut
 
-our $VERSION  = version->declare('0.26.0');
+our $VERSION  = version->declare('0.27.0');
 our %rankName = (S=>'species', G=>'genus', F=>'family', O=>'order', C=>'class', P=>'phylum', K=>'kingdom', D=>'domain', U=>'unclassified');
 our @rankOrder= qw(S G F O C P K D U);
 our %rankOrder= (S=>0, G=>1, F=>2, O=>3, C=>4, P=>5, K=>6, D=>7, U=>8);

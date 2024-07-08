@@ -54,7 +54,7 @@ WriteMakefile(
     'File::Slurp'    => 0,
     #'Bio::Kmer'      => 0, # Bio::Kmer currently requires Jellyfish v2 but Kraken1 requires Jellyfish v1
     'Bio::SeqIO'     => 0,
-    'Text::Fuzzy'    => 0,
+    'Text::Levenshtein'    => 0.15,
     'Bio::FeatureIO' => 0,
     # MLST module
     'Moo'            => 0,
