@@ -15,7 +15,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig samplesheetInfo_tsv command logmsg fullPathToExec/;
 
-our $VERSION = "1.4.1";
+our $VERSION = "1.5.0";
 our $CITATION = "Save failed genomes by Lee Katz";
 
 # For any warnings in the SN report
@@ -77,8 +77,7 @@ sub saveGenomes{
     chomp;
     my %F;
     @F{@header}=split(/\t/,$_);
-    $F{File} = basename($F{File});
-    $readMetrics{$F{File}} = \%F;
+    $readMetrics{$F{Sample}} = \%F;
   }
   close READMETRICS;
 
@@ -89,26 +88,23 @@ sub saveGenomes{
     
     # Get the name of all files linked to this file through the sample.
     $$sampleInfo{$samplename}{fastq}//=[]; # Set {fastq} to an empty list if it does not exist
-    my @file=@{$$sampleInfo{$samplename}{fastq}};
-    for my $fastq(@file){
-      my $fastqMetrics = $readMetrics{basename($fastq)};
 
-      # Coverage
-      if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
-        $totalCoverage = -1; # -1 means 'unknown' coverage
-        logmsg "$fastq unknown coverage" if($$settings{debug});
-      } else {
-        $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
-        $totalCoverage += $$fastqMetrics{coverage};
-        logmsg "Sample $samplename += $$fastqMetrics{coverage}x => ${totalCoverage}x" if($$settings{debug});
-      }
+    my $fastqMetrics = $readMetrics{$samplename};
+
+    if($$fastqMetrics{coverage} eq '.'){ # dot means coverage is unknown
+      $totalCoverage = -1; # -1 means 'unknown' coverage
+      logmsg "$samplename unknown coverage" if($$settings{debug});
+    } else {
+      $$fastqMetrics{coverage} ||= 0; # force it to be a number if it isn't already
+      $totalCoverage = $$fastqMetrics{coverage};
+      logmsg "Sample $samplename = ${totalCoverage}x" if($$settings{debug});
     }
 
     if(
          $totalCoverage >= $$settings{coverage} 
       && $totalCoverage <  $$sampleInfo{$samplename}{taxonRules}{coverage}
     ){
-      $saved{$samplename} = \@file;
+      $saved{$samplename} = $$sampleInfo{$samplename}{fastq}
     }
   }
 
@@ -142,11 +138,14 @@ sub rsync{
   my $subfolder = "$$sample{taxonRules}{dest_subfolder}/QC_fails";
   my $fileString = join(" ", @{$$sample{fastq}});
 
-  my $command = "rsync -av -q --no-motd -av --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/";
+  my $command = "rsync -e 'ssh -q' -av --no-motd --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/";
   if($$settings{debug}){
     logmsg "COMMAND: $command";
   } else {
-    command("rsync -q --no-motd -av --no-g --copy-links --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $fileString $$settings{transfer_destination_string}/$subfolder/");
+    system($command);
+    if($?){
+      die "ERROR: could not rsync $fileString ==> $$settings{transfer_destination_string}/$subfolder/: $!";
+    }
   }
 
   return 1;
