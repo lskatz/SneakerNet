@@ -9,7 +9,6 @@ use File::Basename qw/fileparse basename dirname/;
 use File::Temp qw/tempdir/;
 use File::Copy qw/mv cp/;
 use Bio::SeqIO;
-use Bio::FeatureIO::gff;
 
 use FindBin;
 use lib "$FindBin::RealBin/../lib/perl5";
