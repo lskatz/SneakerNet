@@ -22,7 +22,7 @@ use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "3.5";
+our $VERSION = "3.6";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -189,7 +189,12 @@ sub emailWhoever{
   }
   $body.="</ul></div>\n";
 
-  #$body = tsvToHtml("$dir/SneakerNet/forEmail/passfail.tsv", $settings);
+  $body  = tsvToHtml("$dir/SneakerNet/forEmail/QC_summary.tsv", $settings);
+  $body .= "<p style='font:smaller;'>\n";
+  $body .= "This message was brought to you by SneakerNet v$snVersion!\n";
+  $body .= "Documentation can be found at <a href='https://github.com/lskatz/SneakerNet'>github.com/lskatz/SneakerNet</a>.\n";
+  $body .= "</p>\n";
+
 
   # https://stackoverflow.com/a/11725308
   my $mailpart      = generate_uuid();
@@ -251,7 +256,6 @@ sub emailWhoever{
   for my $file(@finalAttachment){
     append_attachment($fh, $file, $mailpart);
   }
-
   
   close $fh;
   command("sendmail -t < $emailFile");
@@ -287,26 +291,64 @@ sub tsvToHtml{
 
   my $html;
 
+  my @footer;
+
   $html .= "<!-- START $tsv -->\n";
   
-  $html .= "<table>";
+  $html .= "<table style='border:black solid 1px;'>";
 
+  my @evenOddBackground = ('#EEE','#CCC');
+
+  # Read the table and divvy it up into header, body, footer
+  my(@body, $footer);
   open(my $fh, "<", $tsv) or die "ERROR: could not read $tsv: $!";
   my $header = <$fh>;
   chomp($header);
-  my @header = split(/\t/, $header);
-  $html .= "<thead><tr>\n";
-  $html .= "<td>" . join("</td><td>", @header) . "</td>\n";
-  $html .= "</tr></thead>\n";
-  while(<$fh>){
-    chomp;
-    my @F = split /\t/;
-    $html .= "<tr>\n";
-    $html .= "<td>" . join("</td><td>", @F) ."</td>\n";
-    $html .= "</tr>\n";
+  my @header = split(/\t/, lc($header));
+  while(my $line = <$fh>){
+    chomp($line);
+    my @F = split(/\t/, $line);
+    my %F;
+    @F{@header} = @F;
+    if($line =~ /^#/){
+      $line =~ s/^#\s*//;
+      push(@footer, $line);
+    } else {
+      push(@body, \%F);
+    }
   }
   close $fh;
+
+  # Sort the body
+  @body = sort{
+    $$a{score} <=> $$b{score} ||
+      $$a{sample} cmp $$b{sample}
+  } @body;
+
+  $html .= "<thead><tr style='background:#333;'>\n";
+  $html .= "<td>" . join("</td><td>", @header) . "</td>\n";
+  $html .= "</tr></thead>\n";
+  for my $hash(@body){
+    # Background color is determined by running the line number mod number of colors
+    my $background = $evenOddBackground[$. % scalar(@evenOddBackground)];
+
+    $html .= "<tr style='background-color:$background;'>\n";
+    for my $h(@header){
+      $html .= "  <td>$$hash{$h}</td>\n";
+    }
+    $html .= "</tr>\n";
+  }
   $html .= "</table>\n";
+
+  # Footer lines
+  if(@footer){
+    $html .= "<ul style='font-size:smaller;color:#333;'>\n";
+    for my $line(@footer){
+      $html .= "  <li>$line</li>\n";
+    }
+    $html .= "</ul>\n";
+  }
+  
   $html .= "<!-- END $tsv -->\n";
 
   return $html;
