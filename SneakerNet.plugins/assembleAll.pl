@@ -190,7 +190,9 @@ sub assembleAll{
     
     if(!-e "$outdir/quast/report.html"){
       logmsg "Running quast on $outassembly > $outdir/quast";
-      command("quast $outassembly --glimmer --output-dir $outdir/quast --threads $$settings{numcpus} --rna-finding");
+      # 2024-09-23 adding --min-contig 1 to accept assemblies of very small contig lengths:
+      # we just want to know if it's a bad assembly and we don't want quast to crash.
+      command("quast $outassembly --glimmer --output-dir $outdir/quast --threads $$settings{numcpus} --rna-finding --min-contig 1");
     }
     else{
       logmsg "Found $outdir/quast/report.html. Not rerunning";
