@@ -16,6 +16,8 @@ use MIME::Base64 qw/encode_base64/;
 use POSIX qw/strftime/;
 use IO::Compress::Zip qw(zip $ZipError);
 
+use MIME::Base64;
+
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use Config::Simple;
@@ -36,7 +38,7 @@ sub main{
   $$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1,CLEANUP=>1);
   #$$settings{tempdir}||=File::Temp::tempdir(basename($0).".XXXXXX",TMPDIR=>1);
 
-  my @exe = qw(sendmail uuencode);
+  my @exe = qw(sendmail);
   exitOnSomeSneakernetOptions({
       _CITATION => $CITATION,
       _VERSION  => $VERSION,
@@ -409,12 +411,12 @@ sub append_attachment {
     my $attachment_name = basename($file_path);
     my $attachment_ext  = $attachment_name;
        $attachment_ext  =~ s/.+\.//;
-    my $encoded_content = `uuencode $file_path $attachment_name`;
+    my $encoded_content = encode_base64(`cat $file_path`);
     die "Failed to encode attachment content from $file_path: $!" if $?;
     
     print $fh "--$separator\n";
     print $fh "Content-Type: application/$attachment_ext; name=\"$attachment_name\"\n";
-    print $fh "Content-Transfer-Encoding: uuencode\n";
+    print $fh "Content-Transfer-Encoding: base64\n";
     print $fh "Content-Disposition: attachment; filename=\"$attachment_name\"\n";
     print $fh "\n";
     print $fh $encoded_content . "\n";
