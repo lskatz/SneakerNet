@@ -34,17 +34,27 @@ lib/perl5/Try
 lib/perl5/x86_64-linux-thread-multi
 lib/perl5/GD
 lib/perl5/perl5
+lib/perl5/App
+lib/perl5/Statistics
+lib/perl5/TAP
+lib/perl5/Tree
+lib/perl5/XML
 
 t/M00123-18-001-test/SneakerNet/
 t/M00123-18-001-test/readMetrics.tsv
 t/M00123-18-001-test/samples.tsv
+t/M00123-18-001-asm
 
 t/M00123-18-001-test/contaminated_1.fastq.gz
 t/M00123-18-001-test/contaminated_2.fastq.gz
 t/kraken-database
+t/bioprojectSurveillance*
 
 db/*
 db/fasta/*
+
+/env
+/findModules.pl
 
 bin/bdf2gdfont.pl
 

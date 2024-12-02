@@ -16,13 +16,15 @@ use MIME::Base64 qw/encode_base64/;
 use POSIX qw/strftime/;
 use IO::Compress::Zip qw(zip $ZipError);
 
+use MIME::Base64;
+
 $ENV{PATH}="$ENV{PATH}:/opt/cg_pipeline/scripts";
 
 use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "3.4";
+our $VERSION = "3.7";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
@@ -159,35 +161,63 @@ sub emailWhoever{
   logmsg "To: $to";
   my $from=$$settings{from} || die "ERROR: need to set 'from' in the settings.conf file!";
   my $subject="$runName QC";
-  my $body ="Please see below for QC information on $runName.\n\n";
+  
+  my $body ="<div>\n";
+     $body.="Please see below for QC information on $runName.\n\n";
      $body.="For more details, please see the other attachments.\n";
-     $body.=" - TSV files can be opened in Excel\n";
-     $body.=" - LOG files can be opened in Wordpad, Notepad++, or VSCode\n";
-     $body.=" - HTML files can be opened in Edge\n";
-     $body.=" - Full path: ".realpath($dir)."/SneakerNet\n";
+     $body.="<ul>\n";
+     $body.="  <li>TSV files can be opened in Excel</li>\n";
+     $body.="  <li>LOG files can be opened in Wordpad, Notepad++, or VSCode</li>\n";
+     $body.="  <li>HTML files can be opened in Edge</li>\n";
+     $body.="  <li>Full path: ".realpath($dir)."/SneakerNet</li>\n";
+     $body.="</ul>\n";
      $body.="\nThis message was brought to you by SneakerNet v$snVersion!\n";
-     $body.="Documentation can be found at https://github.com/lskatz/SneakerNet\n";
+     $body.="<p>Documentation can be found at https://github.com/lskatz/SneakerNet</p>\n";
+     $body.="</div>\n";
 
   # Failure messages in the body
-  $body.="\nAny samples that have failed QC as shown in passfail.tsv are listed below.\n";
+  $body.="<div>\n";
+  $body.="Any samples that have failed QC as shown in passfail.tsv are listed below.\n";
+  $body.="<ul>\n";
   for my $fastq(keys(%$failure)){
     my $failureMessage="";
     for my $failureCategory(keys(%{$$failure{$fastq}})){
       if($$failure{$fastq}{$failureCategory} == 1){
-        $failureMessage.=$fastq."\n";
+        $failureMessage.="  <li>$fastq</li>\n";
         last; # just list a given failed fastq once
       }
     }
     $body.=$failureMessage;
   }
+  $body.="</ul></div>\n";
+
+  $body  = tsvToHtml("$dir/SneakerNet/forEmail/QC_summary.tsv", $settings);
+  $body .= "<p style='font:smaller;'>\n";
+  $body .= "This message was brought to you by SneakerNet v$snVersion!\n";
+  $body .= "Documentation can be found at <a href='https://github.com/lskatz/SneakerNet'>github.com/lskatz/SneakerNet</a>.\n";
+  $body .= "</p>\n";
+
+
+  # https://stackoverflow.com/a/11725308
+  my $mailpart      = generate_uuid();
+  my $mailpart_body = generate_uuid();
 
   my $emailFile = "$$settings{tempdir}/email.txt";
   open(my $fh, ">", $emailFile) or die "ERROR: could not write to $emailFile: $!";
   print $fh "To: $to\n";
   print $fh "From: $from\n";
   print $fh "Subject: $subject\n";
+  print $fh "MIME-Version: 1.0\n";
+  print $fh "Content-Type: multipart/mixed; boundary=\"$mailpart\"\n";
   print $fh "\n";
+  print $fh "--$mailpart\n";
+  print $fh "Content-Type: multipart/alternative; boundary=\"$mailpart_body\"\n";
+  print $fh "\n";
+  print $fh "--$mailpart_body\n";
+  print $fh "Content-Type: text/html; charset=\"utf-8\"\n";
+  print $fh "Content-Disposition: inline\n";
   print $fh "$body\n";
+  print $fh "--$mailpart_body--\n";
 
   # Save a list of files to be attached
   my @attachment;
@@ -208,7 +238,7 @@ sub emailWhoever{
   my @finalAttachment;
   for my $file(@attachment){
     if(-s $file > 1e7){
-      logmsg "NOTE: $file is too big. I will not attach it.";
+      logmsg "WARNING: $file is too big. I will not attach it.";
     } else {
       push(@finalAttachment, $file);
     }
@@ -226,7 +256,7 @@ sub emailWhoever{
 
   # Finally, attach the files
   for my $file(@finalAttachment){
-    append_attachment($fh, $file);
+    append_attachment($fh, $file, $mailpart);
   }
   
   close $fh;
@@ -239,6 +269,92 @@ sub emailWhoever{
 ################
 # Utility subs #
 ################
+
+sub generate_uuid {
+    my @chars = ('a'..'f', 0..9);
+    my $uuid = '';
+
+    $uuid .= $chars[rand @chars] for 1..8;
+    $uuid .= '-';
+    $uuid .= $chars[rand @chars] for 1..4;
+    $uuid .= '-';
+    $uuid .= $chars[rand @chars] for 1..4;
+    $uuid .= '-';
+    $uuid .= $chars[rand @chars] for 1..4;
+    $uuid .= '-';
+    $uuid .= $chars[rand @chars] for 1..12;
+
+    return $uuid;
+}
+
+# Transform a tsv file into an html string
+sub tsvToHtml{
+  my($tsv, $settings) = @_;
+
+  my $html;
+
+  my @footer;
+
+  $html .= "<!-- START $tsv -->\n";
+  
+  $html .= "<table style='border:black solid 1px;'>";
+
+  my @evenOddBackground = ('#EEE','#CCC');
+
+  # Read the table and divvy it up into header, body, footer
+  my(@body, $footer);
+  open(my $fh, "<", $tsv) or die "ERROR: could not read $tsv: $!";
+  my $header = <$fh>;
+  chomp($header);
+  my @header = split(/\t/, lc($header));
+  while(my $line = <$fh>){
+    chomp($line);
+    my @F = split(/\t/, $line);
+    my %F;
+    @F{@header} = @F;
+    if($line =~ /^#/){
+      $line =~ s/^#\s*//;
+      push(@footer, $line);
+    } else {
+      push(@body, \%F);
+    }
+  }
+  close $fh;
+
+  # Sort the body
+  @body = sort{
+    $$a{score} <=> $$b{score} ||
+      $$a{sample} cmp $$b{sample}
+  } @body;
+
+  $html .= "<thead><tr style='background:#333;'>\n";
+  $html .= "<td>" . join("</td><td>", @header) . "</td>\n";
+  $html .= "</tr></thead>\n";
+  for my $hash(@body){
+    # Background color is determined by running the line number mod number of colors
+    my $background = $evenOddBackground[$. % scalar(@evenOddBackground)];
+
+    $html .= "<tr style='background-color:$background;'>\n";
+    for my $h(@header){
+      $html .= "  <td>$$hash{$h}</td>\n";
+    }
+    $html .= "</tr>\n";
+  }
+  $html .= "</table>\n";
+
+  # Footer lines
+  if(@footer){
+    $html .= "<ul style='font-size:smaller;color:#333;'>\n";
+    for my $line(@footer){
+      $html .= "  <li>$line</li>\n";
+    }
+    $html .= "</ul>\n";
+  }
+  
+  $html .= "<!-- END $tsv -->\n";
+
+  return $html;
+}
 
 # http://stackoverflow.com/a/20359734
 sub flatten {
@@ -289,22 +405,21 @@ sub zip_file {
 
 # Add an attachment to an email file handle
 sub append_attachment {
-    my ($fh, $file_path) = @_;
+    my ($fh, $file_path, $separator) = @_;
 
     # Encode the attachment content using base64 encoding
     my $attachment_name = basename($file_path);
-
-    open(my $attachment_fh, "<", $file_path) or die "Failed to open attachment file $file_path: $!";
-    binmode $attachment_fh;
-    my $attachment_content = do { local $/; <$attachment_fh> };
-    close $attachment_fh;
-
-    my $encoded_content = pack("u", $attachment_content);
+    my $attachment_ext  = $attachment_name;
+       $attachment_ext  =~ s/.+\.//;
+    my $encoded_content = encode_base64(`cat $file_path`);
     die "Failed to encode attachment content from $file_path: $!" if $?;
     
-    print $fh "begin 644 $attachment_name\n";
+    print $fh "--$separator\n";
+    print $fh "Content-Type: application/$attachment_ext; name=\"$attachment_name\"\n";
+    print $fh "Content-Transfer-Encoding: base64\n";
+    print $fh "Content-Disposition: attachment; filename=\"$attachment_name\"\n";
+    print $fh "\n";
     print $fh $encoded_content . "\n";
-    print $fh "end\n";
 
     # Print a newline to separate MIME parts
     print $fh "\n";
