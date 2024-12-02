@@ -24,7 +24,7 @@ use Config::Simple;
 use SneakerNet qw/exitOnSomeSneakernetOptions recordProperties readConfig passfail command logmsg version/;
 use List::MoreUtils qw/uniq/;
 
-our $VERSION = "3.6";
+our $VERSION = "3.7";
 our $CITATION= "Email whoever by Lee Katz";
 
 my $snVersion=version();
